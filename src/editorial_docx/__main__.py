@@ -53,6 +53,8 @@ def main() -> int:
                     "paragraph_index": c.paragraph_index,
                     "issue_excerpt": c.issue_excerpt,
                     "suggested_fix": c.suggested_fix,
+                    "auto_apply": c.auto_apply,
+                    "format_spec": c.format_spec,
                 }
                 for c in result.comments
             ],

@@ -1,0 +1,33 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtualenv
+.venv/
+venv/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+
+# App temp
+.tmp/
+
+# Secrets
+.env
+
+# Generated review outputs
+*_output.docx
+*_output.relatorio.json

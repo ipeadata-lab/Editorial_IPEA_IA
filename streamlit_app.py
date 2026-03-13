@@ -1,7 +1,12 @@
 ﻿from __future__ import annotations
 
+import os
 import json
 import inspect
+import hashlib
+import html
+import re
+import unicodedata
 from pathlib import Path
 from typing import Callable
 
@@ -11,10 +16,62 @@ from src.editorial_docx.docx_utils import apply_comments_to_docx
 from src.editorial_docx.document_loader import load_document
 from src.editorial_docx.graph_chat import run_conversation
 from src.editorial_docx.models import AgentComment
-from src.editorial_docx.prompts import AGENT_ORDER
+from src.editorial_docx.prompts import AGENT_ORDER, detect_prompt_profile
 
 st.set_page_config(page_title="Editorial TD - Agentes", layout="wide")
 st.title("Revisão Editorial TD com Agentes")
+
+AGENT_LABELS = {
+    "metadados": "Metadados",
+    "sinopse_abstract": "Sinopse/Abstract",
+    "estrutura": "Estrutura",
+    "tabelas_figuras": "Tabelas/Figuras",
+    "referencias": "Referências",
+    "conformidade_estilos": "Conformidade de Estilos",
+    "gramatica_ortografia": "Gramática/Ortografia",
+    "tipografia": "Tipografia",
+}
+
+project_root = Path(__file__).resolve().parent
+env_path = project_root / ".env"
+
+with st.sidebar:
+    st.markdown("### OpenAI")
+    if env_path.exists():
+        st.caption("Arquivo .env detectado no repositório. Usando configuração local.")
+    else:
+        key_source = "variável de ambiente" if os.getenv("OPENAI_API_KEY") else "não configurada"
+        st.caption(f"Chave atual: {key_source}")
+        api_key_input = st.text_input(
+            "OPENAI_API_KEY",
+            type="password",
+            help="A chave fica somente nesta sessão e não é salva em disco.",
+        )
+        if st.button("Usar chave nesta sessão", use_container_width=True):
+            if api_key_input.strip():
+                os.environ["OPENAI_API_KEY"] = api_key_input.strip()
+                st.success("Chave carregada para esta sessão.")
+            else:
+                st.warning("Informe uma chave antes de confirmar.")
+
+    st.divider()
+    st.markdown("### Execução")
+    if st.button("Rodar todos os agentes", key="sidebar_run_all", use_container_width=True):
+        st.session_state.pending_run = {
+            "question": "Faça uma revisão completa com todos os agentes e liste ajustes prioritários.",
+            "agents": AGENT_ORDER.copy(),
+            "source": "control:all",
+        }
+
+    st.markdown("#### Execução direta por agente")
+    for agent in AGENT_ORDER:
+        label = AGENT_LABELS.get(agent, agent)
+        if st.button(f"Rodar: {label}", key=f"sidebar_run_{agent}", use_container_width=True):
+            st.session_state.pending_run = {
+                "question": f"Execute revisão focada em {label} e liste problemas com trecho e sugestão de correção.",
+                "agents": [agent],
+                "source": f"agent:{agent}",
+            }
 
 CHAT_HEIGHT_VH = 72
 
@@ -34,16 +91,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-AGENT_LABELS = {
-    "metadados": "Metadados",
-    "sinopse_abstract": "Sinopse/Abstract",
-    "estrutura": "Estrutura",
-    "tabelas_figuras": "Tabelas/Figuras",
-    "referencias": "Referências",
-    "conformidade_estilos": "Conformidade de Estilos",
-    "gramatica_ortografia": "Gramática/Ortografia",
-}
-
 for key, default in {
     "messages": [],
     "comments": [],
@@ -52,6 +99,8 @@ for key, default in {
     "paragraphs": [],
     "refs": [],
     "doc_kind": None,
+    "doc_fingerprint": None,
+    "doc_profile": "GENERIC",
     "sections": [],
     "toc": [],
     "selected_comment_row": 0,
@@ -60,7 +109,6 @@ for key, default in {
     "pending_run": None,
     "agent_result_cache": {},
     "agent_nav_idx": 0,
-    "control_collapsed": False,
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
@@ -68,13 +116,16 @@ for key, default in {
 
 def _build_rows() -> list[dict]:
     rows = []
-    for c in st.session_state.comments:
+    for comment_idx, c in enumerate(st.session_state.comments):
+        if c.auto_apply:
+            continue
         ref = "sem referência"
         if isinstance(c.paragraph_index, int) and 0 <= c.paragraph_index < len(st.session_state.refs):
             ref = st.session_state.refs[c.paragraph_index]
 
         rows.append(
             {
+                "comment_idx": comment_idx,
                 "agente": c.agent,
                 "categoria": c.category,
                 "referencia": ref,
@@ -82,6 +133,8 @@ def _build_rows() -> list[dict]:
                 "comentario": c.message,
                 "trecho_com_problema": c.issue_excerpt,
                 "como_deve_ficar": c.suggested_fix,
+                "auto_aplicar": c.auto_apply,
+                "format_spec": c.format_spec,
             }
         )
     return rows
@@ -89,7 +142,7 @@ def _build_rows() -> list[dict]:
 
 def _merge_comments(existing: list[AgentComment], incoming: list[AgentComment]) -> list[AgentComment]:
     merged: list[AgentComment] = []
-    seen: set[tuple[str, str, int | None, str, str, str]] = set()
+    seen: set[tuple[str, str, int | None, str, str, str, bool, str]] = set()
 
     for c in [*existing, *incoming]:
         key = (
@@ -99,6 +152,8 @@ def _merge_comments(existing: list[AgentComment], incoming: list[AgentComment]) 
             (c.message or "").strip(),
             (c.issue_excerpt or "").strip(),
             (c.suggested_fix or "").strip(),
+            c.auto_apply,
+            (c.format_spec or "").strip(),
         )
         if key in seen:
             continue
@@ -110,12 +165,15 @@ def _merge_comments(existing: list[AgentComment], incoming: list[AgentComment]) 
 def _signature(rows: list[dict]) -> str:
     base = [
         (
+            str(r["comment_idx"]),
             r["agente"],
             r["categoria"],
             str(r["indice_trecho"]),
             r["comentario"],
             r["trecho_com_problema"],
             r["como_deve_ficar"],
+            r.get("auto_aplicar", False),
+            r.get("format_spec", ""),
         )
         for r in rows
     ]
@@ -133,10 +191,12 @@ def _ensure_correction_state(rows: list[dict]) -> None:
         key = str(idx)
         if key not in st.session_state.correction_state:
             initial = row["como_deve_ficar"] or row["trecho_com_problema"] or ""
+            initial_status = "resolvido" if row.get("auto_aplicar") else "pendente"
+            initial_note = "Aplicado automaticamente pelo revisor de tipografia." if row.get("auto_aplicar") else ""
             st.session_state.correction_state[key] = {
-                "status": "pendente",
+                "status": initial_status,
                 "final_text": initial,
-                "observacao": "",
+                "observacao": initial_note,
             }
 
 
@@ -155,27 +215,220 @@ def _build_correction_report(rows: list[dict]) -> list[dict]:
     return report
 
 
+def _build_export_comments(report_rows: list[dict]) -> list[AgentComment]:
+    overrides: dict[int, dict] = {int(row["comment_idx"]): row for row in report_rows}
+    export_comments: list[AgentComment] = []
+
+    for idx, comment in enumerate(st.session_state.comments):
+        override = overrides.get(idx)
+        if override is None:
+            export_comments.append(comment)
+            continue
+
+        export_comments.append(
+            AgentComment(
+                agent=override["agente"],
+                category=override["categoria"],
+                paragraph_index=override["indice_trecho"],
+                message=override["comentario"],
+                issue_excerpt=override["trecho_com_problema"],
+                suggested_fix=override["como_deve_ficar"],
+                auto_apply=override.get("auto_aplicar", False),
+                format_spec=override.get("format_spec", ""),
+                review_status=override.get("status", ""),
+                approved_text=override.get("texto_final_aprovado", ""),
+                reviewer_note=override.get("observacao", ""),
+            )
+        )
+    return export_comments
+
+
+def _set_status_value(key: str, value: str) -> None:
+    st.session_state[key] = value
+
+
+def _select_comment_row(index: int, visible_indexes: list[int], option_labels: list[str]) -> None:
+    if not visible_indexes:
+        st.session_state.selected_comment_row = 0
+        return
+
+    safe_index = max(0, min(index, len(visible_indexes) - 1))
+    st.session_state.selected_comment_row = visible_indexes[safe_index]
+    st.session_state.fix_select = option_labels[safe_index]
+
+
+def _find_next_pending_index(
+    rows: list[dict],
+    current_index: int,
+    visible_indexes: list[int],
+) -> int:
+    pending_indexes = [
+        idx
+        for idx in visible_indexes
+        if st.session_state.correction_state.get(str(idx), {}).get("status") != "resolvido"
+    ]
+    for idx in pending_indexes:
+        if idx > current_index:
+            return idx
+    if pending_indexes:
+        return pending_indexes[0]
+
+    for idx in visible_indexes:
+        if idx > current_index:
+            return idx
+    return visible_indexes[-1] if visible_indexes else current_index
+
+
+def _apply_suggestion_and_advance(
+    rows: list[dict],
+    final_key: str,
+    final_value: str,
+    status_key: str,
+    current_index: int,
+    visible_indexes: list[int],
+    option_labels: list[str],
+) -> None:
+    st.session_state[final_key] = final_value
+    st.session_state[status_key] = "resolvido"
+    next_row_index = _find_next_pending_index(rows, current_index, visible_indexes)
+    next_visible_pos = visible_indexes.index(next_row_index) if next_row_index in visible_indexes else 0
+    _select_comment_row(next_visible_pos, visible_indexes, option_labels)
+
+
+def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
+    normalized_chars: list[str] = []
+    mapping: list[int] = []
+
+    for idx, char in enumerate(text or ""):
+        decomposed = unicodedata.normalize("NFD", char)
+        stripped = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
+        if not stripped:
+            continue
+
+        normalized = stripped.lower()
+        if normalized.isspace():
+            normalized_chars.append(" ")
+            mapping.append(idx)
+            continue
+
+        for part in normalized:
+            normalized_chars.append(part)
+            mapping.append(idx)
+
+    collapsed_chars: list[str] = []
+    collapsed_mapping: list[int] = []
+    prev_space = False
+    for char, idx in zip(normalized_chars, mapping):
+        is_space = char.isspace()
+        if is_space and prev_space:
+            continue
+        collapsed_chars.append(" " if is_space else char)
+        collapsed_mapping.append(idx)
+        prev_space = is_space
+
+    return "".join(collapsed_chars), collapsed_mapping
+
+
+def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
+    if not text or not target:
+        return None
+
+    direct = re.search(re.escape(target), text, flags=re.IGNORECASE)
+    if direct:
+        return direct.span()
+
+    normalized_text, text_mapping = _normalize_text_with_mapping(text)
+    normalized_target, _ = _normalize_text_with_mapping(target)
+    normalized_target = normalized_target.strip()
+    if not normalized_text or not normalized_target:
+        return None
+
+    start = normalized_text.find(normalized_target)
+    if start != -1:
+        end = start + len(normalized_target) - 1
+        return text_mapping[start], text_mapping[end] + 1
+
+    target_tokens = [token for token in normalized_target.split() if len(token) >= 3]
+    if not target_tokens:
+        return None
+
+    best_start = -1
+    best_score = 0
+    for token in target_tokens:
+        token_pos = normalized_text.find(token)
+        if token_pos == -1:
+            continue
+        score = sum(1 for part in target_tokens if part in normalized_text[token_pos : token_pos + len(normalized_target) + 80])
+        if score > best_score:
+            best_score = score
+            best_start = token_pos
+
+    if best_start == -1 or best_score == 0:
+        return None
+
+    end = min(best_start + len(normalized_target) + 40, len(text_mapping) - 1)
+    return text_mapping[best_start], text_mapping[end] + 1
+
+
+def _render_target_excerpt(paragraph: str, issue_excerpt: str) -> None:
+    text = paragraph or ""
+    target = (issue_excerpt or "").strip()
+
+    if not target:
+        st.text_area("Trecho-alvo", value=text, height=180, disabled=True)
+        return
+
+    span = _find_excerpt_span(text, target)
+    if not span:
+        st.text_area("Trecho-alvo", value=text, height=180, disabled=True)
+        return
+
+    start, end = span
+    before = html.escape(text[:start])
+    highlighted = html.escape(text[start:end])
+    after = html.escape(text[end:])
+
+    st.markdown("Trecho-alvo")
+    st.markdown(
+        (
+            "<div style='border: 1px solid rgba(49, 51, 63, 0.2); border-radius: 0.5rem; "
+            "padding: 0.75rem 1rem; background: rgb(249, 250, 251); "
+            "font-family: \"Source Code Pro\", monospace; white-space: pre-wrap; line-height: 1.6;'>"
+            f"{before}<mark style='background-color: #fff3a3; padding: 0.05rem 0.15rem;'>{highlighted}</mark>{after}"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
 def _run_review(
     question: str,
     agents: list[str],
-    on_progress: Callable[[str, int, int, int, int], None] | None = None,
+    on_progress: Callable[[str, int, int, int, int, str], None] | None = None,
 ) -> tuple[str, list[AgentComment], list[str]]:
     logs: list[str] = []
+    batch_statuses: dict[tuple[str, int], str] = {}
 
     def on_agent_done(agent: str, new_count: int, total: int) -> None:
         _ = (agent, new_count, total)
 
+    def on_agent_batch_status(agent: str, batch_idx: int, batch_total: int, status: str) -> None:
+        _ = batch_total
+        batch_statuses[(agent, batch_idx)] = status
+
     def on_agent_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int) -> None:
         label = AGENT_LABELS.get(agent, agent)
+        status = batch_statuses.get((agent, batch_idx), "")
+        suffix = f" | {status}" if status and status not in {"json direto", "lista em `comments`"} else ""
         line = (
             (
                 f"- `{label}` lote {batch_idx}/{batch_total}: "
-                f"+{new_count} comentário(s), total {total}"
+                f"+{new_count} comentário(s), total {total}{suffix}"
             )
         )
         logs.append(line)
         if on_progress is not None:
-            on_progress(agent, batch_idx, batch_total, new_count, total)
+            on_progress(agent, batch_idx, batch_total, new_count, total, status)
 
     kwargs = {
         "selected_agents": agents,
@@ -184,12 +437,15 @@ def _run_review(
     params = inspect.signature(run_conversation).parameters
     if "on_agent_progress" in params:
         kwargs["on_agent_progress"] = on_agent_progress
+    if "on_agent_batch_status" in params:
+        kwargs["on_agent_batch_status"] = on_agent_batch_status
 
     result = run_conversation(
         st.session_state.paragraphs,
         st.session_state.refs,
         st.session_state.sections,
         question,
+        profile_key=st.session_state.doc_profile,
         **kwargs,
     )
     return result.answer, result.comments, logs
@@ -197,8 +453,12 @@ def _run_review(
 
 uploaded = st.file_uploader("Ingestão do documento (.docx ou .pdf)", type=["docx", "pdf"])
 if uploaded is not None:
-    current_name = st.session_state.doc_path.name if st.session_state.doc_path else None
-    if current_name != uploaded.name:
+    file_bytes = uploaded.getvalue()
+    file_fingerprint = hashlib.sha256(file_bytes).hexdigest()
+    profile = detect_prompt_profile(uploaded.name)
+    st.session_state.doc_profile = profile.key
+
+    if st.session_state.doc_fingerprint != file_fingerprint:
         st.session_state.messages = []
         st.session_state.comments = []
         st.session_state.agent_result_cache = {}
@@ -206,75 +466,22 @@ if uploaded is not None:
         st.session_state.correction_state = {}
         st.session_state.comments_signature = ""
 
-    tmp_dir = Path(".tmp")
-    tmp_dir.mkdir(exist_ok=True)
-    doc_path = tmp_dir / uploaded.name
-    file_bytes = uploaded.getvalue()
-    doc_path.write_bytes(file_bytes)
+        tmp_dir = Path(".tmp")
+        tmp_dir.mkdir(exist_ok=True)
+        doc_path = tmp_dir / uploaded.name
+        doc_path.write_bytes(file_bytes)
 
-    loaded = load_document(doc_path)
-    st.session_state.doc_path = doc_path
-    st.session_state.doc_bytes = file_bytes
-    st.session_state.paragraphs = loaded.chunks
-    st.session_state.refs = loaded.refs
-    st.session_state.sections = loaded.sections
-    st.session_state.toc = loaded.toc
-    st.session_state.doc_kind = loaded.kind
+        loaded = load_document(doc_path)
+        st.session_state.doc_path = doc_path
+        st.session_state.doc_bytes = file_bytes
+        st.session_state.doc_fingerprint = file_fingerprint
+        st.session_state.paragraphs = loaded.chunks
+        st.session_state.refs = loaded.refs
+        st.session_state.sections = loaded.sections
+        st.session_state.toc = loaded.toc
+        st.session_state.doc_kind = loaded.kind
 
-control_w = 0.32 if st.session_state.control_collapsed else 0.85
-col_control, col_chat, col_fix = st.columns([control_w, 1.35, 1.1], gap="large")
-
-with col_control:
-    t1, t2 = st.columns([1, 1])
-    with t1:
-        st.subheader("Execução")
-    with t2:
-        icon = "»" if st.session_state.control_collapsed else "«"
-        if st.button(icon, key="toggle_control", help="Minimizar/expandir painel", width="stretch"):
-            st.session_state.control_collapsed = not st.session_state.control_collapsed
-            st.rerun()
-
-    if st.session_state.control_collapsed:
-        if st.button("🧠", key="run_all_icon", help="Rodar todos os agentes", width="stretch"):
-            st.session_state.pending_run = {
-                "question": "Faça uma revisão completa com todos os agentes e liste ajustes prioritários.",
-                "agents": AGENT_ORDER.copy(),
-                "source": "control:all",
-            }
-        icon_map = {
-            "metadados": "🏷️",
-            "sinopse_abstract": "📝",
-            "estrutura": "🧱",
-            "tabelas_figuras": "📊",
-            "referencias": "📚",
-            "conformidade_estilos": "🎨",
-            "gramatica_ortografia": "✍️",
-        }
-        for agent in AGENT_ORDER:
-            label = AGENT_LABELS.get(agent, agent)
-            if st.button(icon_map.get(agent, "⚙️"), key=f"icon_{agent}", help=f"Rodar: {label}", width="stretch"):
-                st.session_state.pending_run = {
-                    "question": f"Execute revisão focada em {label} e liste problemas com trecho e sugestão de correção.",
-                    "agents": [agent],
-                    "source": f"agent:{agent}",
-                }
-    else:
-        if st.button("Rodar todos os agentes", width="stretch"):
-            st.session_state.pending_run = {
-                "question": "Faça uma revisão completa com todos os agentes e liste ajustes prioritários.",
-                "agents": AGENT_ORDER.copy(),
-                "source": "control:all",
-            }
-
-        st.markdown("### Execução direta por agente")
-        for agent in AGENT_ORDER:
-            label = AGENT_LABELS.get(agent, agent)
-            if st.button(f"Rodar: {label}", key=f"run_{agent}", width="stretch"):
-                st.session_state.pending_run = {
-                    "question": f"Execute revisão focada em {label} e liste problemas com trecho e sugestão de correção.",
-                    "agents": [agent],
-                    "source": f"agent:{agent}",
-                }
+col_chat, col_fix = st.columns([1.7, 1.1], gap="large")
 
 with col_chat:
     st.subheader("Chat")
@@ -288,14 +495,15 @@ with col_chat:
         progress_box = st.empty()
         progress_lines: list[str] = []
 
-        def _push_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int) -> None:
+        def _push_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int, status: str) -> None:
             label = AGENT_LABELS.get(agent, agent)
             pct = int((batch_idx / max(batch_total, 1)) * 100)
+            suffix = f" | {status}" if status and status not in {"json direto", "lista em `comments`"} else ""
             progress_header.info(
-                f"Processando: {label} | lote {batch_idx}/{batch_total} | +{new_count} comentário(s), total {total}"
+                f"Processando: {label} | lote {batch_idx}/{batch_total} | +{new_count} comentário(s), total {total}{suffix}"
             )
             progress_bar.progress(pct, text=f"Progresso do documento: lote {batch_idx}/{batch_total}")
-            line = f"- `{label}` lote {batch_idx}/{batch_total}: +{new_count} comentário(s), total {total}"
+            line = f"- `{label}` lote {batch_idx}/{batch_total}: +{new_count} comentário(s), total {total}{suffix}"
             progress_lines.append(line)
             tail = progress_lines[-14:]
             progress_box.markdown("**Progresso da revisão:**\n" + "\n".join(tail))
@@ -329,14 +537,15 @@ with col_chat:
         progress_box = st.empty()
         progress_lines: list[str] = []
 
-        def _push_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int) -> None:
+        def _push_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int, status: str) -> None:
             label = AGENT_LABELS.get(agent, agent)
             pct = int((batch_idx / max(batch_total, 1)) * 100)
+            suffix = f" | {status}" if status and status not in {"json direto", "lista em `comments`"} else ""
             progress_header.info(
-                f"Processando: {label} | lote {batch_idx}/{batch_total} | +{new_count} comentário(s), total {total}"
+                f"Processando: {label} | lote {batch_idx}/{batch_total} | +{new_count} comentário(s), total {total}{suffix}"
             )
             progress_bar.progress(pct, text=f"Progresso do documento: lote {batch_idx}/{batch_total}")
-            line = f"- `{label}` lote {batch_idx}/{batch_total}: +{new_count} comentário(s), total {total}"
+            line = f"- `{label}` lote {batch_idx}/{batch_total}: +{new_count} comentário(s), total {total}{suffix}"
             progress_lines.append(line)
             tail = progress_lines[-14:]
             progress_box.markdown("**Progresso da revisão:**\n" + "\n".join(tail))
@@ -366,23 +575,14 @@ with col_chat:
     rows = _build_rows()
     if rows:
         _ensure_correction_state(rows)
+        report = _build_correction_report(rows)
         st.subheader("Comentários dos agentes")
         st.dataframe(rows, width="stretch")
 
         if st.session_state.doc_path and st.session_state.doc_kind == "docx":
             output_bytes = apply_comments_to_docx(
                 st.session_state.doc_path,
-                [
-                    AgentComment(
-                        agent=r["agente"],
-                        category=r["categoria"],
-                        paragraph_index=r["indice_trecho"],
-                        message=r["comentario"],
-                        issue_excerpt=r["trecho_com_problema"],
-                        suggested_fix=r["como_deve_ficar"],
-                    )
-                    for r in rows
-                ],
+                _build_export_comments(report),
             )
             st.download_button(
                 label="Baixar DOCX comentado",
@@ -391,13 +591,24 @@ with col_chat:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
 
-        report = _build_correction_report(rows)
         st.download_button(
             label="Baixar relatório de correções (JSON)",
             data=json.dumps(report, ensure_ascii=False, indent=2),
             file_name=f"{Path(st.session_state.doc_path).stem if st.session_state.doc_path else 'correcoes'}.relatorio.json",
             mime="application/json",
         )
+    elif st.session_state.comments:
+        if st.session_state.doc_path and st.session_state.doc_kind == "docx":
+            output_bytes = apply_comments_to_docx(
+                st.session_state.doc_path,
+                st.session_state.comments,
+            )
+            st.download_button(
+                label="Baixar DOCX com ajustes automáticos",
+                data=output_bytes,
+                file_name=f"{Path(st.session_state.doc_path).stem}_output.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
 
 with col_fix:
     st.subheader("Painel de Correção Assistida")
@@ -440,43 +651,103 @@ with col_fix:
         st.info("Execute uma revisão no chat ou no painel de controle para carregar itens.")
     else:
         _ensure_correction_state(rows)
+        status_counts = {
+            "pendente": sum(1 for v in st.session_state.correction_state.values() if v.get("status") == "pendente"),
+            "em_revisao": sum(1 for v in st.session_state.correction_state.values() if v.get("status") == "em_revisao"),
+            "resolvido": sum(1 for v in st.session_state.correction_state.values() if v.get("status") == "resolvido"),
+        }
+        st.caption(
+            "Status: "
+            f"{status_counts['pendente']} pendente(s) | "
+            f"{status_counts['em_revisao']} em revisão | "
+            f"{status_counts['resolvido']} resolvido(s)"
+        )
 
-        options = []
+        filter_a, filter_b, filter_c = st.columns([1.2, 1.2, 1])
+        with filter_a:
+            agent_filter = st.multiselect(
+                "Filtrar agentes",
+                options=sorted({AGENT_LABELS.get(row["agente"], row["agente"]) for row in rows}),
+                default=[],
+                key="fix_agent_filter",
+            )
+        with filter_b:
+            category_filter = st.multiselect(
+                "Filtrar categorias",
+                options=sorted({row["categoria"] for row in rows}),
+                default=[],
+                key="fix_category_filter",
+            )
+        with filter_c:
+            pending_only = st.checkbox("Só pendentes", key="fix_pending_only")
+
+        visible_indexes: list[int] = []
+        option_labels: list[str] = []
         for i, row in enumerate(rows):
-            snippet = row["comentario"][:65].replace("\n", " ")
-            options.append(f"{i+1}. {row['referencia']} | {row['categoria']} | {snippet}")
+            agent_label = AGENT_LABELS.get(row["agente"], row["agente"])
+            state = st.session_state.correction_state.get(str(i), {})
+            if agent_filter and agent_label not in agent_filter:
+                continue
+            if category_filter and row["categoria"] not in category_filter:
+                continue
+            if pending_only and state.get("status") == "resolvido":
+                continue
 
-        if st.session_state.selected_comment_row >= len(options):
-            st.session_state.selected_comment_row = 0
+            snippet = row["comentario"][:65].replace("\n", " ")
+            visible_indexes.append(i)
+            option_labels.append(f"{i+1}. {row['referencia']} | {row['categoria']} | {snippet}")
+
+        if not visible_indexes:
+            st.info("Nenhum item corresponde aos filtros atuais.")
+            st.stop()
+
+        if st.session_state.selected_comment_row not in visible_indexes:
+            st.session_state.selected_comment_row = visible_indexes[0]
+            st.session_state.fix_select = option_labels[0]
+
+        current_visible_pos = visible_indexes.index(st.session_state.selected_comment_row)
 
         nav_prev, nav_next, nav_info = st.columns([1, 1, 2])
         with nav_prev:
-            if st.button("Anterior", key="fix_prev", disabled=st.session_state.selected_comment_row <= 0):
-                st.session_state.selected_comment_row -= 1
+            st.button(
+                "Anterior",
+                key="fix_prev",
+                disabled=current_visible_pos <= 0,
+                on_click=_select_comment_row,
+                args=(current_visible_pos - 1, visible_indexes, option_labels),
+            )
         with nav_next:
-            if st.button("Próximo", key="fix_next", disabled=st.session_state.selected_comment_row >= len(options) - 1):
-                st.session_state.selected_comment_row += 1
+            st.button(
+                "Próximo",
+                key="fix_next",
+                disabled=current_visible_pos >= len(visible_indexes) - 1,
+                on_click=_select_comment_row,
+                args=(current_visible_pos + 1, visible_indexes, option_labels),
+            )
         with nav_info:
-            st.caption(f"Item {st.session_state.selected_comment_row + 1} de {len(options)}")
+            st.caption(f"Item {current_visible_pos + 1} de {len(visible_indexes)}")
 
         selected_option = st.selectbox(
             "Selecionar item:",
-            options,
-            index=st.session_state.selected_comment_row,
+            option_labels,
+            index=current_visible_pos,
             key="fix_select",
         )
-        st.session_state.selected_comment_row = options.index(selected_option)
+        st.session_state.selected_comment_row = visible_indexes[option_labels.index(selected_option)]
 
         idx = st.session_state.selected_comment_row
         row = rows[idx]
         state_key = str(idx)
         state = st.session_state.correction_state[state_key]
+        is_auto_apply = bool(row.get("auto_aplicar"))
 
         resolved = sum(1 for v in st.session_state.correction_state.values() if v.get("status") == "resolvido")
         st.progress(resolved / len(rows), text=f"{resolved}/{len(rows)} itens resolvidos")
 
         st.markdown(f"**Agente:** `{AGENT_LABELS.get(row['agente'], row['agente'])}` | **Categoria:** `{row['categoria']}`")
         st.markdown(f"**Referência:** {row['referencia']}")
+        if is_auto_apply:
+            st.caption("Este item será aplicado automaticamente no DOCX exportado.")
         st.info(row["comentario"])
 
         st.markdown("**Trecho com problema**")
@@ -496,20 +767,43 @@ with col_fix:
         if note_key not in st.session_state:
             st.session_state[note_key] = state.get("observacao", "")
 
-        st.text_area("Versão final (editável)", key=final_key, height=180)
-        st.selectbox("Status", ["pendente", "em_revisao", "resolvido"], key=status_key)
-        st.text_area("Observação do revisor", key=note_key, height=90)
+        st.text_area("Versão final (editável)", key=final_key, height=180, disabled=is_auto_apply)
+        st.selectbox("Status", ["pendente", "em_revisao", "resolvido"], key=status_key, disabled=is_auto_apply)
+        st.text_area("Observação do revisor", key=note_key, height=90, disabled=is_auto_apply)
 
         b1, b2, b3 = st.columns(3)
         with b1:
-            if st.button("Usar sugestão", key="fix_use"):
-                st.session_state[final_key] = row["como_deve_ficar"] or st.session_state[final_key]
+            st.button(
+                "Usar sugestão",
+                key="fix_use",
+                disabled=is_auto_apply,
+                on_click=_apply_suggestion_and_advance,
+                args=(
+                    rows,
+                    final_key,
+                    row["como_deve_ficar"] or st.session_state.get(final_key, ""),
+                    status_key,
+                    idx,
+                    visible_indexes,
+                    option_labels,
+                ),
+            )
         with b2:
-            if st.button("Marcar resolvido", key="fix_done"):
-                st.session_state[status_key] = "resolvido"
+            st.button(
+                "Marcar resolvido",
+                key="fix_done",
+                disabled=is_auto_apply,
+                on_click=_set_status_value,
+                args=(status_key, "resolvido"),
+            )
         with b3:
-            if st.button("Reabrir", key="fix_reopen"):
-                st.session_state[status_key] = "em_revisao"
+            st.button(
+                "Reabrir",
+                key="fix_reopen",
+                disabled=is_auto_apply,
+                on_click=_set_status_value,
+                args=(status_key, "em_revisao"),
+            )
 
         state["final_text"] = st.session_state.get(final_key, "")
         state["status"] = st.session_state.get(status_key, "pendente")
@@ -518,13 +812,20 @@ with col_fix:
         pidx = row["indice_trecho"]
         st.markdown("### Contexto do documento")
         if isinstance(pidx, int) and 0 <= pidx < len(st.session_state.paragraphs):
-            st.caption("Trecho-alvo")
-            st.code(st.session_state.paragraphs[pidx], language="text")
+            _render_target_excerpt(st.session_state.paragraphs[pidx], row["trecho_com_problema"])
             if pidx - 1 >= 0:
-                st.caption("Trecho anterior")
-                st.text(st.session_state.paragraphs[pidx - 1][:900])
+                st.text_area(
+                    "Trecho anterior",
+                    value=st.session_state.paragraphs[pidx - 1],
+                    height=180,
+                    disabled=True,
+                )
             if pidx + 1 < len(st.session_state.paragraphs):
-                st.caption("Trecho seguinte")
-                st.text(st.session_state.paragraphs[pidx + 1][:900])
+                st.text_area(
+                    "Trecho seguinte",
+                    value=st.session_state.paragraphs[pidx + 1],
+                    height=180,
+                    disabled=True,
+                )
         else:
             st.caption("Sem índice de trecho para contexto.")

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from .docx_utils import extract_paragraphs
+from .docx_utils import extract_paragraphs_with_metadata
 
 
 @dataclass(slots=True)
@@ -25,7 +25,7 @@ class LoadedDocument:
     toc: list[str]
 
 
-_HEADING_RE = re.compile(r"^(\d+(?:\.\d+)*)\s+[A-ZÀ-Ü].+")
+_HEADING_RE = re.compile(r"^(\d+(?:\.?\d+)*)\s+[A-ZÀ-Ü].+")
 
 
 def _is_heading(text: str) -> bool:
@@ -50,8 +50,13 @@ def _is_heading(text: str) -> bool:
     return False
 
 
-def _build_sections(chunks: list[str]) -> list[Section]:
-    headings = [(idx, text.strip()) for idx, text in enumerate(chunks) if _is_heading(text)]
+def _build_sections(chunks: list[str], refs: list[str] | None = None) -> list[Section]:
+    refs = refs or []
+    headings = []
+    for idx, text in enumerate(chunks):
+        ref = refs[idx] if idx < len(refs) else ""
+        if "tipo=heading" in ref or "tipo=reference_heading" in ref or _is_heading(text):
+            headings.append((idx, text.strip()))
     if not headings:
         return [Section(title="Documento", start_idx=0, end_idx=max(0, len(chunks) - 1))] if chunks else []
 
@@ -63,9 +68,10 @@ def _build_sections(chunks: list[str]) -> list[Section]:
 
 
 def _load_docx(path: Path) -> LoadedDocument:
-    chunks = extract_paragraphs(path)
-    refs = [f"parágrafo {idx + 1}" for idx in range(len(chunks))]
-    sections = _build_sections(chunks)
+    items = extract_paragraphs_with_metadata(path)
+    chunks = [item.text for item in items]
+    refs = [item.ref_label for item in items]
+    sections = _build_sections(chunks, refs)
     toc = [f"{s.title} [{s.start_idx}-{s.end_idx}]" for s in sections]
     return LoadedDocument(kind="docx", chunks=chunks, refs=refs, sections=sections, toc=toc)
 
@@ -97,7 +103,7 @@ def _load_pdf(path: Path) -> LoadedDocument:
                 chunks.append(chunk)
                 refs.append(f"página {page_idx}, bloco {block_idx}")
 
-    sections = _build_sections(chunks)
+    sections = _build_sections(chunks, refs)
     toc = [f"{s.title} [{s.start_idx}-{s.end_idx}]" for s in sections]
     return LoadedDocument(kind="pdf", chunks=chunks, refs=refs, sections=sections, toc=toc)
 
