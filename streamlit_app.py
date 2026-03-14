@@ -15,6 +15,7 @@ import streamlit as st
 from src.editorial_docx.docx_utils import apply_comments_to_docx
 from src.editorial_docx.document_loader import load_document
 from src.editorial_docx.graph_chat import run_conversation
+from src.editorial_docx.llm import get_llm_config
 from src.editorial_docx.models import AgentComment
 from src.editorial_docx.prompts import AGENT_ORDER, detect_prompt_profile
 
@@ -27,7 +28,6 @@ AGENT_LABELS = {
     "estrutura": "Estrutura",
     "tabelas_figuras": "Tabelas/Figuras",
     "referencias": "Referências",
-    "conformidade_estilos": "Conformidade de Estilos",
     "gramatica_ortografia": "Gramática/Ortografia",
     "tipografia": "Tipografia",
 }
@@ -36,23 +36,33 @@ project_root = Path(__file__).resolve().parent
 env_path = project_root / ".env"
 
 with st.sidebar:
-    st.markdown("### OpenAI")
+    llm_config = get_llm_config()
+    st.markdown("### LLM")
+    st.caption(
+        f"Provider: `{llm_config['provider']}` | Modelo: `{llm_config['model']}`"
+    )
+    if llm_config.get("base_url"):
+        st.caption(f"Base URL: `{llm_config['base_url']}`")
     if env_path.exists():
         st.caption("Arquivo .env detectado no repositório. Usando configuração local.")
     else:
-        key_source = "variável de ambiente" if os.getenv("OPENAI_API_KEY") else "não configurada"
+        key_env = "OPENAI_API_KEY" if llm_config["provider"] == "openai" else "LLM_API_KEY"
+        key_source = "variável de ambiente" if llm_config.get("api_key") else "não configurada"
         st.caption(f"Chave atual: {key_source}")
-        api_key_input = st.text_input(
-            "OPENAI_API_KEY",
-            type="password",
-            help="A chave fica somente nesta sessão e não é salva em disco.",
-        )
-        if st.button("Usar chave nesta sessão", use_container_width=True):
-            if api_key_input.strip():
-                os.environ["OPENAI_API_KEY"] = api_key_input.strip()
-                st.success("Chave carregada para esta sessão.")
-            else:
-                st.warning("Informe uma chave antes de confirmar.")
+        if llm_config["provider"] != "ollama":
+            api_key_input = st.text_input(
+                key_env,
+                type="password",
+                help="A chave fica somente nesta sessão e não é salva em disco.",
+            )
+            if st.button("Usar chave nesta sessão", use_container_width=True):
+                if api_key_input.strip():
+                    os.environ[key_env] = api_key_input.strip()
+                    st.success("Chave carregada para esta sessão.")
+                else:
+                    st.warning("Informe uma chave antes de confirmar.")
+        else:
+            st.caption("Provider Ollama configurado: chave não é obrigatória por padrão.")
 
     st.divider()
     st.markdown("### Execução")

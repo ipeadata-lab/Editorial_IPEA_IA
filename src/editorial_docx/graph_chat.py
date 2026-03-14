@@ -38,6 +38,18 @@ _ALLOWED_TYPOGRAPHY_KEYS = {
     "line_spacing",
     "left_indent_pt",
 }
+_ILLUSTRATION_LABEL_RE = re.compile(
+    r"^\s*(?:tabela|figura|quadro|imagem)\s+\d+\b|^\s*gr\S*fico\s+\d+\b",
+    re.IGNORECASE,
+)
+_STYLE_BY_BLOCK_TYPE = {
+    "heading": {"TITULO_1", "TITULO_2", "TITULO_3", "TÍTULO_1", "TÍTULO_2", "TÍTULO_3"},
+    "paragraph": {"TEXTO"},
+    "table_cell": {"TEXTO_TABELA"},
+    "reference_entry": {"TEXTO_REFERENCIA"},
+    "reference_heading": {"TITULO_1", "TÍTULO_1"},
+    "caption": {"TEXTO", "FONTE_TABELA_GRAFICO", "TEXTO_TABELA"},
+}
 
 
 def _sanitize_for_llm(text: str) -> str:
@@ -157,6 +169,74 @@ def _ref_block_type(ref: str) -> str:
     return match.group(1).lower() if match else ""
 
 
+def _ref_style_name(ref: str) -> str:
+    match = re.search(r"\bestilo=([^|]+)", ref or "", re.IGNORECASE)
+    return match.group(1).strip() if match else ""
+
+
+def _indexes_by_ref_type(refs: list[str], allowed_types: set[str]) -> list[int]:
+    return [idx for idx, ref in enumerate(refs) if _ref_block_type(ref) in allowed_types]
+
+
+def _style_name_looks_explicit(style_name: str) -> bool:
+    normalized = (style_name or "").strip().casefold()
+    if not normalized:
+        return False
+    generic = {"normal", "paragraph", "parágrafo", "paragrafo", "texto", "body text", "corpo de texto"}
+    return normalized not in generic
+
+
+def _is_relevant_typography_spec(spec: dict[str, str]) -> bool:
+    strong_keys = {"font", "size_pt", "bold", "italic", "align", "left_indent_pt"}
+    if any(key in spec for key in strong_keys):
+        return True
+    spacing_keys = [key for key in ("space_before_pt", "space_after_pt", "line_spacing") if key in spec]
+    return len(spacing_keys) == 3
+
+
+def _is_illustration_caption(text: str) -> bool:
+    return bool(_ILLUSTRATION_LABEL_RE.match(_normalized_text(text)))
+
+
+def _looks_like_all_caps_title(text: str) -> bool:
+    letters = [ch for ch in (text or "") if ch.isalpha()]
+    if not letters:
+        return False
+    upper_ratio = sum(1 for ch in letters if ch.isupper()) / len(letters)
+    return upper_ratio >= 0.8
+
+
+def _find_metadata_like_indexes(chunks: list[str], refs: list[str], limit: int = 18) -> list[int]:
+    metadata_rx = re.compile(
+        r"\b(doi|jel|palavras-chave|cidade|editora|edição|edição:|ano|autor(?:es)?|afilia|institui|produto editorial)\b",
+        re.IGNORECASE,
+    )
+    allowed_types = {"heading", "paragraph"}
+    picked: list[int] = []
+    for idx, chunk in enumerate(chunks[: min(limit, len(chunks))]):
+        if _ref_block_type(refs[idx]) not in allowed_types:
+            continue
+        if idx <= 12 or metadata_rx.search(chunk):
+            picked.append(idx)
+    return picked
+
+
+def _expand_neighbors(indexes: list[int], total: int, radius: int = 1) -> list[int]:
+    expanded: set[int] = set()
+    for idx in indexes:
+        for candidate in range(max(0, idx - radius), min(total, idx + radius + 1)):
+            expanded.add(candidate)
+    return sorted(expanded)
+
+
+def _has_neighbor_with_prefix(paragraph_index: int, refs: list[str], chunks: list[str], prefixes: tuple[str, ...], radius: int = 2) -> bool:
+    for candidate in range(max(0, paragraph_index - radius), min(len(chunks), paragraph_index + radius + 1)):
+        text = (chunks[candidate] or "").strip().casefold()
+        if any(text.startswith(prefix.casefold()) for prefix in prefixes):
+            return True
+    return False
+
+
 def _find_excerpt_index(excerpt: str, candidate_indexes: list[int], chunks: list[str]) -> int | None:
     needle = _normalized_text(excerpt)
     if not needle:
@@ -215,31 +295,80 @@ def _should_keep_comment(comment: AgentComment, agent: str, chunks: list[str], r
         ref = refs[comment.paragraph_index]
     block_type = _ref_block_type(ref)
 
-    if agent == "gramatica_ortografia" and block_type in {
-        "direct_quote",
-        "reference_entry",
-        "reference_heading",
-        "heading",
-        "caption",
-        "table_cell",
-        "list_item",
-    }:
-        return False
-
     if agent == "estrutura" and block_type in {
         "direct_quote",
         "reference_entry",
         "table_cell",
     }:
         return False
+    if agent == "estrutura" and block_type == "caption":
+        source_text = ""
+        if isinstance(comment.paragraph_index, int) and 0 <= comment.paragraph_index < len(chunks):
+            source_text = chunks[comment.paragraph_index]
+        issue_text = comment.issue_excerpt or source_text
+        if _is_illustration_caption(issue_text) or _is_illustration_caption(source_text):
+            structure_msg = _normalized_text(comment.message)
+            structure_fix = _normalized_text(comment.suggested_fix)
+            if any(token in structure_msg for token in {"seção", "secao", "subseção", "subsecao", "numerar a seção", "numerar a secao"}):
+                return False
+            if any(token in structure_fix for token in {"seção", "secao"}):
+                return False
+    if agent == "estrutura" and block_type not in {"heading", "caption"}:
+        structure_msg = _normalized_text(comment.message)
+        if any(token in structure_msg for token in {"não está numerada", "deveria ser numerada", "numerar a seção"}):
+            return False
+    if agent == "estrutura" and block_type == "caption":
+        structure_blob = _normalized_text(" ".join([comment.message or "", comment.suggested_fix or ""]))
+        if _is_illustration_caption(comment.issue_excerpt or "") and any(
+            token in structure_blob for token in {"secao", "seÃ§Ã£o", "seã§ã£o", "subsecao", "subseÃ§Ã£o", "subseã§ã£o"}
+        ):
+            return False
+    if agent == "estrutura" and block_type == "heading" and comment.issue_excerpt:
+        if not _matches_whole_paragraph(comment, chunks):
+            return False
+    if agent == "estrutura" and block_type != "heading":
+        structure_blob = _normalized_text(" ".join([comment.message or "", comment.suggested_fix or ""]))
+        title_tokens = {
+            "titulo",
+            "título",
+            "secao",
+            "seÃ§Ã£o",
+            "subsecao",
+            "subseÃ§Ã£o",
+            "numerada",
+            "numerar",
+        }
+        if comment.issue_excerpt and not _matches_whole_paragraph(comment, chunks):
+            if any(token in structure_blob for token in title_tokens):
+                return False
     if agent == "estrutura" and comment.auto_apply:
         if not _is_safe_structure_auto_apply(comment, chunks):
             return False
 
+    if agent == "metadados":
+        if block_type not in {"heading", "paragraph"}:
+            return False
+        if isinstance(comment.paragraph_index, int) and comment.paragraph_index >= 18:
+            return False
+        metadata_excerpt = _normalized_text(comment.issue_excerpt)
+        metadata_message = _normalized_text(comment.message)
+        if any(term in metadata_excerpt for term in {"não fornecido", "nao fornecido"}) and isinstance(comment.paragraph_index, int) and comment.paragraph_index > 12:
+            return False
+        if "placeholder" in metadata_message and "xxxxx" not in metadata_excerpt and "<td" not in metadata_excerpt:
+            return False
+
     if agent == "tabelas_figuras":
         issue_excerpt = _normalized_text(comment.issue_excerpt)
+        table_blob = _normalized_text(" ".join([comment.category or "", comment.message or "", comment.suggested_fix or ""]))
+        if block_type == "table_cell" and any(token in table_blob for token in {"subtitulo", "subtítulo", "fonte", "identificador", "legenda"}):
+            return False
+        if block_type != "caption" and any(token in table_blob for token in {"subtitulo", "subtítulo", "fonte"}):
+            return False
         if re.match(r"^(tabela|figura|quadro)\s+\d+", issue_excerpt):
             if "fonte" in _normalized_text(comment.message) or "fonte" in _normalized_text(comment.suggested_fix):
+                return False
+        if "fonte" in _normalized_text(comment.message) and isinstance(comment.paragraph_index, int):
+            if _has_neighbor_with_prefix(comment.paragraph_index, refs, chunks, ("Fonte:", "Elaboração:"), radius=2):
                 return False
         if comment.auto_apply and not _is_safe_text_normalization_auto_apply(comment, chunks):
             return False
@@ -252,6 +381,21 @@ def _should_keep_comment(comment: AgentComment, agent: str, chunks: list[str], r
             return False
         if any(key not in _ALLOWED_TYPOGRAPHY_KEYS for key in spec):
             return False
+        if not _is_relevant_typography_spec(spec):
+            return False
+        if comment.issue_excerpt and not _matches_whole_paragraph(comment, chunks):
+            return False
+        if block_type == "paragraph" and isinstance(comment.paragraph_index, int) and comment.paragraph_index >= 24:
+            return False
+        if block_type in {"reference_entry", "reference_heading"}:
+            return False
+        if block_type not in {"heading", "caption", "paragraph"}:
+            return False
+        tipografia_blob = _normalized_text(" ".join([comment.message or "", comment.suggested_fix or ""]))
+        if any(token in tipografia_blob for token in {"caixa alta", "caixa baixa", "capitaliza", "maiusc", "minusc"}):
+            return False
+        if "alterar para '" in (comment.suggested_fix or "").casefold() or 'alterar para "' in (comment.suggested_fix or "").casefold():
+            return False
         if any(token in _normalized_text(comment.suggested_fix) for token in {"reescrever", "substituir texto", "alterar conteúdo"}):
             return False
 
@@ -260,11 +404,39 @@ def _should_keep_comment(comment: AgentComment, agent: str, chunks: list[str], r
     if agent == "referencias" and comment.auto_apply:
         if not _is_safe_text_normalization_auto_apply(comment, chunks):
             return False
+    if agent == "referencias" and isinstance(comment.paragraph_index, int):
+        current = (chunks[comment.paragraph_index] or "").casefold()
+        message_blob = _normalized_text(" ".join([comment.category or "", comment.message or "", comment.suggested_fix or ""]))
+        if any(token in message_blob for token in {"adicionar o titulo", "adicionar a pagina", "adicionar a paginacao", "adicionar o ano", "ano de publicacao", "verificar e corrigir o ano"}):
+            return False
+        if "caixa baixa" in message_blob or "caixa alta" in message_blob:
+            return False
+        source_text = chunks[comment.paragraph_index] or ""
+        if "titulo" in message_blob and _looks_like_all_caps_title(source_text):
+            return False
+        if "ano" in _normalized_text(comment.category) or "ano" in _normalized_text(comment.message):
+            if re.search(r"\b(19|20)\d{2}\b", current):
+                if "alterar o ano" in _normalized_text(comment.suggested_fix):
+                    return False
+
+    if agent == "conformidade_estilos":
+        suggestion = (comment.suggested_fix or "").strip().upper()
+        if not _matches_whole_paragraph(comment, chunks):
+            return False
+        allowed = _STYLE_BY_BLOCK_TYPE.get(block_type)
+        if allowed and suggestion and suggestion not in allowed:
+            return False
+        if block_type == "paragraph" and suggestion in {"TITULO_1", "TÍTULO_1", "TITULO_2", "TÍTULO_2", "TITULO_3", "TÍTULO_3"}:
+            return False
 
     if isinstance(comment.paragraph_index, int) and 0 <= comment.paragraph_index < len(chunks):
         if comment.issue_excerpt:
             excerpt_ok = _find_excerpt_index(comment.issue_excerpt, [comment.paragraph_index], chunks)
             if excerpt_ok is None and agent in {"gramatica_ortografia", "referencias"}:
+                return False
+        if agent == "gramatica_ortografia":
+            msg = _normalized_text(comment.message)
+            if not any(term in msg for term in {"ortografia", "acentua", "pontua", "concord", "crase", "regência", "regencia"}):
                 return False
 
     return True
@@ -298,6 +470,16 @@ def _is_safe_text_normalization_auto_apply(comment: AgentComment, chunks: list[s
     if _normalized_text(issue) != _normalized_text(source):
         return False
     return _tokenize_structure_text(issue) == _tokenize_structure_text(suggestion) == _tokenize_structure_text(source)
+
+
+def _matches_whole_paragraph(comment: AgentComment, chunks: list[str]) -> bool:
+    if not isinstance(comment.paragraph_index, int) or not (0 <= comment.paragraph_index < len(chunks)):
+        return False
+    issue = (comment.issue_excerpt or "").strip()
+    source = (chunks[comment.paragraph_index] or "").strip()
+    if not issue or not source:
+        return False
+    return _normalized_text(issue) == _normalized_text(source)
 
 
 def _normalize_batch_comments(
@@ -460,7 +642,7 @@ def _find_content_indexes(chunks: list[str], pattern: str) -> list[int]:
     return out
 
 
-def _agent_scope_indexes(agent: str, chunks: list[str], sections: list[Section]) -> list[int]:
+def _agent_scope_indexes(agent: str, chunks: list[str], refs: list[str], sections: list[Section]) -> list[int]:
     total = len(chunks)
     if total == 0:
         return []
@@ -471,11 +653,10 @@ def _agent_scope_indexes(agent: str, chunks: list[str], sections: list[Section])
     tail_30 = list(range(tail_30_start, total))
 
     if agent == "metadados":
-        sec = _expand_section_ranges(
-            sections,
-            ("metadad", "ficha catalogr", "capa", "titulo", "autoria"),
-        )
-        return sec or head_20
+        sec = _expand_section_ranges(sections, ("metadad", "ficha catalogr", "capa", "titulo", "autoria"))
+        head_candidates = _find_metadata_like_indexes(chunks, refs, limit=18)
+        picked = sorted(dict.fromkeys([*sec, *head_candidates]))
+        return picked or head_candidates or list(range(min(12, total)))
 
     if agent == "sinopse_abstract":
         sec = _expand_section_ranges(
@@ -486,27 +667,39 @@ def _agent_scope_indexes(agent: str, chunks: list[str], sections: list[Section])
         picked = sorted(dict.fromkeys([*sec, *content]))
         return picked or head_20
 
+    if agent == "estrutura":
+        typed = _indexes_by_ref_type(refs, {"heading", "reference_heading"})
+        section_starts = sorted(dict.fromkeys(sec.start_idx for sec in sections))
+        picked = sorted(dict.fromkeys([*typed, *section_starts]))
+        return picked or typed or head_20
+
     if agent == "tabelas_figuras":
-        sec = _expand_section_ranges(
-            sections,
-            ("tabela", "figura", "quadro", "grafico", "gráfico", "anexo"),
-        )
+        sec = _expand_section_ranges(sections, ("tabela", "figura", "quadro", "grafico", "gráfico", "anexo"))
         content = _find_content_indexes(chunks, r"\b(tabela|figura|quadro|gr[aá]fico|imagem)\b")
-        picked = sorted(dict.fromkeys([*sec, *content]))
-        return picked or all_indexes
+        typed = _indexes_by_ref_type(refs, {"caption", "table_cell"})
+        picked = _expand_neighbors(sorted(dict.fromkeys([*sec, *content, *typed])), total=total, radius=2)
+        return picked or typed or all_indexes
 
     if agent == "referencias":
-        sec = _expand_section_ranges(
-            sections,
-            ("refer", "bibliograf", "references", "bibliography"),
-        )
+        sec = _expand_section_ranges(sections, ("refer", "bibliograf", "references", "bibliography"))
         if sec:
             return sec
         content = _find_content_indexes(chunks, r"\b(doi|http://|https://|et al\.|v\.\s*\d+|n\.\s*\d+)\b")
-        picked = sorted(dict.fromkeys(content))
+        typed = _indexes_by_ref_type(refs, {"reference_entry", "reference_heading"})
+        picked = sorted(dict.fromkeys([*content, *typed]))
         if not picked:
             return tail_30
         return picked
+
+    if agent == "tipografia":
+        typed = _indexes_by_ref_type(refs, {"heading", "caption", "reference_entry", "reference_heading"})
+        styled = [
+            idx
+            for idx, ref in enumerate(refs)
+            if _ref_block_type(ref) == "paragraph" and _style_name_looks_explicit(_ref_style_name(ref)) and idx < 24
+        ]
+        picked = sorted(dict.fromkeys([*typed, *styled]))
+        return picked or typed or head_20
 
     if agent == "gramatica_ortografia":
         return all_indexes
@@ -534,7 +727,7 @@ def run_conversation(
     previous_count = 0
 
     for agent in agent_order:
-        scoped_indexes = _agent_scope_indexes(agent, paragraphs, sections)
+        scoped_indexes = _agent_scope_indexes(agent, paragraphs, refs, sections)
         batches = _build_batches(paragraphs, refs, scoped_indexes)
         if not batches:
             continue

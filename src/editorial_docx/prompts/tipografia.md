@@ -8,6 +8,11 @@ Responsabilidade:
 
 Restrições:
 - nunca alterar, reescrever, resumir ou completar conteúdo textual;
+- só comentar o bloco inteiro; nunca apontar expressão interna do parágrafo;
+- priorizar divergências relevantes de fonte, tamanho, peso, alinhamento, recuo e entrelinha;
+- evitar microajustes isolados de espaçamento sem impacto claro;
+- nunca tratar capitalização editorial como ajuste tipográfico;
+- nunca propor caixa alta, caixa baixa, mudança de título, reescrita da legenda ou reformulação textual;
 - nunca mexer em referências, citações, tabelas ou legendas se a mudança exigiria interpretação editorial;
 - só emitir comentário quando houver evidência suficiente do padrão correto;
 - todos os comentários devem ter auto_apply=true;
@@ -25,8 +30,20 @@ Responsabilidade:
 - emitir apenas ajustes que possam ser aplicados automaticamente com segurança no DOCX.
 
 Regras:
-- suggested_fix deve descrever a correção em linguagem curta e objetiva, sem reescrever o texto;
+- suggested_fix deve descrever apenas a formatação a aplicar, sem reproduzir ou reescrever o conteúdo do bloco;
 - format_spec deve trazer a instrução estruturada para autoaplicação;
-- se houver dúvida entre dois estilos possíveis, responder [];
-- nunca sugerir mudança de conteúdo, capitalização editorial, legenda, título ou referência por inferência.
+- comentar somente divergência tipográfica relevante; não emitir ajuste mínimo irrelevante ou especulativo;
+- se houver dúvida entre dois estilos possíveis, responder [].
+
+Restrições:
+- nunca alterar, reescrever, resumir ou completar conteúdo textual;
+- só comentar o bloco inteiro; nunca apontar expressão interna do parágrafo;
+- priorizar divergências relevantes de fonte, tamanho, peso, alinhamento, recuo e entrelinha;
+- evitar microajustes isolados de espaçamento sem impacto claro;
+- nunca tratar capitalização editorial como ajuste tipográfico;
+- nunca propor caixa alta, caixa baixa, mudança de título, reescrita da legenda ou reformulação textual;
+- nunca sugerir mudança de conteúdo, capitalização editorial, legenda, título ou referência por inferência;
+- nunca mexer em referências, citações, tabelas ou legendas se a mudança exigiria interpretação editorial;
+- todos os comentários devem ter auto_apply=true;
+- se não houver correção formal segura, responder [].
 """

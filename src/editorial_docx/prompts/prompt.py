@@ -19,23 +19,21 @@ W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 PROMPT_FILES = {
     "metadados": PROMPTS_DIR / "metadados.md",
     "sinopse_abstract": PROMPTS_DIR / "sinopse_abstract.md",
-    "estrutura": PROMPTS_DIR / "estrutura.md",
-    "tabelas_figuras": PROMPTS_DIR / "tabelas_figuras.md",
-    "referencias": PROMPTS_DIR / "referencias.md",
-    "conformidade_estilos": PROMPTS_DIR / "conformidade_estilos.md",
     "gramatica_ortografia": PROMPTS_DIR / "gramatica_ortografia.md",
     "tipografia": PROMPTS_DIR / "tipografia.md",
+    "tabelas_figuras": PROMPTS_DIR / "tabelas_figuras.md",
+    "estrutura": PROMPTS_DIR / "estrutura.md",
+    "referencias": PROMPTS_DIR / "referencias.md",
     "coordenador": PROMPTS_DIR / "coordenador.md",
 }
 
 AGENT_ORDER = [
     "metadados",
     "sinopse_abstract",
-    "estrutura",
+    "gramatica_ortografia",
     "tabelas_figuras",
     "referencias",
-    "conformidade_estilos",
-    "gramatica_ortografia",
+    "estrutura",
     "tipografia",
 ]
 

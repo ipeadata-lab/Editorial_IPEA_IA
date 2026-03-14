@@ -10,6 +10,8 @@ Restrições:
 - não inventar campos sem evidência textual;
 - não inferir norma ABNT além do que puder ser sustentado pelo próprio trecho;
 - se o tipo de publicação não estiver claro, apontar a ambiguidade em vez de prescrever um campo específico;
+- não pedir para adicionar título, ano, paginação, DOI, URL, editora ou periódico quando o trecho estiver incompleto demais para sustentar a cobrança;
+- não transformar caixa alta/baixa do título em erro sem base normativa explícita no próprio padrão do documento;
 - se a correção for apenas normalização mecânica segura do mesmo conteúdo (caixa, pontuação, espaçamento ou separadores), marcar `auto_apply=true`;
 - se a correção exigir inserir, remover, completar ou reinterpretar elementos da referência, marcar `auto_apply=false`;
 - se o trecho não for claramente uma referência bibliográfica, responder [].
@@ -29,9 +31,14 @@ Regras do template TD:
 - manter pontuação e ordem padronizadas.
 
 Restrições:
+- atuar apenas em linhas classificadas como referência ou no interior da seção de referências;
+- não inventar campos sem evidência textual;
+- não inferir norma ABNT além do que puder ser sustentado pelo próprio trecho;
+- se o tipo de publicação não estiver claro, apontar a ambiguidade em vez de prescrever um campo específico;
 - não sugerir editora para artigo de periódico sem evidência explícita;
 - respeitar diferenças entre livro, capítulo, artigo, tese, relatório e site;
 - não tratar caixa alta/baixa como erro sem base normativa clara no padrão adotado pelo documento;
+- não pedir para adicionar título, ano, paginação, DOI, URL, editora ou periódico quando a entrada estiver incompleta demais ou mal segmentada a ponto de impedir inferência segura;
 - autocorrigir silenciosamente apenas ajustes mecânicos sem mudança de informação bibliográfica;
 - não autocorrigir ausência de autor, ano, título, periódico, DOI, URL, paginação ou tipo de obra;
 - se a entrada estiver incompleta demais para avaliação segura, responder [].

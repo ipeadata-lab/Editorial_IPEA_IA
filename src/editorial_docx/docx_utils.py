@@ -2,6 +2,7 @@
 
 import re
 import zipfile
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -102,6 +103,62 @@ def _paragraph_text(paragraph: etree._Element) -> str:
     return "".join(text_parts)
 
 
+def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
+    normalized_chars: list[str] = []
+    mapping: list[int] = []
+
+    for idx, char in enumerate(text or ""):
+        decomposed = unicodedata.normalize("NFD", char)
+        stripped = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
+        if not stripped:
+            continue
+
+        lowered = stripped.lower()
+        if lowered.isspace():
+            normalized_chars.append(" ")
+            mapping.append(idx)
+            continue
+
+        for part in lowered:
+            normalized_chars.append(part)
+            mapping.append(idx)
+
+    collapsed_chars: list[str] = []
+    collapsed_mapping: list[int] = []
+    prev_space = False
+    for char, idx in zip(normalized_chars, mapping):
+        is_space = char.isspace()
+        if is_space and prev_space:
+            continue
+        collapsed_chars.append(" " if is_space else char)
+        collapsed_mapping.append(idx)
+        prev_space = is_space
+
+    return "".join(collapsed_chars), collapsed_mapping
+
+
+def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
+    if not text or not target:
+        return None
+
+    direct = re.search(re.escape(target), text, flags=re.IGNORECASE)
+    if direct:
+        return direct.span()
+
+    normalized_text, text_mapping = _normalize_text_with_mapping(text)
+    normalized_target, _ = _normalize_text_with_mapping(target)
+    normalized_target = normalized_target.strip()
+    if not normalized_text or not normalized_target:
+        return None
+
+    start = normalized_text.find(normalized_target)
+    if start != -1:
+        end = start + len(normalized_target) - 1
+        return text_mapping[start], text_mapping[end] + 1
+
+    return None
+
+
 def _load_style_map(parts: dict[str, bytes]) -> dict[str, str]:
     raw = parts.get("word/styles.xml")
     if raw is None:
@@ -144,11 +201,29 @@ _REFERENCE_ENTRY_RE = re.compile(
 )
 
 
-def _looks_like_heading(text: str) -> bool:
+def _looks_like_heading(
+    text: str,
+    style_name: str = "",
+    position_ratio: float = 1.0,
+    previous_text: str = "",
+    next_text: str = "",
+) -> bool:
     t = (text or "").strip()
-    if not t or len(t) > 180:
+    normalized_style = (style_name or "").strip().lower()
+    if not t or len(t) > 140:
         return False
-    if re.match(r"^\d+(?:\.\d+)*\s+\S+", t):
+
+    style_heading = any(token in normalized_style for token in ("heading", "titulo", "título"))
+    numbered_heading = bool(re.match(r"^\d+(?:\.\d+)*[.)]?\s+\S+", t))
+    explicit_heading = t.upper() in {"SINOPSE", "ABSTRACT", "REFERÊNCIAS", "INTRODUÇÃO", "APÊNDICE", "ANEXO"}
+    short_line = len(t) <= 90
+    next_is_body = len((next_text or "").strip()) >= 80
+    previous_looks_title = len((previous_text or "").strip()) <= 120
+    early_document = position_ratio <= 0.20
+
+    if style_heading and (short_line or numbered_heading or explicit_heading):
+        return True
+    if numbered_heading and (short_line or next_is_body):
         return True
 
     words = t.split()
@@ -156,12 +231,23 @@ def _looks_like_heading(text: str) -> bool:
         letters = [ch for ch in t if ch.isalpha()]
         if letters:
             upper_ratio = sum(1 for ch in letters if ch.isupper()) / len(letters)
-            if upper_ratio >= 0.75:
+            if upper_ratio >= 0.85 and (next_is_body or early_document or previous_looks_title):
                 return True
+
+    if explicit_heading:
+        return True
     return False
 
 
-def _classify_paragraph(paragraph: etree._Element, text: str, style_name: str) -> str:
+def _classify_paragraph(
+    paragraph: etree._Element,
+    text: str,
+    style_name: str,
+    visible_index: int = 0,
+    total_visible: int = 1,
+    previous_text: str = "",
+    next_text: str = "",
+) -> str:
     normalized_style = (style_name or "").strip().lower()
     normalized_text = (text or "").strip()
     normalized_text_lower = normalized_text.lower()
@@ -174,14 +260,20 @@ def _classify_paragraph(paragraph: etree._Element, text: str, style_name: str) -
         "heading" in normalized_style
         or "titulo" in normalized_style
         or "título" in normalized_style
-        or _looks_like_heading(normalized_text)
+        or _looks_like_heading(
+            normalized_text,
+            style_name=style_name,
+            position_ratio=(visible_index / max(total_visible, 1)),
+            previous_text=previous_text,
+            next_text=next_text,
+        )
     ):
         if "refer" in normalized_text_lower:
             return "reference_heading"
         return "heading"
     if "quote" in normalized_style or "citacao" in normalized_style or "citação" in normalized_style:
         return "direct_quote"
-    if _paragraph_has_numbering(paragraph) or re.match(r"^\s*([•\\-–—]|\(?[a-z0-9]+\))\s+", normalized_text, re.IGNORECASE):
+    if _paragraph_has_numbering(paragraph) or re.match(r"^\s*(?:[•\-–—]|[a-z0-9]+[.)])\s+", normalized_text, re.IGNORECASE):
         return "list_item"
     if _REFERENCE_ENTRY_RE.search(normalized_text):
         return "reference_entry"
@@ -199,15 +291,23 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
     paragraphs = document_root.findall(".//w:p", namespaces=NS)
 
     items: list[ExtractedParagraph] = []
-    visible_index = 0
-    for paragraph in paragraphs:
-        text = _paragraph_text(paragraph).strip()
-        if not text:
-            continue
+    visible_paragraphs = [(paragraph, _paragraph_text(paragraph).strip()) for paragraph in paragraphs]
+    visible_paragraphs = [(paragraph, text) for paragraph, text in visible_paragraphs if text]
+    total_visible = len(visible_paragraphs)
 
-        visible_index += 1
+    for visible_index, (paragraph, text) in enumerate(visible_paragraphs, start=1):
         style_name = _paragraph_style_name(paragraph, style_map)
-        block_type = _classify_paragraph(paragraph, text, style_name)
+        previous_text = visible_paragraphs[visible_index - 2][1] if visible_index - 2 >= 0 else ""
+        next_text = visible_paragraphs[visible_index][1] if visible_index < total_visible else ""
+        block_type = _classify_paragraph(
+            paragraph,
+            text,
+            style_name,
+            visible_index=visible_index,
+            total_visible=total_visible,
+            previous_text=previous_text,
+            next_text=next_text,
+        )
         ref_bits = [f"parágrafo {visible_index}", f"tipo={block_type}"]
         if style_name:
             ref_bits.append(f"estilo={style_name}")
@@ -222,7 +322,62 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
     return items
 
 
-def _attach_comment(paragraph: etree._Element, comment_id: int) -> None:
+def _clone_run_with_text(run: etree._Element, text: str) -> etree._Element:
+    cloned_run = etree.Element(_qname(W_NS, "r"))
+    rpr = run.find("w:rPr", namespaces=NS)
+    if rpr is not None:
+        cloned_run.append(etree.fromstring(etree.tostring(rpr)))
+    text_node = etree.SubElement(cloned_run, _qname(W_NS, "t"))
+    if text.startswith(" ") or text.endswith(" ") or "  " in text:
+        text_node.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    text_node.text = text
+    return cloned_run
+
+
+def _run_text(run: etree._Element) -> str:
+    return "".join(node.text or "" for node in run.findall(".//w:t", namespaces=NS))
+
+
+def _can_split_run(run: etree._Element) -> bool:
+    allowed = {_qname(W_NS, "rPr"), _qname(W_NS, "t")}
+    return all(child.tag in allowed for child in run)
+
+
+def _split_run_at_offset(run: etree._Element, offset: int) -> tuple[etree._Element, etree._Element] | None:
+    text = _run_text(run)
+    if not text or offset <= 0 or offset >= len(text) or not _can_split_run(run):
+        return None
+
+    parent = run.getparent()
+    if parent is None:
+        return None
+
+    left_run = _clone_run_with_text(run, text[:offset])
+    right_run = _clone_run_with_text(run, text[offset:])
+    run.addprevious(left_run)
+    left_run.addnext(right_run)
+    parent.remove(run)
+    return left_run, right_run
+
+
+def _apply_yellow_highlight(run: etree._Element) -> None:
+    rpr = run.find("w:rPr", namespaces=NS)
+    if rpr is None:
+        rpr = etree.Element(_qname(W_NS, "rPr"))
+        run.insert(0, rpr)
+    highlight = rpr.find("w:highlight", namespaces=NS)
+    if highlight is None:
+        highlight = etree.SubElement(rpr, _qname(W_NS, "highlight"))
+    highlight.set(_qname(W_NS, "val"), "yellow")
+
+
+def _attach_comment(paragraph: etree._Element, comment_id: int, issue_excerpt: str | None = None) -> None:
+    excerpt_span = _find_excerpt_span(_paragraph_text(paragraph), issue_excerpt or "")
+    if excerpt_span:
+        anchored = _attach_comment_to_span(paragraph, comment_id, excerpt_span)
+        if anchored:
+            return
+
     children = list(paragraph)
     start = etree.Element(_qname(W_NS, "commentRangeStart"))
     start.set(_qname(W_NS, "id"), str(comment_id))
@@ -248,6 +403,85 @@ def _attach_comment(paragraph: etree._Element, comment_id: int) -> None:
         paragraph.append(start)
         paragraph.append(end)
         paragraph.append(reference_run)
+
+
+def _attach_comment_to_span(paragraph: etree._Element, comment_id: int, span: tuple[int, int]) -> bool:
+    start_offset, end_offset = span
+    if start_offset < 0 or end_offset <= start_offset:
+        return False
+
+    runs = [run for run in paragraph.findall("w:r", namespaces=NS) if _run_text(run)]
+    if not runs:
+        return False
+
+    positions: list[tuple[etree._Element, int, int]] = []
+    cursor = 0
+    for run in runs:
+        text = _run_text(run)
+        run_start = cursor
+        run_end = cursor + len(text)
+        positions.append((run, run_start, run_end))
+        cursor = run_end
+
+    start_entry = next((item for item in positions if item[1] <= start_offset < item[2]), None)
+    end_entry = next((item for item in positions if item[1] < end_offset <= item[2]), None)
+    if start_entry is None or end_entry is None:
+        return False
+
+    start_run, start_run_start, _ = start_entry
+    end_run, end_run_start, end_run_end = end_entry
+
+    if start_run is end_run:
+        split_end = _split_run_at_offset(end_run, end_offset - end_run_start)
+        if split_end is None and end_offset != end_run_end:
+            return False
+        target_run = split_end[0] if split_end is not None else end_run
+        split_start = _split_run_at_offset(target_run, start_offset - start_run_start)
+        if split_start is None and start_offset != start_run_start:
+            return False
+        first_selected = split_start[1] if split_start is not None else target_run
+        last_selected = first_selected
+    else:
+        split_end = _split_run_at_offset(end_run, end_offset - end_run_start)
+        if split_end is None and end_offset != end_run_end:
+            return False
+        last_selected = split_end[0] if split_end is not None else end_run
+
+        split_start = _split_run_at_offset(start_run, start_offset - start_run_start)
+        if split_start is None and start_offset != start_run_start:
+            return False
+        first_selected = split_start[1] if split_start is not None else start_run
+
+    selected_runs: list[etree._Element] = []
+    collecting = False
+    for child in paragraph:
+        if child is first_selected:
+            collecting = True
+        if collecting and child.tag == _qname(W_NS, "r"):
+            selected_runs.append(child)
+        if child is last_selected:
+            break
+
+    if not selected_runs:
+        return False
+
+    start = etree.Element(_qname(W_NS, "commentRangeStart"))
+    start.set(_qname(W_NS, "id"), str(comment_id))
+    end = etree.Element(_qname(W_NS, "commentRangeEnd"))
+    end.set(_qname(W_NS, "id"), str(comment_id))
+    reference_run = etree.Element(_qname(W_NS, "r"))
+    rpr = etree.SubElement(reference_run, _qname(W_NS, "rPr"))
+    rstyle = etree.SubElement(rpr, _qname(W_NS, "rStyle"))
+    rstyle.set(_qname(W_NS, "val"), "CommentReference")
+    cref = etree.SubElement(reference_run, _qname(W_NS, "commentReference"))
+    cref.set(_qname(W_NS, "id"), str(comment_id))
+
+    selected_runs[0].addprevious(start)
+    selected_runs[-1].addnext(end)
+    end.addnext(reference_run)
+    for run in selected_runs:
+        _apply_yellow_highlight(run)
+    return True
 
 
 def _append_comment_paragraph(comment: etree._Element, text: str) -> None:
@@ -520,6 +754,47 @@ def _build_comment_lines_for_item(item: AgentComment, ordinal: int) -> list[str]
     return lines
 
 
+def _spans_overlap(left: tuple[int, int] | None, right: tuple[int, int] | None) -> bool:
+    if left is None or right is None:
+        return False
+    return not (left[1] <= right[0] or right[1] <= left[0])
+
+
+def _group_comments_for_paragraph(paragraph_text: str, items: list[AgentComment]) -> list[list[AgentComment]]:
+    groups: list[dict[str, object]] = []
+
+    for item in items:
+        excerpt = (item.issue_excerpt or "").strip()
+        span = _find_excerpt_span(paragraph_text, excerpt) if excerpt else None
+        normalized_excerpt = _normalized_text(excerpt)
+
+        if span is None:
+            if groups:
+                groups[0]["items"].append(item)  # type: ignore[index]
+            else:
+                groups.append({"span": None, "excerpt": normalized_excerpt, "items": [item]})
+            continue
+
+        matched_group: dict[str, object] | None = None
+        for group in groups:
+            group_span = group["span"]  # type: ignore[index]
+            group_excerpt = group["excerpt"]  # type: ignore[index]
+            if _spans_overlap(span, group_span if isinstance(group_span, tuple) else None):
+                matched_group = group
+                break
+            if normalized_excerpt and normalized_excerpt == group_excerpt:
+                matched_group = group
+                break
+
+        if matched_group is None:
+            groups.append({"span": span, "excerpt": normalized_excerpt, "items": [item]})
+        else:
+            matched_group["items"].append(item)  # type: ignore[index]
+
+    groups.sort(key=lambda group: (group["span"][0] if isinstance(group["span"], tuple) else -1))  # type: ignore[index]
+    return [group["items"] for group in groups]  # type: ignore[index]
+
+
 def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> bytes:
     with zipfile.ZipFile(input_path, "r") as zin:
         parts = {name: zin.read(name) for name in zin.namelist()}
@@ -535,9 +810,10 @@ def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> by
     paragraphs = document_root.findall(".//w:p", namespaces=NS)
     non_empty_indexes = [i for i, p in enumerate(paragraphs) if _paragraph_text(p).strip()]
     _apply_auto_formatting(paragraphs, non_empty_indexes, comments)
+    visible_comments = [item for item in comments if not item.auto_apply]
 
     grouped_comments: dict[int, list[AgentComment]] = {}
-    for item in comments:
+    for item in visible_comments:
         paragraph_index = _resolve_docx_paragraph_index(item, non_empty_indexes)
         if paragraph_index is None or paragraph_index < 0 or paragraph_index >= len(paragraphs):
             continue
@@ -545,16 +821,19 @@ def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> by
 
     comment_id = _next_comment_id(comments_root)
     for paragraph_index in sorted(grouped_comments):
-        items = grouped_comments[paragraph_index]
-        comment_lines = ["Achados consolidados neste trecho:"]
-        for ordinal, item in enumerate(items, start=1):
-            comment_lines.extend(_build_comment_lines_for_item(item, ordinal))
-        agents = ", ".join(sorted({item.agent for item in items}))
-        author = f"Revisão: {agents}"[:255]
+        paragraph_text = _paragraph_text(paragraphs[paragraph_index])
+        comment_groups = _group_comments_for_paragraph(paragraph_text, grouped_comments[paragraph_index])
+        for items in comment_groups:
+            comment_lines = ["Achados consolidados neste trecho:"]
+            for ordinal, item in enumerate(items, start=1):
+                comment_lines.extend(_build_comment_lines_for_item(item, ordinal))
+            agents = ", ".join(sorted({item.agent for item in items}))
+            author = f"Revisão: {agents}"[:255]
+            anchor_excerpt = next((item.issue_excerpt for item in items if (item.issue_excerpt or "").strip()), "")
 
-        _append_comment(comments_root, comment_id, author=author, paragraphs=comment_lines)
-        _attach_comment(paragraphs[paragraph_index], comment_id)
-        comment_id += 1
+            _append_comment(comments_root, comment_id, author=author, paragraphs=comment_lines)
+            _attach_comment(paragraphs[paragraph_index], comment_id, issue_excerpt=anchor_excerpt)
+            comment_id += 1
 
     parts["word/document.xml"] = _serialize_xml(document_root)
     parts["[Content_Types].xml"] = _serialize_xml(content_types_root)
