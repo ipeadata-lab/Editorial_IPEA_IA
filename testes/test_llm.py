@@ -47,11 +47,10 @@ def test_get_llm_config_uses_openai_compatible_settings(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
     monkeypatch.setenv("LLM_BASE_URL", "http://interna/v1")
     monkeypatch.setenv("LLM_MODEL", "modelo-interno")
-    monkeypatch.setenv("LLM_API_KEY", "local")
 
     config = get_llm_config()
 
     assert config["provider"] == "openai_compatible"
     assert config["base_url"] == "http://interna/v1"
     assert config["model"] == "modelo-interno"
-    assert config["api_key"] == "local"
+    assert config["api_key"] == ""

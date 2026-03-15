@@ -36,7 +36,7 @@ def get_llm_config() -> dict[str, str]:
     if provider == "openai_compatible":
         model_name = (os.getenv("LLM_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini").strip()
         base_url = (os.getenv("LLM_BASE_URL") or os.getenv("OPENAI_BASE_URL") or "").strip()
-        api_key = (os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY") or "local").strip()
+        api_key = os.getenv("LLM_API_KEY", "").strip()
         return {
             "provider": "openai_compatible",
             "model": model_name,
@@ -71,7 +71,9 @@ def get_chat_model():
     kwargs: dict[str, str | int | float] = {
         "model": config["model"],
         "temperature": 0,
-        "api_key": config["api_key"],
+        # Some OpenAI-compatible local endpoints accept requests without real auth,
+        # but the client may still require a non-empty api_key field.
+        "api_key": config["api_key"] or "local",
     }
     if config["base_url"]:
         kwargs["base_url"] = config["base_url"]

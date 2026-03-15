@@ -47,7 +47,7 @@ OLLAMA_API_KEY=ollama
 LLM_PROVIDER=openai_compatible
 LLM_BASE_URL=http://servidor-interno/v1
 LLM_MODEL=nome-do-modelo
-LLM_API_KEY=local
+# LLM_API_KEY=token-opcional
 ```
 
 ## Onde modificar a configuração da LLM
@@ -59,6 +59,7 @@ LLM_API_KEY=local
 Na prática:
 - para trocar só provider, modelo e URL, edite `.env`;
 - para mudar a lógica de fallback entre `openai`, `ollama` e `openai_compatible`, edite [llm.py](/D:/github/lang_IPEA_editorial/src/editorial_docx/llm.py).
+- em `openai_compatible`, a chave pode ficar ausente quando o endpoint interno/local não exigir autenticação; a fábrica aplica um fallback interno apenas se o cliente precisar.
 
 ## Execução
 
