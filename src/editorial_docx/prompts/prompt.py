@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from lxml import etree
 
 from .profiles import get_prompt_profile
-from .schemas import agent_output_contract_text
+from .schemas import agent_output_contract_text, review_output_contract_text
 
 PROMPTS_DIR = Path(__file__).resolve().parent
 AUX_NORMAS_DIR = PROMPTS_DIR.parent / "auxiliar_normas"
@@ -28,12 +28,10 @@ PROMPT_FILES = {
 }
 
 AGENT_ORDER = [
-    "metadados",
     "sinopse_abstract",
     "gramatica_ortografia",
     "tabelas_figuras",
     "referencias",
-    "estrutura",
     "tipografia",
 ]
 
@@ -133,17 +131,18 @@ def _build_tasks_context(agent_name: str) -> str:
 def _load_typography_support_context() -> str:
     snippets = [
         "[TUTORIAL:tipografia]",
-        "- titulo_publicacao: font=Times New Roman; size_pt=14; bold=true; align=center; space_before_pt=6; space_after_pt=54; line_spacing=1.0; left_indent_pt=0",
-        "- texto: font=Times New Roman; size_pt=12; bold=false; italic=false; align=justify; space_before_pt=0; space_after_pt=6; line_spacing=1.5; left_indent_pt=0",
-        "- nota_rodape: font=Times New Roman; size_pt=10; bold=false; italic=false; align=justify; space_before_pt=0; space_after_pt=4; line_spacing=1.0; left_indent_pt=0",
-        "- titulo_1: font=Times New Roman; size_pt=12; bold=true; align=justify; space_before_pt=18; space_after_pt=6; line_spacing=1.0; left_indent_pt=35.4",
-        "- titulo_2: font=Times New Roman; size_pt=12; bold=true; align=justify; space_before_pt=18; space_after_pt=6; line_spacing=1.0; left_indent_pt=35.4",
-        "- titulo_3: font=Times New Roman; size_pt=12; bold=true; align=justify; space_before_pt=18; space_after_pt=6; line_spacing=1.0; left_indent_pt=35.4",
-        "- titulo_tabela_grafico: font=Times New Roman; size_pt=12; bold=false; align=justify; space_before_pt=18; space_after_pt=2; line_spacing=1.0; left_indent_pt=0",
-        "- subtitulo_tabela_grafico: font=Times New Roman; size_pt=12; bold=true; align=justify; space_before_pt=0; space_after_pt=6; line_spacing=1.0; left_indent_pt=0",
-        "- texto_tabela: font=Times New Roman; size_pt=11; bold=false; align=left; space_before_pt=0; space_after_pt=0; line_spacing=1.0; left_indent_pt=0",
-        "- fonte_tabela_grafico: font=Times New Roman; size_pt=10; bold=false; align=justify; space_before_pt=2; space_after_pt=12; line_spacing=1.0; left_indent_pt=0",
-        "- texto_referencia: font=Times New Roman; size_pt=12; bold=false; align=justify; space_before_pt=0; space_after_pt=6; line_spacing=1.5; left_indent_pt=0",
+        "A família de fonte é apenas referência de template e não deve gerar comentário por si só.",
+        "- titulo_publicacao: case=upper; size_pt=14; bold=true; italic=false; align=center; space_before_pt=6; space_after_pt=54; line_spacing=1.0; left_indent_pt=0",
+        "- texto: case=mixed; size_pt=12; bold=false; italic=false; align=justify; space_before_pt=0; space_after_pt=6; line_spacing=1.5; left_indent_pt=0",
+        "- nota_rodape: case=mixed; size_pt=10; bold=false; italic=false; align=justify; space_before_pt=0; space_after_pt=4; line_spacing=1.0; left_indent_pt=0",
+        "- titulo_1: case=upper; size_pt=12; bold=true; italic=false; align=justify; space_before_pt=18; space_after_pt=6; line_spacing=1.0; left_indent_pt=35.4",
+        "- titulo_2: case=mixed; size_pt=12; bold=true; italic=false; align=justify; space_before_pt=18; space_after_pt=6; line_spacing=1.0; left_indent_pt=35.4",
+        "- titulo_3: case=mixed; size_pt=12; bold=true; italic=false; align=justify; space_before_pt=18; space_after_pt=6; line_spacing=1.0; left_indent_pt=35.4",
+        "- titulo_tabela_grafico: case=upper; size_pt=12; bold=false; italic=false; align=justify; space_before_pt=18; space_after_pt=2; line_spacing=1.0; left_indent_pt=0",
+        "- subtitulo_tabela_grafico: case=mixed; size_pt=12; bold=true; italic=false; align=justify; space_before_pt=0; space_after_pt=6; line_spacing=1.0; left_indent_pt=0",
+        "- texto_tabela: case=mixed; size_pt=11; bold=false; italic=false; align=left; space_before_pt=0; space_after_pt=0; line_spacing=1.0; left_indent_pt=0",
+        "- fonte_tabela_grafico: case=mixed; size_pt=10; bold=false; italic=false; align=justify; space_before_pt=2; space_after_pt=12; line_spacing=1.0; left_indent_pt=0",
+        "- texto_referencia: case=mixed; size_pt=12; bold=false; italic=false; align=justify; space_before_pt=0; space_after_pt=6; line_spacing=1.5; left_indent_pt=0",
     ]
 
     cls_path = AUX_UTILIDADES_DIR / "td.cls"
@@ -154,7 +153,7 @@ def _load_typography_support_context() -> str:
                 [
                     "",
                     "[TD-CLS:fontes]",
-                    "O template TD define Times New Roman como fonte principal.",
+                    "O template TD define Times New Roman como fonte principal, mas a família de fonte não deve gerar comentário por si só.",
                 ]
             )
     return "\n".join(snippets)
@@ -214,6 +213,11 @@ def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatP
                 (
                     "Perfil do documento: {profile_description}\n"
                     "Instrução de perfil: {profile_instruction}\n\n"
+                    "Estilo dos comentários:\n"
+                    "- em `message`, explique de forma natural e objetiva o que está errado ou faltando no trecho;\n"
+                    "- em `message`, cite o problema local, não apenas um rótulo genérico;\n"
+                    "- em `suggested_fix`, traga a correção exata do fragmento ou uma instrução curta e concreta;\n"
+                    "- não use mensagens vagas como `ajustar trecho`, `corrigir problema` ou `normalizar item`;\n\n"
                     "Cada linha do trecho vem no formato [indice_global] (referência | tipo=...). "
                     "Se preencher paragraph_index, use exatamente o número entre colchetes [N] daquela linha; "
                     "nunca use a posição do item no lote.\n"
@@ -252,3 +256,42 @@ def build_coordinator_prompt(profile_key: str | None = None) -> ChatPromptTempla
             ),
         ]
     ).partial(**profile_ctx)
+
+
+def build_comment_review_prompt(agent_name: str, profile_key: str | None = None) -> ChatPromptTemplate:
+    instruction = load_agent_instruction(agent_name, profile_key=profile_key)
+    profile_ctx = _build_profile_context(profile_key)
+    support_context = _build_agent_support_context(agent_name)
+
+    return ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                (
+                    "Você é o revisor final de comentários do agente editorial. "
+                    "Sua função é avaliar apenas os comentários propostos, nunca criar novos. "
+                    "Aplique as mesmas restrições do agente original com rigor ainda maior. "
+                    "Aprove somente comentários objetivos, locais, necessários e claramente sustentados pelo trecho. "
+                    "Rejeite comentários especulativos, verbosos, estilísticos, redundantes, contraditórios ou fora de escopo.\n\n"
+                    "Instrução do agente original:\n{agent_instruction}"
+                ),
+            ),
+            (
+                "human",
+                (
+                    "Perfil do documento: {profile_description}\n"
+                    "Instrução de perfil: {profile_instruction}\n\n"
+                    "Normas auxiliares locais:\n{support_context}\n\n"
+                    "Trecho do documento:\n{document_excerpt}\n\n"
+                    "Comentários propostos (JSON):\n{comments_json}\n\n"
+                    "Revise cada comentário proposto e retorne apenas `approve` ou `reject`, sem reescrever a correção.\n\n"
+                    "Contrato de saída:\n{output_contract}\n"
+                ),
+            ),
+        ]
+    ).partial(
+        **profile_ctx,
+        agent_instruction=instruction,
+        support_context=support_context or "(nenhuma norma auxiliar carregada para este agente)",
+        output_contract=review_output_contract_text(),
+    )

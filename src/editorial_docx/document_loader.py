@@ -26,6 +26,7 @@ class LoadedDocument:
 
 
 _HEADING_RE = re.compile(r"^(\d+(?:\.?\d+)*)\s+[A-ZÀ-Ü].+")
+_REF_TYPE_RE = re.compile(r"\btipo=([a-z_]+)\b", re.IGNORECASE)
 
 
 def _is_heading(text: str) -> bool:
@@ -50,12 +51,18 @@ def _is_heading(text: str) -> bool:
     return False
 
 
+def _ref_block_type(ref: str) -> str:
+    match = _REF_TYPE_RE.search(ref or "")
+    return match.group(1).lower() if match else ""
+
+
 def _build_sections(chunks: list[str], refs: list[str] | None = None) -> list[Section]:
     refs = refs or []
     headings = []
     for idx, text in enumerate(chunks):
         ref = refs[idx] if idx < len(refs) else ""
-        if "tipo=heading" in ref or "tipo=reference_heading" in ref or _is_heading(text):
+        ref_type = _ref_block_type(ref)
+        if ref_type in {"heading", "reference_heading"} or (not ref_type and _is_heading(text)):
             headings.append((idx, text.strip()))
     if not headings:
         return [Section(title="Documento", start_idx=0, end_idx=max(0, len(chunks) - 1))] if chunks else []

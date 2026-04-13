@@ -15,8 +15,8 @@ import streamlit as st
 from src.editorial_docx.docx_utils import apply_comments_to_docx
 from src.editorial_docx.document_loader import load_document
 from src.editorial_docx.graph_chat import run_conversation
-from src.editorial_docx.llm import get_llm_config
-from src.editorial_docx.models import AgentComment
+from src.editorial_docx.llm import get_llm_config, get_llm_model_tag
+from src.editorial_docx.models import AgentComment, agent_short_label
 from src.editorial_docx.prompts import AGENT_ORDER, detect_prompt_profile
 
 st.set_page_config(page_title="Editorial TD - Agentes", layout="wide")
@@ -37,6 +37,7 @@ env_path = project_root / ".env"
 
 with st.sidebar:
     llm_config = get_llm_config()
+    llm_model_tag = get_llm_model_tag(llm_config)
     st.markdown("### LLM")
     st.caption(
         f"Provider: `{llm_config['provider']}` | Modelo: `{llm_config['model']}`"
@@ -68,7 +69,7 @@ with st.sidebar:
     st.markdown("### Execução")
     if st.button("Rodar todos os agentes", key="sidebar_run_all", use_container_width=True):
         st.session_state.pending_run = {
-            "question": "Faça uma revisão completa com todos os agentes e liste ajustes prioritários.",
+            "question": "Faça uma revisão completa com todos os agentes ativos e liste ajustes prioritários.",
             "agents": AGENT_ORDER.copy(),
             "source": "control:all",
         }
@@ -127,8 +128,6 @@ for key, default in {
 def _build_rows() -> list[dict]:
     rows = []
     for comment_idx, c in enumerate(st.session_state.comments):
-        if c.auto_apply:
-            continue
         ref = "sem referência"
         if isinstance(c.paragraph_index, int) and 0 <= c.paragraph_index < len(st.session_state.refs):
             ref = st.session_state.refs[c.paragraph_index]
@@ -136,7 +135,8 @@ def _build_rows() -> list[dict]:
         rows.append(
             {
                 "comment_idx": comment_idx,
-                "agente": c.agent,
+                "agente": agent_short_label(c.agent),
+                "agent_key": c.agent,
                 "categoria": c.category,
                 "referencia": ref,
                 "indice_trecho": c.paragraph_index,
@@ -176,7 +176,7 @@ def _signature(rows: list[dict]) -> str:
     base = [
         (
             str(r["comment_idx"]),
-            r["agente"],
+            r["agent_key"],
             r["categoria"],
             str(r["indice_trecho"]),
             r["comentario"],
@@ -237,7 +237,7 @@ def _build_export_comments(report_rows: list[dict]) -> list[AgentComment]:
 
         export_comments.append(
             AgentComment(
-                agent=override["agente"],
+                agent=override["agent_key"],
                 category=override["categoria"],
                 paragraph_index=override["indice_trecho"],
                 message=override["comentario"],
@@ -597,14 +597,14 @@ with col_chat:
             st.download_button(
                 label="Baixar DOCX comentado",
                 data=output_bytes,
-                file_name=f"{Path(st.session_state.doc_path).stem}_output.docx",
+                file_name=f"{Path(st.session_state.doc_path).stem}_output_{llm_model_tag}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
 
         st.download_button(
             label="Baixar relatório de correções (JSON)",
             data=json.dumps(report, ensure_ascii=False, indent=2),
-            file_name=f"{Path(st.session_state.doc_path).stem if st.session_state.doc_path else 'correcoes'}.relatorio.json",
+            file_name=f"{Path(st.session_state.doc_path).stem if st.session_state.doc_path else 'correcoes'}_output_{llm_model_tag}.relatorio.json",
             mime="application/json",
         )
     elif st.session_state.comments:
@@ -616,7 +616,7 @@ with col_chat:
             st.download_button(
                 label="Baixar DOCX com ajustes automáticos",
                 data=output_bytes,
-                file_name=f"{Path(st.session_state.doc_path).stem}_output.docx",
+                file_name=f"{Path(st.session_state.doc_path).stem}_output_{llm_model_tag}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
 
@@ -677,7 +677,7 @@ with col_fix:
         with filter_a:
             agent_filter = st.multiselect(
                 "Filtrar agentes",
-                options=sorted({AGENT_LABELS.get(row["agente"], row["agente"]) for row in rows}),
+                options=sorted({row["agente"] for row in rows}),
                 default=[],
                 key="fix_agent_filter",
             )
@@ -694,7 +694,7 @@ with col_fix:
         visible_indexes: list[int] = []
         option_labels: list[str] = []
         for i, row in enumerate(rows):
-            agent_label = AGENT_LABELS.get(row["agente"], row["agente"])
+            agent_label = row["agente"]
             state = st.session_state.correction_state.get(str(i), {})
             if agent_filter and agent_label not in agent_filter:
                 continue
@@ -754,7 +754,7 @@ with col_fix:
         resolved = sum(1 for v in st.session_state.correction_state.values() if v.get("status") == "resolvido")
         st.progress(resolved / len(rows), text=f"{resolved}/{len(rows)} itens resolvidos")
 
-        st.markdown(f"**Agente:** `{AGENT_LABELS.get(row['agente'], row['agente'])}` | **Categoria:** `{row['categoria']}`")
+        st.markdown(f"**Agente:** `{row['agente']}` | **Categoria:** `{row['categoria']}`")
         st.markdown(f"**Referência:** {row['referencia']}")
         if is_auto_apply:
             st.caption("Este item será aplicado automaticamente no DOCX exportado.")

@@ -1,0 +1,930 @@
+{
+  "dataset_version": "1.0",
+  "label_taxonomy": {
+    "comment_labels": [
+      "correto",
+      "parcial",
+      "incorreto"
+    ],
+    "severity_labels": [
+      "alta",
+      "media",
+      "baixa"
+    ],
+    "missed_issue_labels": [
+      "faltou"
+    ]
+  },
+  "document": {
+    "source_document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+    "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+    "model_name": "gpt-4o",
+    "run_label": "seed_inicial_gpt_4o"
+  },
+  "summary": {
+    "total_model_comments": 49,
+    "by_agent": {
+      "sin": 2,
+      "gram": 8,
+      "tab": 11,
+      "ref": 25,
+      "tip": 3
+    }
+  },
+  "annotations": [
+    {
+      "id": "sin_0001",
+      "agent": "sin",
+      "category": "Keywords",
+      "paragraph_index": 15,
+      "issue_excerpt": "social security; collective benefits; social indicators; health; social assistance; social security; social protection.",
+      "suggested_fix": "social security; collective benefits; social indicators; health; social assistance; social protection.",
+      "model_comment": "Há uma repetição desnecessária da palavra-chave 'social security' nas keywords em inglês.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "sin_0002",
+      "agent": "sin",
+      "category": "Formatação",
+      "paragraph_index": 13,
+      "issue_excerpt": "This work aims to contribute to the debate on social security by shedding light on the issue of collective benefits. Considering that different perspectives can be mobilized around the issue, the text carries out a classification exercise of collective benefits based on three approaches: (i) types of beneficiaries; (ii) types of provision and delivery strategies; and (iii) outcomes. The sections of the text therefore focus on defining and analysing collective benefits from these three perspectives, providing examples and proposing categories within each of these groups. After presenting each approach, the classification is revisited and presented in the form of a proposed typology. This exercise supports the possibility of thinking about different dimensions for categorising collective benefits and suggests promising possibilities for developing indicators that can make each type of collective benefit more visible.",
+      "suggested_fix": "Justificar o parágrafo do abstract.",
+      "model_comment": "O abstract deve estar justificado, mas este parágrafo está com outro alinhamento.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0003",
+      "agent": "gram",
+      "category": "Concordância",
+      "paragraph_index": 8,
+      "issue_excerpt": "e sugerem",
+      "suggested_fix": "e sugere",
+      "model_comment": "A concordância verbal está incorreta neste fragmento.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0004",
+      "agent": "gram",
+      "category": "Concordância",
+      "paragraph_index": 27,
+      "issue_excerpt": "benefícios monetário",
+      "suggested_fix": "benefícios monetários",
+      "model_comment": "A concordância está incorreta neste fragmento.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0005",
+      "agent": "gram",
+      "category": "Concordância",
+      "paragraph_index": 42,
+      "issue_excerpt": "que assenta o acesso",
+      "suggested_fix": "que assentam o acesso",
+      "model_comment": "A concordância está incorreta neste fragmento.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0006",
+      "agent": "gram",
+      "category": "Ortografia",
+      "paragraph_index": 61,
+      "issue_excerpt": "especificas",
+      "suggested_fix": "específicas",
+      "model_comment": "A palavra 'especificas' deve ser acentuada.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0007",
+      "agent": "gram",
+      "category": "Concordância",
+      "paragraph_index": 63,
+      "issue_excerpt": "contribuem",
+      "suggested_fix": "contribui",
+      "model_comment": "O verbo 'contribuem' deve estar no singular para concordar com o sujeito 'a baixa visibilidade'.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0008",
+      "agent": "gram",
+      "category": "Ortografia",
+      "paragraph_index": 69,
+      "issue_excerpt": "grupos éticos",
+      "suggested_fix": "grupos étnicos",
+      "model_comment": "Há um erro ortográfico neste fragmento.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0009",
+      "agent": "gram",
+      "category": "Concordância verbal",
+      "paragraph_index": 77,
+      "issue_excerpt": "Parte importante desses avanços respondem aos novos objetivos",
+      "suggested_fix": "Parte importante desses avanços responde aos novos objetivos",
+      "model_comment": "O verbo 'respondem' deve estar no singular para concordar com 'parte'.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "gram_0010",
+      "agent": "gram",
+      "category": "Concordância verbal",
+      "paragraph_index": 85,
+      "issue_excerpt": "no contexto em que se constata os efeitos nocivos",
+      "suggested_fix": "no contexto em que se constatam os efeitos nocivos",
+      "model_comment": "O verbo 'se constata' deve estar no plural para concordar com 'os efeitos'.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0011",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 57,
+      "issue_excerpt": "Gráfico 1: Cobertura populacional do Sisagua, por forma de abastecimento (2014-2019)",
+      "suggested_fix": "Separar em duas linhas: `GRÁFICO 1` na primeira linha e `Cobertura populacional do Sisagua, por forma de abastecimento (2014-2019)` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0012",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 67,
+      "issue_excerpt": "Gráfico 2: Taxa de mortalidade infantil Brasil, Sistema de Atenção à Saúde Indígena (SasiSUS) e Distrito Sanitário Especial Indígena Yanomami (DSEI Yanomami) (2018-2022)",
+      "suggested_fix": "Separar em duas linhas: `GRÁFICO 2` na primeira linha e `Taxa de mortalidade infantil Brasil, Sistema de Atenção à Saúde Indígena (SasiSUS) e Distrito Sanitário Especial Indígena Yanomami (DSEI Yanomami) (2018-2022)` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0013",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 86,
+      "issue_excerpt": "Quadro 1: Campanhas nacionais de saúde realizadas em 2023",
+      "suggested_fix": "Separar em duas linhas: `QUADRO 1` na primeira linha e `Campanhas nacionais de saúde realizadas em 2023` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0014",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 128,
+      "issue_excerpt": "Gráfico 3: Porcentagem de pessoas idosas na população participando do SCFV (2012-2023)",
+      "suggested_fix": "Separar em duas linhas: `GRÁFICO 3` na primeira linha e `Porcentagem de pessoas idosas na população participando do SCFV (2012-2023)` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0015",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 132,
+      "issue_excerpt": "Gráfico 4: Porcentagem de CRAS que realizaram atendimentos coletivos, por tipo de temática abordada (2023)",
+      "suggested_fix": "Separar em duas linhas: `GRÁFICO 4` na primeira linha e `Porcentagem de CRAS que realizaram atendimentos coletivos, por tipo de temática abordada (2023)` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0016",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 178,
+      "issue_excerpt": "Gráfico 5: Composição do rendimento domiciliar por fonte, segundo décimos da renda domiciliar per capita (2020 e 2022)",
+      "suggested_fix": "Separar em duas linhas: `GRÁFICO 5` na primeira linha e `Composição do rendimento domiciliar por fonte, segundo décimos da renda domiciliar per capita (2020 e 2022)` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0017",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 184,
+      "issue_excerpt": "Tabela 1: Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006",
+      "suggested_fix": "Separar em duas linhas: `TABELA 1` na primeira linha e `Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0018",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 224,
+      "issue_excerpt": "Gráfico 6: Efeito simulado da ausência de benefícios sociais sobre a pobreza (2019-2022) - Em %",
+      "suggested_fix": "Separar em duas linhas: `GRÁFICO 6` na primeira linha e `Efeito simulado da ausência de benefícios sociais sobre a pobreza (2019-2022) - Em %` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0019",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 227,
+      "issue_excerpt": "Tabela 2: Decomposição do índice de Gini da renda total familiar per capita por fontes de renda – Brasil (2017-2018)",
+      "suggested_fix": "Separar em duas linhas: `TABELA 2` na primeira linha e `Decomposição do índice de Gini da renda total familiar per capita por fontes de renda – Brasil (2017-2018)` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0020",
+      "agent": "tab",
+      "category": "Legenda",
+      "paragraph_index": 308,
+      "issue_excerpt": "Quadro 2: Síntese da classificação dos benefícios coletivos da seguridade social",
+      "suggested_fix": "Separar em duas linhas: `QUADRO 2` na primeira linha e `Síntese da classificação dos benefícios coletivos da seguridade social` na linha abaixo.",
+      "model_comment": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tab_0021",
+      "agent": "tab",
+      "category": "Fonte",
+      "paragraph_index": 308,
+      "issue_excerpt": "Quadro 2: Síntese da classificação dos benefícios coletivos da seguridade social",
+      "suggested_fix": "Adicionar uma linha própria com `Fonte:` ou `Elaboração:` abaixo do bloco.",
+      "model_comment": "O bloco está sem uma linha de fonte ou elaboração logo abaixo da legenda.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0022",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 39,
+      "issue_excerpt": "Fraser (2001)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Fraser (2001) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0023",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 56,
+      "issue_excerpt": "BRASIL, 2020",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a BRASIL (2020) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0024",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 58,
+      "issue_excerpt": "BRASIL (2020)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a BRASIL (2020) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0025",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 59,
+      "issue_excerpt": "Fine, Eames & Heymann, 2011",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Fine (2011) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0026",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 69,
+      "issue_excerpt": "MDS, 2023, p. 8",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a MDS (2023) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0027",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 84,
+      "issue_excerpt": "Mantovani (2005)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Mantovani (2005) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0028",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 84,
+      "issue_excerpt": "UFSC, 2018",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a UFSC (2018) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0029",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 145,
+      "issue_excerpt": "Marques (2003)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Marques (2003) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0030",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 146,
+      "issue_excerpt": "Vaguet, 2001",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Vaguet (2001) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0031",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 158,
+      "issue_excerpt": "CASTEL, 1998",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a CASTEL (1998) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0032",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 340,
+      "issue_excerpt": "2023",
+      "suggested_fix": "2000",
+      "model_comment": "Há inconsistência de ano nesta referência.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0033",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 341,
+      "issue_excerpt": "2006.D",
+      "suggested_fix": "2006. D",
+      "model_comment": "Há duas referências coladas neste ponto.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0034",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 163,
+      "issue_excerpt": "Draibe e Riesco, 2007, p.12-13",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Draibe (2007) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0035",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 167,
+      "issue_excerpt": "Viney (2021)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Viney (2021) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0036",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 226,
+      "issue_excerpt": "Silveira et al (2020)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Silveira (2020) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0037",
+      "agent": "ref",
+      "category": "citation_match",
+      "paragraph_index": 303,
+      "issue_excerpt": "Silveira et al. (2020)",
+      "suggested_fix": "Incluir ou revisar a referência correspondente a Silveira (2020) na lista final.",
+      "model_comment": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0038",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 327,
+      "issue_excerpt": "Referências",
+      "suggested_fix": "Verificar estas obras: ANSILIERO (2023); ASENSI (2010); BALBANI (2005); Barros. P. B. de Azevedo. Os bens públicos na Nova Economia Institucional. Dissertação de mestrado. Instituto de Pesquisas Econômicas da Universidade de São Paulo (2003); BRASIL. Ministério da Saúde. Secretaria de Vigilância em Saúde. Indicadores institucionais do Programa Nacional de Vigilância da Qualidade da Água para consumo humano 2019. Brasília: Ministério da Saúde (2019); Chitolina (2013); e mais 39 item(ns).",
+      "model_comment": "Há referências na lista que não foram localizadas nas citações do corpo do texto.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0039",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 327,
+      "issue_excerpt": "Referências",
+      "suggested_fix": "Incluir ou revisar as referências correspondentes a: Fraser (2001); BRASIL (2020); BRASIL (2020); Fine (2011); MDS (2023); Mantovani (2005); e mais 8 item(ns).",
+      "model_comment": "Há citações no corpo do texto sem correspondência clara na lista de referências.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0040",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 349,
+      "issue_excerpt": "Rio de Janeiro: Rio de Janeiro, 2009",
+      "suggested_fix": "Revisar a editora no trecho final, pois local e editora foram repetidos.",
+      "model_comment": "Há duplicação de local e editora no trecho final da referência.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0041",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 350,
+      "issue_excerpt": "Disponível em: https://www.epsjv.fiocruz.br/sites/default/files/livro1.pdf.",
+      "suggested_fix": "Inserir `Acesso em:` com a data de consulta após a URL.",
+      "model_comment": "A referência online informa a URL, mas não traz `Acesso em:` ao final.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0042",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 355,
+      "issue_excerpt": "EA. POLÍTICAS SOCIAIS: Acompanhamento e Análise. Brasília, DF: Ipea, n. 31, 2024",
+      "suggested_fix": "EA. POLÍTICAS SOCIAIS: Acompanhamento e Análise. Brasília, DF: Ipea, n. 31, 2024.",
+      "model_comment": "A referência termina sem ponto final.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0043",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 361,
+      "issue_excerpt": "Jones, Peter. Group Rights. The Stanford Encyclopedia of Philosophy. 2022",
+      "suggested_fix": "Jones, Peter. Group Rights. The Stanford Encyclopedia of Philosophy. 2022.",
+      "model_comment": "A referência termina sem ponto final.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0044",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 381,
+      "issue_excerpt": "Rawls, J. A Theory of Justice. Cambridge: Harvard University Press, 1971",
+      "suggested_fix": "Rawls, J. A Theory of Justice. Cambridge: Harvard University Press, 1971.",
+      "model_comment": "A referência termina sem ponto final.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0045",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 386,
+      "issue_excerpt": "sta Brasileira de Direitos Fundamentais & Justiça, v. 4, n. 10, p. 205-228, 2010",
+      "suggested_fix": "sta Brasileira de Direitos Fundamentais & Justiça, v. 4, n. 10, p. 205-228, 2010.",
+      "model_comment": "A referência termina sem ponto final.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "ref_0046",
+      "agent": "ref",
+      "category": "inconsistency",
+      "paragraph_index": 396,
+      "issue_excerpt": "p.77-116",
+      "suggested_fix": "p. 77-116",
+      "model_comment": "A paginação está sem espaço após `p.`.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tip_0047",
+      "agent": "tip",
+      "category": "inconsistency",
+      "paragraph_index": 54,
+      "issue_excerpt": "Beneficiários coletivos não identificáveis",
+      "suggested_fix": "Remover itálico do título.",
+      "model_comment": "Neste subtítulo, o itálico destoa do padrão tipográfico do mesmo nível.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tip_0048",
+      "agent": "tip",
+      "category": "inconsistency",
+      "paragraph_index": 64,
+      "issue_excerpt": "Beneficiários coletivos pertencentes a minorias étnicas",
+      "suggested_fix": "Remover itálico do título.",
+      "model_comment": "Neste subtítulo, o itálico destoa do padrão tipográfico do mesmo nível.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    },
+    {
+      "id": "tip_0049",
+      "agent": "tip",
+      "category": "inconsistency",
+      "paragraph_index": 70,
+      "issue_excerpt": "Beneficiários pertencentes a grupos submetidos a processos de discriminação",
+      "suggested_fix": "Remover itálico do título.",
+      "model_comment": "Neste subtítulo, o itálico destoa do padrão tipográfico do mesmo nível.",
+      "label": "",
+      "severity": "",
+      "reviewer_note": "",
+      "source": {
+        "document": "234362_TD_3125_Benefícios coletivos (53 laudas).docx",
+        "report_path": "D:\\github\\lang_IPEA_editorial\\testes\\historico\\comparativo_20260329_190759\\gpt-4o\\output.relatorio.json",
+        "model_name": "gpt-4o",
+        "run_label": "seed_inicial_gpt_4o"
+      }
+    }
+  ],
+  "missed_issues": [
+    {
+      "id": "faltou_0001",
+      "agent": "",
+      "paragraph_index": null,
+      "issue_excerpt": "",
+      "expected_fix": "",
+      "label": "faltou",
+      "severity": "",
+      "reviewer_note": ""
+    }
+  ]
+}

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from lxml import etree
 
-from .models import AgentComment
+from .models import AgentComment, agent_short_label
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -28,6 +28,18 @@ class ExtractedParagraph:
     ref_label: str
     block_type: str
     style_name: str = ""
+    has_numbering: bool = False
+    is_bold: bool = False
+    is_italic: bool = False
+    alignment: str = ""
+
+
+@dataclass(slots=True)
+class _StyleMeta:
+    name: str = ""
+    based_on: str = ""
+    bold: bool | None = None
+    italic: bool | None = None
 
 
 def _qname(ns: str, tag: str) -> str:
@@ -103,6 +115,23 @@ def _paragraph_text(paragraph: etree._Element) -> str:
     return "".join(text_parts)
 
 
+def _paragraph_alignment(paragraph: etree._Element) -> str:
+    ppr = paragraph.find("w:pPr", namespaces=NS)
+    if ppr is None:
+        return ""
+    jc = ppr.find("w:jc", namespaces=NS)
+    if jc is None:
+        return ""
+    value = (jc.get(_qname(W_NS, "val")) or "").strip().lower()
+    mapping = {
+        "both": "justify",
+        "left": "left",
+        "center": "center",
+        "right": "right",
+    }
+    return mapping.get(value, value)
+
+
 def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
     normalized_chars: list[str] = []
     mapping: list[int] = []
@@ -174,12 +203,100 @@ def _load_style_map(parts: dict[str, bytes]) -> dict[str, str]:
     return style_map
 
 
+def _parse_on_off(element: etree._Element | None) -> bool | None:
+    if element is None:
+        return None
+    value = element.get(_qname(W_NS, "val"))
+    if value is None:
+        return True
+    value = value.strip().lower()
+    if value in {"0", "false", "off", "no"}:
+        return False
+    if value in {"1", "true", "on", "yes"}:
+        return True
+    return True
+
+
+def _load_style_meta(parts: dict[str, bytes]) -> dict[str, _StyleMeta]:
+    raw = parts.get("word/styles.xml")
+    if raw is None:
+        return {}
+
+    root = _parse_xml(raw)
+    style_meta: dict[str, _StyleMeta] = {}
+    for style in root.findall(".//w:style", namespaces=NS):
+        style_id = style.get(_qname(W_NS, "styleId")) or ""
+        if not style_id:
+            continue
+        name = style.find("w:name", namespaces=NS)
+        based_on = style.find("w:basedOn", namespaces=NS)
+        rpr = style.find("w:rPr", namespaces=NS)
+        style_meta[style_id] = _StyleMeta(
+            name=name.get(_qname(W_NS, "val"), "") if name is not None else "",
+            based_on=based_on.get(_qname(W_NS, "val"), "") if based_on is not None else "",
+            bold=_parse_on_off(rpr.find("w:b", namespaces=NS) if rpr is not None else None),
+            italic=_parse_on_off(rpr.find("w:i", namespaces=NS) if rpr is not None else None),
+        )
+    return style_meta
+
+
 def _paragraph_style_name(paragraph: etree._Element, style_map: dict[str, str]) -> str:
     style = paragraph.find("./w:pPr/w:pStyle", namespaces=NS)
     if style is None:
         return ""
     style_id = style.get(_qname(W_NS, "val"), "")
     return style_map.get(style_id, style_id)
+
+
+def _paragraph_style_id(paragraph: etree._Element) -> str:
+    style = paragraph.find("./w:pPr/w:pStyle", namespaces=NS)
+    if style is None:
+        return ""
+    return style.get(_qname(W_NS, "val"), "")
+
+
+def _resolve_style_flag(
+    style_id: str,
+    style_meta: dict[str, _StyleMeta],
+    attr: str,
+    seen: set[str] | None = None,
+) -> bool | None:
+    if not style_id:
+        return None
+    if seen is None:
+        seen = set()
+    if style_id in seen:
+        return None
+    seen.add(style_id)
+    meta = style_meta.get(style_id)
+    if meta is None:
+        return None
+    value = getattr(meta, attr)
+    if value is not None:
+        return value
+    if meta.based_on:
+        return _resolve_style_flag(meta.based_on, style_meta, attr, seen)
+    return None
+
+
+def _paragraph_emphasis(paragraph: etree._Element, style_meta: dict[str, _StyleMeta]) -> tuple[bool, bool]:
+    style_id = _paragraph_style_id(paragraph)
+    default_bold = _resolve_style_flag(style_id, style_meta, "bold")
+    default_italic = _resolve_style_flag(style_id, style_meta, "italic")
+    runs = [run for run in paragraph.findall("w:r", namespaces=NS) if _run_text(run).strip()]
+    if not runs:
+        return bool(default_bold), bool(default_italic)
+
+    effective_bold: list[bool] = []
+    effective_italic: list[bool] = []
+    for run in runs:
+        rpr = run.find("w:rPr", namespaces=NS)
+        run_bold = _parse_on_off(rpr.find("w:b", namespaces=NS) if rpr is not None else None)
+        run_italic = _parse_on_off(rpr.find("w:i", namespaces=NS) if rpr is not None else None)
+        effective_bold.append(default_bold if run_bold is None else run_bold)
+        effective_italic.append(default_italic if run_italic is None else run_italic)
+
+    return all(bool(value) for value in effective_bold), all(bool(value) for value in effective_italic)
 
 
 def _paragraph_has_numbering(paragraph: etree._Element) -> bool:
@@ -199,6 +316,72 @@ _REFERENCE_ENTRY_RE = re.compile(
     r"\b(doi|dispon[ií]vel em|acesso em|et al\.|https?://|v\.\s*\d+|n\.\s*\d+)\b",
     re.IGNORECASE,
 )
+_LIST_ITEM_RE = re.compile(
+    r"^\s*(?:[•\-–—]|(?:\(?\d{1,3}\)?|\(?[ivxlcdm]{1,6}\)?|\(?[A-Za-z]\)?)[\.\):])\s+",
+    re.IGNORECASE,
+)
+_KEYWORD_LABEL_RE = re.compile(r"^(palavras-chave|keywords)\s*:\s*$", re.IGNORECASE)
+_JEL_RE = re.compile(r"^jel\s*:\s*[A-Z0-9][A-Z0-9,;.\-\s]*$", re.IGNORECASE)
+_REFERENCE_HEADING_MARKERS = {"REFERENCIAS", "REFERENCES", "BIBLIOGRAPHY"}
+_FRONT_MATTER_HEADINGS = {"SINOPSE", "RESUMO", "ABSTRACT", "SUMMARY"}
+_DOCUMENT_LABEL_MARKERS = {"TEXTO PARA DISCUSSAO", "TEXTOS PARA DISCUSSAO"}
+_QUOTE_MARKERS = "\"“”‘’«»"
+
+
+def _strip_accents(value: str) -> str:
+    normalized = unicodedata.normalize("NFD", value or "")
+    return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+
+
+def _normalize_marker(value: str) -> str:
+    stripped = re.sub(r"\s+", " ", (value or "").strip().upper())
+    return _strip_accents(stripped)
+
+
+def _looks_like_reference_entry_text(text: str, *, in_reference_section: bool = False) -> bool:
+    candidate = (text or "").strip()
+    if len(candidate) < 20:
+        return False
+    if _REFERENCE_ENTRY_RE.search(candidate):
+        return True
+
+    score = 0
+    lowered = _strip_accents(candidate).casefold()
+    if re.search(r"\b(?:19|20)\d{2}\b", candidate):
+        score += 1
+    if re.search(r"^[A-ZÀ-Ý][A-Za-zÀ-ÿ'`´-]+,\s+", candidate):
+        score += 1
+    if re.search(r"\b(?:in:|revista|journal|press|editora|companhia das letras|elsevier|routledge|sage|ipea|brasilia:|rio de janeiro:|sao paulo:|cambridge:|londres:)\b", lowered):
+        score += 1
+    if len(re.findall(r"[.;:]", candidate)) >= 3:
+        score += 1
+    if ";" in candidate:
+        score += 1
+
+    threshold = 2 if in_reference_section else 3
+    return score >= threshold
+
+
+def _looks_like_author_line(text: str) -> bool:
+    candidate = (text or "").strip()
+    if not candidate or len(candidate) > 90:
+        return False
+    if any(ch.isdigit() for ch in candidate):
+        return False
+    if any(token in candidate for token in (":", ";", "http://", "https://")):
+        return False
+    if candidate.endswith("."):
+        return False
+
+    words = re.findall(r"[A-Za-zÀ-ÿ'`´-]+", candidate)
+    if not 2 <= len(words) <= 6:
+        return False
+
+    lowercase_particles = {"de", "da", "das", "do", "dos", "e"}
+    significant = [word for word in words if word.casefold() not in lowercase_particles]
+    if not significant:
+        return False
+    return all(word[:1].isupper() for word in significant)
 
 
 def _looks_like_heading(
@@ -251,11 +434,16 @@ def _classify_paragraph(
     normalized_style = (style_name or "").strip().lower()
     normalized_text = (text or "").strip()
     normalized_text_lower = normalized_text.lower()
+    normalized_marker = _normalize_marker(normalized_text)
 
     if _has_ancestor(paragraph, "tbl"):
         return "table_cell"
     if "caption" in normalized_style or "legenda" in normalized_style:
         return "caption"
+    if _JEL_RE.match(normalized_text):
+        return "jel_code"
+    if _KEYWORD_LABEL_RE.match(normalized_text):
+        return "keywords_label"
     if (
         "heading" in normalized_style
         or "titulo" in normalized_style
@@ -268,18 +456,145 @@ def _classify_paragraph(
             next_text=next_text,
         )
     ):
-        if "refer" in normalized_text_lower:
+        if normalized_marker in _REFERENCE_HEADING_MARKERS or "refer" in normalized_text_lower:
             return "reference_heading"
+        if normalized_marker in _FRONT_MATTER_HEADINGS:
+            return "abstract_heading"
+        if normalized_marker in _DOCUMENT_LABEL_MARKERS:
+            return "document_label"
         return "heading"
     if "quote" in normalized_style or "citacao" in normalized_style or "citação" in normalized_style:
         return "direct_quote"
-    if _paragraph_has_numbering(paragraph) or re.match(r"^\s*(?:[•\-–—]|[a-z0-9]+[.)])\s+", normalized_text, re.IGNORECASE):
+    if _paragraph_has_numbering(paragraph) or _LIST_ITEM_RE.match(normalized_text):
         return "list_item"
-    if _REFERENCE_ENTRY_RE.search(normalized_text):
+    if _looks_like_reference_entry_text(normalized_text):
         return "reference_entry"
     if normalized_text.startswith(("\"", "“")) and normalized_text.endswith(("\"", "”")):
         return "direct_quote"
     return "paragraph"
+
+
+def _refine_contextual_block_types(items: list[ExtractedParagraph]) -> list[ExtractedParagraph]:
+    if not items:
+        return items
+
+    block_types = [item.block_type for item in items]
+    texts = [item.text for item in items]
+    markers = [_normalize_marker(text) for text in texts]
+
+    for idx, marker in enumerate(markers):
+        if marker in _DOCUMENT_LABEL_MARKERS:
+            block_types[idx] = "document_label"
+        elif marker in _FRONT_MATTER_HEADINGS:
+            block_types[idx] = "abstract_heading"
+        elif marker in _REFERENCE_HEADING_MARKERS:
+            block_types[idx] = "reference_heading"
+        elif _KEYWORD_LABEL_RE.match(texts[idx]):
+            block_types[idx] = "keywords_label"
+        elif _JEL_RE.match(texts[idx]):
+            block_types[idx] = "jel_code"
+
+    front_matter_end = next(
+        (
+            idx
+            for idx, block_type in enumerate(block_types)
+            if block_type == "heading"
+        ),
+        len(items),
+    )
+
+    if front_matter_end > 0:
+        start_idx = 1 if markers[0] in _DOCUMENT_LABEL_MARKERS else 0
+        if start_idx < front_matter_end:
+            title_idx = next(
+                (
+                    idx
+                    for idx in range(start_idx, front_matter_end)
+                    if block_types[idx] == "paragraph"
+                    and len((texts[idx] or "").strip()) >= 20
+                    and not _looks_like_reference_entry_text(texts[idx])
+                ),
+                None,
+            )
+            if title_idx is not None:
+                block_types[title_idx] = "title"
+                for idx in range(title_idx + 1, front_matter_end):
+                    if block_types[idx] != "paragraph":
+                        continue
+                    if _looks_like_author_line(texts[idx]):
+                        block_types[idx] = "author_line"
+                    else:
+                        break
+
+        active_abstract = False
+        pending_keywords = False
+        for idx in range(front_matter_end):
+            if block_types[idx] == "abstract_heading":
+                active_abstract = True
+                pending_keywords = False
+                continue
+            if block_types[idx] == "keywords_label":
+                active_abstract = False
+                pending_keywords = True
+                continue
+            if block_types[idx] == "jel_code":
+                active_abstract = False
+                pending_keywords = False
+                continue
+            if block_types[idx] in {"title", "author_line", "document_label"}:
+                continue
+            if pending_keywords and block_types[idx] == "paragraph":
+                block_types[idx] = "keywords_content"
+                pending_keywords = False
+                continue
+            if active_abstract and block_types[idx] == "paragraph":
+                block_types[idx] = "abstract_body"
+
+    reference_heading_idx = next(
+        (idx for idx, block_type in enumerate(block_types) if block_type == "reference_heading"),
+        None,
+    )
+    if reference_heading_idx is not None:
+        for idx in range(reference_heading_idx + 1, len(items)):
+            if block_types[idx] in {"caption", "table_cell"}:
+                continue
+            if block_types[idx] != "reference_heading":
+                block_types[idx] = "reference_entry"
+    else:
+        tail_start = max(0, len(items) - max(40, len(items) // 5))
+        for idx in range(tail_start, len(items)):
+            if block_types[idx] in {"paragraph", "list_item"} and _looks_like_reference_entry_text(
+                texts[idx],
+                in_reference_section=True,
+            ):
+                block_types[idx] = "reference_entry"
+
+    refined: list[ExtractedParagraph] = []
+    for idx, item in enumerate(items, start=1):
+        ref_bits = [f"parágrafo {idx}", f"tipo={block_types[idx - 1]}"]
+        if item.style_name:
+            ref_bits.append(f"estilo={item.style_name}")
+        if item.has_numbering:
+            ref_bits.append("numerado=sim")
+        if item.is_bold:
+            ref_bits.append("negrito=sim")
+        if item.is_italic:
+            ref_bits.append("italico=sim")
+        if item.alignment:
+            ref_bits.append(f"align={item.alignment}")
+        refined.append(
+            ExtractedParagraph(
+                text=item.text,
+                ref_label=" | ".join(ref_bits),
+                block_type=block_types[idx - 1],
+                style_name=item.style_name,
+                has_numbering=item.has_numbering,
+                is_bold=item.is_bold,
+                is_italic=item.is_italic,
+                alignment=item.alignment,
+            )
+        )
+    return refined
 
 
 def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagraph]:
@@ -287,6 +602,7 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
         parts = {name: zin.read(name) for name in zin.namelist()}
 
     style_map = _load_style_map(parts)
+    style_meta = _load_style_meta(parts)
     document_root = _parse_xml(parts["word/document.xml"])
     paragraphs = document_root.findall(".//w:p", namespaces=NS)
 
@@ -297,6 +613,8 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
 
     for visible_index, (paragraph, text) in enumerate(visible_paragraphs, start=1):
         style_name = _paragraph_style_name(paragraph, style_map)
+        is_bold, is_italic = _paragraph_emphasis(paragraph, style_meta)
+        alignment = _paragraph_alignment(paragraph)
         previous_text = visible_paragraphs[visible_index - 2][1] if visible_index - 2 >= 0 else ""
         next_text = visible_paragraphs[visible_index][1] if visible_index < total_visible else ""
         block_type = _classify_paragraph(
@@ -308,18 +626,19 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
             previous_text=previous_text,
             next_text=next_text,
         )
-        ref_bits = [f"parágrafo {visible_index}", f"tipo={block_type}"]
-        if style_name:
-            ref_bits.append(f"estilo={style_name}")
         items.append(
             ExtractedParagraph(
                 text=text,
-                ref_label=" | ".join(ref_bits),
+                ref_label="",
                 block_type=block_type,
                 style_name=style_name,
+                has_numbering=_paragraph_has_numbering(paragraph),
+                is_bold=is_bold,
+                is_italic=is_italic,
+                alignment=alignment,
             )
         )
-    return items
+    return _refine_contextual_block_types(items)
 
 
 def _clone_run_with_text(run: etree._Element, text: str) -> etree._Element:
@@ -719,18 +1038,8 @@ def _apply_auto_formatting(paragraphs: list[etree._Element], non_empty_indexes: 
         paragraph_index = item.paragraph_index
         if paragraph_index is None or not (0 <= paragraph_index < len(non_empty_indexes)):
             continue
-        paragraph = paragraphs[non_empty_indexes[paragraph_index]]
         if item.agent == "tipografia" and item.auto_apply:
-            spec = _parse_format_spec(item.format_spec)
-            if not spec:
-                continue
-            _apply_paragraph_formatting(paragraph, spec)
             continue
-        if _is_safe_heading_normalization(item, _paragraph_text(paragraph)):
-            _replace_paragraph_text(paragraph, item.suggested_fix.strip())
-            continue
-        if _is_safe_plain_text_normalization(item, _paragraph_text(paragraph)):
-            _replace_paragraph_text(paragraph, item.suggested_fix.strip())
 
 
 def _resolve_docx_paragraph_index(item: AgentComment, non_empty_indexes: list[int]) -> int | None:
@@ -743,15 +1052,12 @@ def _resolve_docx_paragraph_index(item: AgentComment, non_empty_indexes: list[in
 
 
 def _build_comment_lines_for_item(item: AgentComment, ordinal: int) -> list[str]:
-    lines = [f"{ordinal}. [{item.agent}/{item.category}] {item.message}"]
-    if item.suggested_fix:
-        lines.append(f"Sugestão: {item.suggested_fix}")
-    review_note = _build_review_note(item)
-    if review_note:
-        lines.append(review_note)
-    if item.reviewer_note:
-        lines.append(f"Observação: {item.reviewer_note}")
-    return lines
+    message = (item.message or "").strip()
+    suggestion = (item.suggested_fix or "").strip()
+
+    if suggestion:
+        return [f"Correção: {suggestion}"]
+    return [message] if message else []
 
 
 def _spans_overlap(left: tuple[int, int] | None, right: tuple[int, int] | None) -> bool:
@@ -810,7 +1116,7 @@ def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> by
     paragraphs = document_root.findall(".//w:p", namespaces=NS)
     non_empty_indexes = [i for i, p in enumerate(paragraphs) if _paragraph_text(p).strip()]
     _apply_auto_formatting(paragraphs, non_empty_indexes, comments)
-    visible_comments = [item for item in comments if not item.auto_apply]
+    visible_comments = comments[:]
 
     grouped_comments: dict[int, list[AgentComment]] = {}
     for item in visible_comments:
@@ -824,10 +1130,10 @@ def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> by
         paragraph_text = _paragraph_text(paragraphs[paragraph_index])
         comment_groups = _group_comments_for_paragraph(paragraph_text, grouped_comments[paragraph_index])
         for items in comment_groups:
-            comment_lines = ["Achados consolidados neste trecho:"]
+            comment_lines: list[str] = []
             for ordinal, item in enumerate(items, start=1):
                 comment_lines.extend(_build_comment_lines_for_item(item, ordinal))
-            agents = ", ".join(sorted({item.agent for item in items}))
+            agents = ", ".join(sorted({agent_short_label(item.agent) for item in items}))
             author = f"Revisão: {agents}"[:255]
             anchor_excerpt = next((item.issue_excerpt for item in items if (item.issue_excerpt or "").strip()), "")
 
