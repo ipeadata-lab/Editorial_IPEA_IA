@@ -6,7 +6,9 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-from .docx_utils import extract_paragraphs_with_metadata
+from .docx_utils import extract_docx_user_comments, extract_paragraphs_with_metadata
+from .models import DocumentUserComment
+from .normalized_document import NormalizedDocument, build_normalized_document
 
 
 @dataclass(slots=True)
@@ -18,11 +20,14 @@ class Section:
 
 @dataclass(slots=True)
 class LoadedDocument:
+    source_path: Path
     kind: str
     chunks: list[str]
     refs: list[str]
     sections: list[Section]
     toc: list[str]
+    user_comments: list[DocumentUserComment]
+    normalized_document: NormalizedDocument
 
 
 _HEADING_RE = re.compile(r"^(\d+(?:\.?\d+)*)\s+[A-ZÀ-Ü].+")
@@ -80,7 +85,25 @@ def _load_docx(path: Path) -> LoadedDocument:
     refs = [item.ref_label for item in items]
     sections = _build_sections(chunks, refs)
     toc = [f"{s.title} [{s.start_idx}-{s.end_idx}]" for s in sections]
-    return LoadedDocument(kind="docx", chunks=chunks, refs=refs, sections=sections, toc=toc)
+    user_comments = extract_docx_user_comments(path)
+    return LoadedDocument(
+        source_path=path,
+        kind="docx",
+        chunks=chunks,
+        refs=refs,
+        sections=sections,
+        toc=toc,
+        user_comments=user_comments,
+        normalized_document=build_normalized_document(
+            input_path=path,
+            kind="docx",
+            chunks=chunks,
+            refs=refs,
+            sections=sections,
+            toc=toc,
+            user_comments=user_comments,
+        ),
+    )
 
 
 def _load_pdf(path: Path) -> LoadedDocument:
@@ -112,7 +135,42 @@ def _load_pdf(path: Path) -> LoadedDocument:
 
     sections = _build_sections(chunks, refs)
     toc = [f"{s.title} [{s.start_idx}-{s.end_idx}]" for s in sections]
-    return LoadedDocument(kind="pdf", chunks=chunks, refs=refs, sections=sections, toc=toc)
+    user_comments: list[DocumentUserComment] = []
+    return LoadedDocument(
+        source_path=path,
+        kind="pdf",
+        chunks=chunks,
+        refs=refs,
+        sections=sections,
+        toc=toc,
+        user_comments=user_comments,
+        normalized_document=build_normalized_document(
+            input_path=path,
+            kind="pdf",
+            chunks=chunks,
+            refs=refs,
+            sections=sections,
+            toc=toc,
+            user_comments=user_comments,
+        ),
+    )
+
+
+def load_normalized_document(path: Path) -> LoadedDocument:
+    normalized = NormalizedDocument.from_json(path.read_text(encoding="utf-8"))
+    chunks = [block.text for block in normalized.blocks]
+    refs = [block.ref_label for block in normalized.blocks]
+    sections = [Section(title=section.title, start_idx=section.start_idx, end_idx=section.end_idx) for section in normalized.sections]
+    return LoadedDocument(
+        source_path=path,
+        kind=normalized.metadata.kind or "normalized",
+        chunks=chunks,
+        refs=refs,
+        sections=sections,
+        toc=normalized.toc[:],
+        user_comments=normalized.user_comments[:],
+        normalized_document=normalized,
+    )
 
 
 def load_document(path: Path) -> LoadedDocument:
@@ -121,4 +179,6 @@ def load_document(path: Path) -> LoadedDocument:
         return _load_docx(path)
     if suffix == ".pdf":
         return _load_pdf(path)
+    if suffix == ".json":
+        return load_normalized_document(path)
     raise ValueError(f"Formato não suportado: {path.suffix}")

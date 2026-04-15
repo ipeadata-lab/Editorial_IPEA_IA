@@ -31,3 +31,8 @@ dist/
 # Generated review outputs
 *_output.docx
 *_output.relatorio.json
+/testes/historico
+/testes/benchmarks
+/testes
+*.docx
+*.json

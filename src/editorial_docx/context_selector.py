@@ -2,6 +2,7 @@
 
 import re
 
+from .config import DEFAULT_REVIEW_MAX_BATCH_CHARS
 from .document_loader import Section
 
 _TOKEN_RE = re.compile(r"[a-zA-ZÀ-ÿ0-9]{3,}")
@@ -68,7 +69,12 @@ def select_chunk_indexes(
     return out[:max_chunks]
 
 
-def build_excerpt(indexes: list[int], chunks: list[str], refs: list[str], max_chars: int = 12000) -> str:
+def build_excerpt(
+    indexes: list[int],
+    chunks: list[str],
+    refs: list[str],
+    max_chars: int = DEFAULT_REVIEW_MAX_BATCH_CHARS,
+) -> str:
     lines: list[str] = []
     total = 0
     for idx in indexes:

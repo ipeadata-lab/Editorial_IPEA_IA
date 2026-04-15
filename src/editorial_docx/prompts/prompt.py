@@ -23,6 +23,7 @@ PROMPT_FILES = {
     "tipografia": PROMPTS_DIR / "tipografia.md",
     "tabelas_figuras": PROMPTS_DIR / "tabelas_figuras.md",
     "estrutura": PROMPTS_DIR / "estrutura.md",
+    "comentarios_usuario_referencias": PROMPTS_DIR / "comentarios_usuario_referencias.md",
     "referencias": PROMPTS_DIR / "referencias.md",
     "coordenador": PROMPTS_DIR / "coordenador.md",
 }
@@ -31,6 +32,7 @@ AGENT_ORDER = [
     "sinopse_abstract",
     "gramatica_ortografia",
     "tabelas_figuras",
+    "comentarios_usuario_referencias",
     "referencias",
     "tipografia",
 ]
@@ -217,7 +219,16 @@ def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatP
                     "- em `message`, explique de forma natural e objetiva o que está errado ou faltando no trecho;\n"
                     "- em `message`, cite o problema local, não apenas um rótulo genérico;\n"
                     "- em `suggested_fix`, traga a correção exata do fragmento ou uma instrução curta e concreta;\n"
-                    "- não use mensagens vagas como `ajustar trecho`, `corrigir problema` ou `normalizar item`;\n\n"
+                    "- não use mensagens vagas como `ajustar trecho`, `corrigir problema` ou `normalizar item`;\n"
+                    "- não emita item se `suggested_fix` repetir o `issue_excerpt` ou o texto original com mudança irrelevante de caixa, espaço ou pontuação terminal;\n"
+                    "- não repita o mesmo comentário no mesmo bloco com formulações equivalentes;\n"
+                    "- se apenas parte do bloco divergir, comente apenas a parte divergente;\n"
+                    "- se a conclusão depender de contexto ausente ou inferência externa, retorne `[]`;\n\n"
+                    "O contexto abaixo vem separado em quatro zonas: mapa do documento, memória progressiva do agente, janela de contexto e trecho-alvo.\n"
+                    "- use o mapa e a memória apenas para orientação e coerência;\n"
+                    "- use a janela de contexto para desambiguar o trecho-alvo;\n"
+                    "- ancore cada comentário no trecho-alvo ou em evidência local explícita da janela;\n"
+                    "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
                     "Cada linha do trecho vem no formato [indice_global] (referência | tipo=...). "
                     "Se preencher paragraph_index, use exatamente o número entre colchetes [N] daquela linha; "
                     "nunca use a posição do item no lote.\n"

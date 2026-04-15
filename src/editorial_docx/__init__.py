@@ -1,5 +1,5 @@
 ﻿"""Arquitetura Streamlit + LangGraph para revisão editorial em DOCX."""
 
-from .graph_chat import run_conversation
+from .graph_chat import prepare_review_batches, run_conversation, run_prepared_review
 
-__all__ = ["run_conversation"]
+__all__ = ["prepare_review_batches", "run_conversation", "run_prepared_review"]

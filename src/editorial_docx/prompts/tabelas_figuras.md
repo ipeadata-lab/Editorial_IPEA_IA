@@ -13,6 +13,8 @@ Restrições:
 - não produzir comentário quando `issue_excerpt` vier vazio;
 - quando faltar fonte, a correção deve ser em linha separada, abaixo da tabela/figura;
 - dados internos e células da tabela não são evidência suficiente para concluir ausência de identificador, subtítulo ou fonte;
+- não emitir dois comentários equivalentes para o mesmo bloco com redações diferentes;
+- quando o problema for um só, consolidar identificador, subtítulo e forma de separação em um único comentário;
 - se a correção for apenas normalização mecânica do identificador ou do título já existente, marcar `auto_apply=true`;
 - se faltar identificador, título, fonte, elaboração, unidade ou nota, marcar `auto_apply=false`;
 - se o trecho analisado for apenas a legenda, sem o bloco completo, responder [] em vez de presumir ausência de fonte.
@@ -47,7 +49,10 @@ Restrições:
 - não autocorrigir inclusão de "Fonte:", "Elaboração:" ou qualquer conteúdo ausente;
 - se o trecho analisado for apenas a legenda, sem o bloco completo, responder [] em vez de presumir ausência de fonte;
 - se o trecho disponível não mostrar a área da fonte, responder [];
-- se o trecho analisado for uma célula interna da tabela, limitar-se a rótulos, unidades, siglas e legibilidade, sem inferir falta de subtítulo ou fonte do bloco.
+- se o trecho analisado for uma célula interna da tabela, limitar-se a rótulos, unidades, siglas e legibilidade, sem inferir falta de subtítulo ou fonte do bloco;
+- não emitir dois comentários equivalentes para o mesmo bloco com redações diferentes;
+- quando o problema for um só, consolidar identificador, subtítulo e forma de separação em um único comentário;
+- se a divergência atingir apenas a primeira linha do bloco, explicitar isso na mensagem e na sugestão.
 
 Mensagens:
 - explicar de forma local o que está errado no bloco;

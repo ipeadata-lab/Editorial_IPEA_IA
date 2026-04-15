@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+from difflib import SequenceMatcher
 import re
 import zipfile
 import unicodedata
@@ -9,7 +10,7 @@ from pathlib import Path
 
 from lxml import etree
 
-from .models import AgentComment, agent_short_label
+from .models import AgentComment, DocumentUserComment, agent_short_label
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -184,6 +185,44 @@ def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
     if start != -1:
         end = start + len(normalized_target) - 1
         return text_mapping[start], text_mapping[end] + 1
+
+    target_len = len(normalized_target)
+    if target_len < 6 or len(normalized_text) < 6:
+        return None
+
+    anchor_tokens = [token for token in normalized_target.split() if len(token) >= 5]
+    candidate_starts: set[int] = set()
+    for token in anchor_tokens[:3]:
+        anchor_pos = normalized_target.find(token)
+        search_pos = normalized_text.find(token)
+        while search_pos != -1:
+            candidate_starts.add(max(0, search_pos - max(anchor_pos, 0)))
+            search_pos = normalized_text.find(token, search_pos + 1)
+
+    if not candidate_starts:
+        step = max(1, target_len // 3)
+        candidate_starts.update(range(0, max(len(normalized_text) - target_len + 1, 1), step))
+
+    max_extra = max(8, target_len // 3)
+    best_ratio = 0.0
+    best_span: tuple[int, int] | None = None
+    for start_idx in sorted(candidate_starts):
+        min_len = max(6, target_len - max_extra)
+        max_len = min(len(normalized_text) - start_idx, target_len + max_extra)
+        if max_len < min_len:
+            continue
+        step = max(1, target_len // 8)
+        for window_len in range(min_len, max_len + 1, step):
+            excerpt = normalized_text[start_idx : start_idx + window_len]
+            ratio = SequenceMatcher(None, normalized_target, excerpt).ratio()
+            if ratio < 0.82 or ratio <= best_ratio:
+                continue
+            end_idx = start_idx + window_len - 1
+            best_ratio = ratio
+            best_span = (text_mapping[start_idx], text_mapping[end_idx] + 1)
+
+    if best_span is not None:
+        return best_span
 
     return None
 
@@ -641,6 +680,108 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
     return _refine_contextual_block_types(items)
 
 
+def _comment_text(comment: etree._Element) -> str:
+    paragraphs: list[str] = []
+    for paragraph in comment.findall("w:p", namespaces=NS):
+        text = "".join(node.text or "" for node in paragraph.findall(".//w:t", namespaces=NS)).strip()
+        if text:
+            paragraphs.append(text)
+    return "\n".join(paragraphs).strip()
+
+
+def _paragraph_comment_excerpts(paragraph: etree._Element) -> dict[int, str]:
+    active_ids: set[int] = set()
+    fragments: dict[int, list[str]] = {}
+
+    for child in paragraph:
+        if child.tag == _qname(W_NS, "commentRangeStart"):
+            raw_id = child.get(_qname(W_NS, "id")) or ""
+            if raw_id.isdigit():
+                comment_id = int(raw_id)
+                active_ids.add(comment_id)
+                fragments.setdefault(comment_id, [])
+            continue
+        if child.tag == _qname(W_NS, "commentRangeEnd"):
+            raw_id = child.get(_qname(W_NS, "id")) or ""
+            if raw_id.isdigit():
+                active_ids.discard(int(raw_id))
+            continue
+
+        child_text = "".join(node.text or "" for node in child.findall(".//w:t", namespaces=NS))
+        if not child_text:
+            continue
+        for comment_id in active_ids:
+            fragments.setdefault(comment_id, []).append(child_text)
+
+    return {
+        comment_id: "".join(parts).strip()
+        for comment_id, parts in fragments.items()
+        if "".join(parts).strip()
+    }
+
+
+def extract_docx_user_comments(input_path: Path) -> list[DocumentUserComment]:
+    with zipfile.ZipFile(input_path, "r") as zin:
+        parts = {name: zin.read(name) for name in zin.namelist()}
+
+    comments_raw = parts.get(COMMENTS_PART)
+    if comments_raw is None:
+        return []
+
+    comments_root = _parse_xml(comments_raw)
+    document_root = _parse_xml(parts["word/document.xml"])
+
+    comment_meta: dict[int, tuple[str, str]] = {}
+    for comment in comments_root.findall(_qname(W_NS, "comment")):
+        raw_id = comment.get(_qname(W_NS, "id")) or ""
+        if not raw_id.isdigit():
+            continue
+        comment_meta[int(raw_id)] = (
+            (comment.get(_qname(W_NS, "author")) or "").strip(),
+            _comment_text(comment),
+        )
+
+    paragraphs = document_root.findall(".//w:p", namespaces=NS)
+    out: list[DocumentUserComment] = []
+    seen: set[tuple[int, int | None]] = set()
+    visible_index = -1
+
+    for paragraph in paragraphs:
+        paragraph_text = _paragraph_text(paragraph).strip()
+        if not paragraph_text:
+            continue
+        visible_index += 1
+
+        anchored = _paragraph_comment_excerpts(paragraph)
+        reference_ids = {
+            int(node.get(_qname(W_NS, "id")))
+            for node in paragraph.findall(".//w:commentReference", namespaces=NS)
+            if (node.get(_qname(W_NS, "id")) or "").isdigit()
+        }
+        comment_ids = set(anchored) | reference_ids
+
+        for comment_id in sorted(comment_ids):
+            author, text = comment_meta.get(comment_id, ("", ""))
+            if not text:
+                continue
+            key = (comment_id, visible_index)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(
+                DocumentUserComment(
+                    comment_id=comment_id,
+                    author=author,
+                    text=text,
+                    paragraph_index=visible_index,
+                    anchor_excerpt=anchored.get(comment_id, ""),
+                    paragraph_text=paragraph_text,
+                )
+            )
+
+    return out
+
+
 def _clone_run_with_text(run: etree._Element, text: str) -> etree._Element:
     cloned_run = etree.Element(_qname(W_NS, "r"))
     rpr = run.find("w:rPr", namespaces=NS)
@@ -833,6 +974,8 @@ def _build_review_note(item: AgentComment) -> str:
         return "Normalização estrutural aplicada automaticamente."
     if item.agent == "referencias" and item.auto_apply:
         return "Normalização de referência aplicada automaticamente."
+    if item.agent == "comentarios_usuario_referencias" and item.auto_apply:
+        return "Referência inserida na lista final a partir de comentário do usuário."
     if item.agent == "tabelas_figuras" and item.auto_apply:
         return "Normalização de tabela/figura aplicada automaticamente."
     if item.review_status != "resolvido":
@@ -924,6 +1067,25 @@ def _replace_paragraph_text(paragraph: etree._Element, new_text: str) -> None:
         run.append(preserved_rpr)
     text_node = etree.SubElement(run, _qname(W_NS, "t"))
     text_node.text = new_text
+
+
+def _new_paragraph_like(paragraph: etree._Element, text: str) -> etree._Element:
+    new_paragraph = etree.Element(_qname(W_NS, "p"))
+    ppr = paragraph.find("w:pPr", namespaces=NS)
+    if ppr is not None:
+        new_paragraph.append(etree.fromstring(etree.tostring(ppr)))
+
+    template_run = paragraph.find("w:r", namespaces=NS)
+    new_run = etree.SubElement(new_paragraph, _qname(W_NS, "r"))
+    if template_run is not None:
+        rpr = template_run.find("w:rPr", namespaces=NS)
+        if rpr is not None:
+            new_run.append(etree.fromstring(etree.tostring(rpr)))
+    text_node = etree.SubElement(new_run, _qname(W_NS, "t"))
+    if text.startswith(" ") or text.endswith(" ") or "  " in text:
+        text_node.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    text_node.text = text
+    return new_paragraph
 
 
 def _ensure_child(parent: etree._Element, tag: str) -> etree._Element:
@@ -1042,6 +1204,42 @@ def _apply_auto_formatting(paragraphs: list[etree._Element], non_empty_indexes: 
             continue
 
 
+def _insert_auto_references(
+    paragraphs: list[etree._Element],
+    non_empty_indexes: list[int],
+    comments: list[AgentComment],
+) -> None:
+    insertions: list[tuple[int, str]] = []
+    seen_refs: set[str] = set()
+
+    for item in comments:
+        if item.agent != "comentarios_usuario_referencias" or not item.auto_apply:
+            continue
+        spec = _parse_format_spec(item.format_spec)
+        if spec.get("action") != "insert_reference":
+            continue
+        suggested_fix = (item.suggested_fix or "").strip()
+        if not suggested_fix:
+            continue
+        raw_insert_after = spec.get("insert_after", "")
+        if not raw_insert_after.isdigit():
+            continue
+        visible_index = int(raw_insert_after)
+        if not (0 <= visible_index < len(non_empty_indexes)):
+            continue
+        normalized = _normalized_text(suggested_fix)
+        if normalized in seen_refs:
+            continue
+        seen_refs.add(normalized)
+        insertions.append((non_empty_indexes[visible_index], suggested_fix))
+
+    for docx_index, suggested_fix in sorted(insertions, key=lambda item: item[0], reverse=True):
+        if not (0 <= docx_index < len(paragraphs)):
+            continue
+        anchor = paragraphs[docx_index]
+        anchor.addnext(_new_paragraph_like(anchor, suggested_fix))
+
+
 def _resolve_docx_paragraph_index(item: AgentComment, non_empty_indexes: list[int]) -> int | None:
     paragraph_index = item.paragraph_index
     if paragraph_index is not None and 0 <= paragraph_index < len(non_empty_indexes):
@@ -1055,6 +1253,13 @@ def _build_comment_lines_for_item(item: AgentComment, ordinal: int) -> list[str]
     message = (item.message or "").strip()
     suggestion = (item.suggested_fix or "").strip()
 
+    if item.agent == "comentarios_usuario_referencias":
+        lines: list[str] = []
+        if message:
+            lines.append(message)
+        if suggestion:
+            lines.append(f"Referência inserida: {suggestion}")
+        return lines
     if suggestion:
         return [f"Correção: {suggestion}"]
     return [message] if message else []
@@ -1116,6 +1321,7 @@ def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> by
     paragraphs = document_root.findall(".//w:p", namespaces=NS)
     non_empty_indexes = [i for i, p in enumerate(paragraphs) if _paragraph_text(p).strip()]
     _apply_auto_formatting(paragraphs, non_empty_indexes, comments)
+    _insert_auto_references(paragraphs, non_empty_indexes, comments)
     visible_comments = comments[:]
 
     grouped_comments: dict[int, list[AgentComment]] = {}

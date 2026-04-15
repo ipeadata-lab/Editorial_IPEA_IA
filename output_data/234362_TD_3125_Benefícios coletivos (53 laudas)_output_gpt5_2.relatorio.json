@@ -1,0 +1,1666 @@
+[
+  {
+    "agent": "sin",
+    "category": "Sinopse",
+    "message": "Há quebra de paralelismo verbal no fechamento: o sujeito singular (“O exercício realizado”) puxa dois verbos, mas o segundo está no plural (“sugerem”).",
+    "paragraph_index": 8,
+    "issue_excerpt": "O exercício realizado sustenta a possibilidade de pensar em dimensões distintas de categorização dos benefícios coletivos e sugerem possibilidades promissoras de desenvolvimento de indicadores...",
+    "suggested_fix": "Substituir “sugerem” por “sugere”: “O exercício realizado sustenta a possibilidade de pensar em dimensões distintas de categorização dos benefícios coletivos e sugere possibilidades promissoras de desenvolvimento de indicadores que possam dar melhor visibilidade a cada um dos tipos de benefícios coletivos.”"
+  },
+  {
+    "agent": "sin",
+    "category": "keywords",
+    "message": "Há repetição de palavras-chave na lista.",
+    "paragraph_index": 15,
+    "issue_excerpt": "social security; collective benefits; social indicators; health; social assistance; social security; social protection.",
+    "suggested_fix": "Remover as repetições e manter apenas entradas únicas."
+  },
+  {
+    "agent": "sin",
+    "category": "Keywords",
+    "message": "Há repetição literal de termo na lista de Keywords (“social security” aparece duas vezes).",
+    "paragraph_index": 15,
+    "issue_excerpt": "social security; collective benefits; social indicators; health; social assistance; social security; social protection.",
+    "suggested_fix": "Remover a repetição e manter o termo uma única vez; por exemplo: “social security; collective benefits; social indicators; health; social assistance; social protection.”"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "Os títulos de nível 1 no trecho aparecem em negrito, mas não estão em caixa alta como os demais títulos de mesmo nível devem estar.",
+    "paragraph_index": 17,
+    "issue_excerpt": "Introdução",
+    "suggested_fix": "Aplicar caixa alta ao título (nível 1)."
+  },
+  {
+    "agent": "gram",
+    "category": "Ortografia/acentuação",
+    "message": "Falta acento circunflexo na forma verbal do plural.",
+    "paragraph_index": 20,
+    "issue_excerpt": "vem sendo tradicionalmente acompanhadas",
+    "suggested_fix": "vêm sendo tradicionalmente acompanhadas"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "Os títulos de nível 1 no trecho aparecem em negrito, mas não estão em caixa alta como os demais títulos de mesmo nível devem estar.",
+    "paragraph_index": 22,
+    "issue_excerpt": "Classificação dos benefícios coletivos",
+    "suggested_fix": "Aplicar caixa alta ao título (nível 1)."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Há vírgula separando sujeito e verbo, o que é inadequado neste caso.",
+    "paragraph_index": 24,
+    "issue_excerpt": "proteção social, remete",
+    "suggested_fix": "proteção social remete"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deve concordar com \"coletivos\" (plural).",
+    "paragraph_index": 25,
+    "issue_excerpt": "coletivos que detém um reconhecimento próprio",
+    "suggested_fix": "coletivos que detêm um reconhecimento próprio"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Há vírgula indevida separando o sujeito do verbo.",
+    "paragraph_index": 27,
+    "issue_excerpt": "serviços sociais, se espraiam",
+    "suggested_fix": "serviços sociais se espraiam"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância nominal",
+    "message": "O adjetivo está no singular, mas concorda com o substantivo plural “benefícios”.",
+    "paragraph_index": 27,
+    "issue_excerpt": "benefícios monetário",
+    "suggested_fix": "benefícios monetários"
+  },
+  {
+    "agent": "sin",
+    "category": "Palavras-chave/Keywords",
+    "message": "As Palavras-chave e as Keywords não estão alinhadas em quantidade/itens (PT tem “previdência social”, EN repete “social security” e não explicita o equivalente de “previdência social”).",
+    "paragraph_index": 27,
+    "issue_excerpt": "Palavras-chave: ... previdência social; ... / Keywords: ... social security; ... social security; ...",
+    "suggested_fix": "Harmonizar as listas para que os itens correspondam entre idiomas; por exemplo, se mantiver “previdência social” em PT, usar “social insurance” (ou “pensions”) em EN e evitar duplicar “social security”."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "Os títulos de nível 1 no trecho aparecem em negrito, mas não estão em caixa alta como os demais títulos de mesmo nível devem estar.",
+    "paragraph_index": 29,
+    "issue_excerpt": "Classificação pelo tipo de beneficiário",
+    "suggested_fix": "Aplicar caixa alta ao título (nível 1)."
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Falta acento agudo em \"à\", que aqui é locução adverbial feminina.",
+    "paragraph_index": 30,
+    "issue_excerpt": "Face a definição apresentada",
+    "suggested_fix": "Face à definição apresentada"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título de nível 2 está todo em caixa alta e baixa, mas o padrão pede apenas a primeira palavra com inicial maiúscula e as demais em caixa baixa.",
+    "paragraph_index": 31,
+    "issue_excerpt": "Direitos difusos e coletivos",
+    "suggested_fix": "Ajustar a caixa do título (nível 2) para: primeira palavra com inicial maiúscula e demais palavras em caixa baixa."
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O particípio deve concordar com o sujeito no plural.",
+    "paragraph_index": 32,
+    "issue_excerpt": "têm sido afirmado",
+    "suggested_fix": "têm sido afirmados"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O particípio/adjetivo deve concordar com o sujeito no plural.",
+    "paragraph_index": 32,
+    "issue_excerpt": "amparado por dispositivos constitucionais",
+    "suggested_fix": "amparados por dispositivos constitucionais"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deve concordar com o núcleo do sujeito no plural.",
+    "paragraph_index": 32,
+    "issue_excerpt": "foi consolidado",
+    "suggested_fix": "foram consolidados"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula obrigatória para isolar a oração adverbial deslocada no início do período.",
+    "paragraph_index": 35,
+    "issue_excerpt": "Por sua vez",
+    "suggested_fix": "Por sua vez,"
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Há separação indevida do artigo antes de palavra iniciada por vogal.",
+    "paragraph_index": 35,
+    "issue_excerpt": "o exercício de a diferenciação",
+    "suggested_fix": "o exercício da diferenciação"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula obrigatória para introduzir a citação direta após \"autor\".",
+    "paragraph_index": 37,
+    "issue_excerpt": "Segundo o autor “",
+    "suggested_fix": "Segundo o autor, “"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deve concordar com o sujeito plural \"grupos\".",
+    "paragraph_index": 37,
+    "issue_excerpt": "grupos que detém",
+    "suggested_fix": "grupos que detêm"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 37,
+    "issue_excerpt": "Para Jovanovic (2005)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Para Jovanovic (2005) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Falta acento circunflexo em \"detêm\" (3ª pessoa do plural do verbo \"deter\").",
+    "paragraph_index": 38,
+    "issue_excerpt": "grupos que detém uma subjetividade moral",
+    "suggested_fix": "grupos que detêm uma subjetividade moral"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 39,
+    "issue_excerpt": "Fraser (2001)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Fraser (2001) na lista final."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título de nível 2 está todo em caixa alta e baixa, mas o padrão pede apenas a primeira palavra com inicial maiúscula e as demais em caixa baixa.",
+    "paragraph_index": 41,
+    "issue_excerpt": "Beneficiários individuais",
+    "suggested_fix": "Ajustar a caixa do título (nível 2) para: primeira palavra com inicial maiúscula e demais palavras em caixa baixa."
+  },
+  {
+    "agent": "gram",
+    "category": "Concordância",
+    "message": "O verbo deve concordar com o sujeito composto.",
+    "paragraph_index": 42,
+    "issue_excerpt": "que assenta o acesso",
+    "suggested_fix": "que assentam o acesso"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "O travessão de inciso está com hífen simples no fechamento; padronize com o mesmo sinal do trecho.",
+    "paragraph_index": 49,
+    "issue_excerpt": "pessoa com deficiência -",
+    "suggested_fix": "pessoa com deficiência –"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "A construção \"seja..., seja...\" exige paralelismo; falta o segundo \"seja\" para manter a estrutura.",
+    "paragraph_index": 50,
+    "issue_excerpt": "seja a coletividade em geral ou grupos e atores coletivos",
+    "suggested_fix": "seja a coletividade em geral, seja grupos e atores coletivos"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deve concordar com o núcleo plural \"direitos\".",
+    "paragraph_index": 50,
+    "issue_excerpt": "direitos de proteção social responde",
+    "suggested_fix": "direitos de proteção social respondem"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título de nível 2 está todo em caixa alta e baixa, mas o padrão pede apenas a primeira palavra com inicial maiúscula e as demais em caixa baixa.",
+    "paragraph_index": 51,
+    "issue_excerpt": "Classificação dos beneficiários coletivos na seguridade social",
+    "suggested_fix": "Ajustar a caixa do título (nível 2) para: primeira palavra com inicial maiúscula e demais palavras em caixa baixa."
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Falta a preposição \"da\" para formar a enumeração correta dos campos.",
+    "paragraph_index": 52,
+    "issue_excerpt": "no campo da previdência social da assistência social e da saúde",
+    "suggested_fix": "no campo da previdência social, da assistência social e da saúde"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O adjetivo deve concordar com o substantivo plural \"características\".",
+    "paragraph_index": 52,
+    "issue_excerpt": "característica pessoais",
+    "suggested_fix": "características pessoais"
+  },
+  {
+    "agent": "gram",
+    "category": "acentuação",
+    "message": "Falta acento em \"detêm\" (verbo \"deter\" na 3ª pessoa do plural).",
+    "paragraph_index": 53,
+    "issue_excerpt": "coletivos que detém",
+    "suggested_fix": "coletivos que detêm"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "Os títulos de nível 3 no trecho estão em itálico, mas não estão em negrito como os demais títulos equivalentes (nível 3) do documento.",
+    "paragraph_index": 54,
+    "issue_excerpt": "Beneficiários coletivos não identificáveis",
+    "suggested_fix": "Remover itálico e aplicar negrito ao título (nível 3)."
+  },
+  {
+    "agent": "tip",
+    "category": "heading",
+    "message": "Remover o itálico deste subtítulo e manter o negrito.",
+    "paragraph_index": 54,
+    "issue_excerpt": "Beneficiários coletivos não identificáveis",
+    "suggested_fix": "Remover itálico do título."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Há vírgula indevida separando sujeito e verbo.",
+    "paragraph_index": 56,
+    "issue_excerpt": "de vacinação, contribui",
+    "suggested_fix": "de vacinação contribui"
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 57,
+    "issue_excerpt": "Gráfico 1: Cobertura populacional do Sisagua, por forma de abastecimento (2014-2019)",
+    "suggested_fix": "Separar em duas linhas: `GRÁFICO 1` na primeira linha e `Cobertura populacional do Sisagua, por forma de abastecimento (2014-2019)` na linha abaixo."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_legendas",
+    "message": "As legendas de ilustração (Gráfico/Quadro) estão em negrito, mas o padrão de nome da ilustração pede peso regular (sem negrito).",
+    "paragraph_index": 57,
+    "issue_excerpt": "Gráfico 1: Cobertura populacional do Sisagua, por forma de abastecimento (2014-2019)",
+    "suggested_fix": "Remover negrito do parágrafo da legenda/nome da ilustração."
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 59,
+    "issue_excerpt": "Fine, Eames & Heymann, 2011",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Eames & Heymann (2011) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Há vírgula indevida separando o adjunto adverbial do restante da oração.",
+    "paragraph_index": 63,
+    "issue_excerpt": "frequentemente, os beneficiários",
+    "suggested_fix": "frequentemente os beneficiários"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo está no plural, mas o sujeito (“a baixa visibilidade”) está no singular.",
+    "paragraph_index": 63,
+    "issue_excerpt": "a baixa visibilidade de ações nas áreas de vigilância sanitária e de vacinação, contribuem",
+    "suggested_fix": "a baixa visibilidade de ações nas áreas de vigilância sanitária e de vacinação contribui"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "Os títulos de nível 3 no trecho estão em itálico, mas não estão em negrito como os demais títulos equivalentes (nível 3) do documento.",
+    "paragraph_index": 64,
+    "issue_excerpt": "Beneficiários coletivos pertencentes a minorias étnicas",
+    "suggested_fix": "Remover itálico e aplicar negrito ao título (nível 3)."
+  },
+  {
+    "agent": "tip",
+    "category": "heading",
+    "message": "Remover o itálico deste subtítulo e manter o negrito.",
+    "paragraph_index": 64,
+    "issue_excerpt": "Beneficiários coletivos pertencentes a minorias étnicas",
+    "suggested_fix": "Remover itálico do título."
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 67,
+    "issue_excerpt": "Gráfico 2: Taxa de mortalidade infantil Brasil, Sistema de Atenção à Saúde Indígena (SasiSUS) e Distrito Sanitário Especial Indígena Yanomami (DSEI Yanomami) (2018-2022)",
+    "suggested_fix": "Separar em duas linhas: `GRÁFICO 2` na primeira linha e `Taxa de mortalidade infantil Brasil, Sistema de Atenção à Saúde Indígena (SasiSUS) e Distrito Sanitário Especial Indígena Yanomami (DSEI Yanomami) (2018-2022)` na linha abaixo."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_legendas",
+    "message": "As legendas de ilustração (Gráfico/Quadro) estão em negrito, mas o padrão de nome da ilustração pede peso regular (sem negrito).",
+    "paragraph_index": 67,
+    "issue_excerpt": "Gráfico 2: Taxa de mortalidade infantil Brasil, Sistema de Atenção à Saúde Indígena (SasiSUS) e Distrito Sanitário Especial Indígena Yanomami (DSEI Yanomami) (2018-2022)",
+    "suggested_fix": "Remover negrito do parágrafo da legenda/nome da ilustração."
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 69,
+    "issue_excerpt": "MDS, 2023, p. 8",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a MDS (2023) na lista final."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "Os títulos de nível 3 no trecho estão em itálico, mas não estão em negrito como os demais títulos equivalentes (nível 3) do documento.",
+    "paragraph_index": 70,
+    "issue_excerpt": "Beneficiários pertencentes a grupos submetidos a processos de discriminação",
+    "suggested_fix": "Remover itálico e aplicar negrito ao título (nível 3)."
+  },
+  {
+    "agent": "tip",
+    "category": "heading",
+    "message": "Remover o itálico deste subtítulo e manter o negrito.",
+    "paragraph_index": 70,
+    "issue_excerpt": "Beneficiários pertencentes a grupos submetidos a processos de discriminação",
+    "suggested_fix": "Remover itálico do título."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "A vírgula separa indevidamente o verbo do seu complemento.",
+    "paragraph_index": 71,
+    "issue_excerpt": "brasileiras, e vem",
+    "suggested_fix": "brasileiras e vem"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Há vírgula indevida após a locução \"além\", separando-a do termo a que se liga.",
+    "paragraph_index": 75,
+    "issue_excerpt": "divisou além, dos beneficiários individuais,",
+    "suggested_fix": "divisou além dos beneficiários individuais,"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula após adjunto adverbial deslocado no início do período.",
+    "paragraph_index": 77,
+    "issue_excerpt": "Neste processo",
+    "suggested_fix": "Neste processo,"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância verbal",
+    "message": "O sujeito está no singular, mas o verbo foi flexionado no plural.",
+    "paragraph_index": 77,
+    "issue_excerpt": "Parte importante desses avanços respondem",
+    "suggested_fix": "Parte importante desses avanços responde"
+  },
+  {
+    "agent": "gram",
+    "category": "regência",
+    "message": "O verbo \"assistir\" (no sentido de presenciar) exige a preposição \"a\".",
+    "paragraph_index": 77,
+    "issue_excerpt": "assistiu-se a formulação e implementação",
+    "suggested_fix": "assistiu-se à formulação e implementação"
+  },
+  {
+    "agent": "gram",
+    "category": "morfossintaxe",
+    "message": "Uso inadequado de advérbio em posição em que se pede adjetivo (característica do tipo de entrega).",
+    "paragraph_index": 78,
+    "issue_excerpt": "predominantemente individualmente",
+    "suggested_fix": "predominantemente individuais"
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Falta acento gráfico em palavra paroxítona terminada em ditongo.",
+    "paragraph_index": 80,
+    "issue_excerpt": "experiencia",
+    "suggested_fix": "experiência"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 81,
+    "issue_excerpt": "Deslandes (2006)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Deslandes (2006) na lista final."
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 82,
+    "issue_excerpt": "DESLANDES, 2006, p. 38",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a DESLANDES (2006) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "A forma verbal deve concordar com o núcleo singular \"protocolo clínico\".",
+    "paragraph_index": 84,
+    "issue_excerpt": "protocolo clínico e diretrizes terapêuticas",
+    "suggested_fix": "protocolo clínico e as diretrizes terapêuticas"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 84,
+    "issue_excerpt": "Mantovani (2005)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Mantovani (2005) na lista final."
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 84,
+    "issue_excerpt": "UFSC, 2018",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a UFSC (2018) na lista final."
+  },
+  {
+    "agent": "tab",
+    "category": "Tabelas e figuras",
+    "message": "O texto cita “(quadro 2)”, mas a ilustração exibida está identificada como “Quadro 1”, gerando inconsistência de numeração e referência cruzada.",
+    "paragraph_index": 85,
+    "issue_excerpt": "(quadro 2)",
+    "suggested_fix": "Substituir por “(quadro 1)” ou renumerar a legenda do quadro para “Quadro 2” e ajustar as demais referências no texto para manter a sequência."
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 86,
+    "issue_excerpt": "Quadro 1: Campanhas nacionais de saúde realizadas em 2023",
+    "suggested_fix": "Separar em duas linhas: `QUADRO 1` na primeira linha e `Campanhas nacionais de saúde realizadas em 2023` na linha abaixo."
+  },
+  {
+    "agent": "tab",
+    "category": "Fonte",
+    "message": "O bloco está sem uma linha de fonte ou elaboração logo abaixo da legenda.",
+    "paragraph_index": 86,
+    "issue_excerpt": "Quadro 1: Campanhas nacionais de saúde realizadas em 2023",
+    "suggested_fix": "Adicionar uma linha própria com `Fonte:` ou `Elaboração:` abaixo do bloco."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_legendas",
+    "message": "As legendas de ilustração (Gráfico/Quadro) estão em negrito, mas o padrão de nome da ilustração pede peso regular (sem negrito).",
+    "paragraph_index": 86,
+    "issue_excerpt": "Quadro 1: Campanhas nacionais de saúde realizadas em 2023",
+    "suggested_fix": "Remover negrito do parágrafo da legenda/nome da ilustração."
+  },
+  {
+    "agent": "gram",
+    "category": "acentuação",
+    "message": "Falta acento grave indicativo de crase antes de \"Famílias\".",
+    "paragraph_index": 126,
+    "issue_excerpt": "as Famílias e Indivíduos",
+    "suggested_fix": "às Famílias e Indivíduos"
+  },
+  {
+    "agent": "gram",
+    "category": "sigla",
+    "message": "A sigla do serviço aparece com letras trocadas em relação à forma já apresentada no texto.",
+    "paragraph_index": 127,
+    "issue_excerpt": "SCVF",
+    "suggested_fix": "SCFV"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula para separar a oração relativa explicativa iniciada por \"frequentes\".",
+    "paragraph_index": 127,
+    "issue_excerpt": "pessoas idosas e com deficiências (Jaccoud, 2024)",
+    "suggested_fix": "pessoas idosas e com deficiências, (Jaccoud, 2024)"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "Há discordância entre o verbo no plural e o núcleo do sujeito no singular (\"a capacidade protetiva\").",
+    "paragraph_index": 127,
+    "issue_excerpt": "que deles fazem parte",
+    "suggested_fix": "que deles faz parte"
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Há um \"e\" sobrando antes do verbo, causando erro de digitação.",
+    "paragraph_index": 127,
+    "issue_excerpt": "também e promovem",
+    "suggested_fix": "também promovem"
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 128,
+    "issue_excerpt": "Gráfico 3: Porcentagem de pessoas idosas na população participando do SCFV (2012-2023)",
+    "suggested_fix": "Separar em duas linhas: `GRÁFICO 3` na primeira linha e `Porcentagem de pessoas idosas na população participando do SCFV (2012-2023)` na linha abaixo."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_legendas",
+    "message": "As legendas de ilustração (Gráfico/Quadro) estão em negrito, mas o padrão de nome da ilustração pede peso regular (sem negrito).",
+    "paragraph_index": 128,
+    "issue_excerpt": "Gráfico 3: Porcentagem de pessoas idosas na população participando do SCFV (2012-2023)",
+    "suggested_fix": "Remover negrito do parágrafo da legenda/nome da ilustração."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Vírgula separando verbo de seu complemento, o que é incorreto neste caso.",
+    "paragraph_index": 131,
+    "issue_excerpt": "facilitar o acesso a serviços no território, e fortalecer",
+    "suggested_fix": "facilitar o acesso a serviços no território e fortalecer"
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 132,
+    "issue_excerpt": "Gráfico 4: Porcentagem de CRAS que realizaram atendimentos coletivos, por tipo de temática abordada (2023)",
+    "suggested_fix": "Separar em duas linhas: `GRÁFICO 4` na primeira linha e `Porcentagem de CRAS que realizaram atendimentos coletivos, por tipo de temática abordada (2023)` na linha abaixo."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_legendas",
+    "message": "As legendas de ilustração (Gráfico/Quadro) estão em negrito, mas o padrão de nome da ilustração pede peso regular (sem negrito).",
+    "paragraph_index": 132,
+    "issue_excerpt": "Gráfico 4: Porcentagem de CRAS que realizaram atendimentos coletivos, por tipo de temática abordada (2023)",
+    "suggested_fix": "Remover negrito do parágrafo da legenda/nome da ilustração."
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Falta acento grave indicativo de crase na locução “à lógica”.",
+    "paragraph_index": 137,
+    "issue_excerpt": "fogem a lógica puramente espacial",
+    "suggested_fix": "fogem à lógica puramente espacial"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta ponto final antes da citação, pois a frase fica interrompida por vírgula.",
+    "paragraph_index": 137,
+    "issue_excerpt": "O território seria assim,",
+    "suggested_fix": "O território seria assim."
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "O uso do gerúndio no início da frase exige a forma pronominal “Apropriando-se”.",
+    "paragraph_index": 137,
+    "issue_excerpt": "Se apropriando de enfoques",
+    "suggested_fix": "Apropriando-se de enfoques"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta espaço após a abreviação de página na referência.",
+    "paragraph_index": 138,
+    "issue_excerpt": "p.14",
+    "suggested_fix": "p. 14"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "Há discordância de gênero entre o pronome e o antecedente (“território”).",
+    "paragraph_index": 138,
+    "issue_excerpt": "no qual ela está inserida",
+    "suggested_fix": "no qual ele está inserido"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "A vírgula separa indevidamente o sujeito (“A territorialização”) do verbo.",
+    "paragraph_index": 140,
+    "issue_excerpt": "A territorialização, é assim,",
+    "suggested_fix": "A territorialização é assim"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo está no plural, mas o antecedente mais próximo é singular (“população”).",
+    "paragraph_index": 140,
+    "issue_excerpt": "necessidades da população que habitam em um espaço físico",
+    "suggested_fix": "necessidades da população que habita em um espaço físico"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O paralelismo verbal exige formas no infinitivo: “identificação precoce e controle” pede “controlar”.",
+    "paragraph_index": 144,
+    "issue_excerpt": "na identificação precoce e controle desses agravos",
+    "suggested_fix": "na identificação precoce e no controle desses agravos"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta pontuação ao final do trecho, deixando a frase incompleta após a referência.",
+    "paragraph_index": 145,
+    "issue_excerpt": "Como apontam Najar e Marques (2003)",
+    "suggested_fix": "Como apontam Najar e Marques (2003),"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 145,
+    "issue_excerpt": "Marques (2003)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Marques (2003) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "maiúsculas/minúsculas",
+    "message": "A frase inicia com letra minúscula após ponto final, contrariando a regra de início de frase com maiúscula.",
+    "paragraph_index": 146,
+    "issue_excerpt": "mais do que qualquer outra atividade do setor terciário",
+    "suggested_fix": "Mais do que qualquer outra atividade do setor terciário"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 146,
+    "issue_excerpt": "Vaguet, 2001",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Vaguet (2001) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "Pontuação",
+    "message": "Falta pontuação terminal ao final do parágrafo.",
+    "paragraph_index": 147,
+    "issue_excerpt": "ao desenho de estratégias territorializadas de intervenção",
+    "suggested_fix": "ao desenho de estratégias territorializadas de intervenção."
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deve concordar com o pronome relativo “em que” (território), e não com “CRAS”.",
+    "paragraph_index": 150,
+    "issue_excerpt": "em que serão atuantes",
+    "suggested_fix": "em que atuará"
+  },
+  {
+    "agent": "gram",
+    "category": "colocação pronominal",
+    "message": "Em início de oração, a próclise não é admitida na norma-padrão.",
+    "paragraph_index": 151,
+    "issue_excerpt": "se propôs",
+    "suggested_fix": "propôs-se"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título com estilo heading 1 está em caixa baixa/mista, mas títulos de nível 1 devem estar em caixa alta.",
+    "paragraph_index": 152,
+    "issue_excerpt": "Classificação por resultados das políticas públicas",
+    "suggested_fix": "Aplicar CAIXA ALTA ao título (manter negrito)."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula obrigatória para separar a oração subordinada adverbial deslocada (\"Na sequência\") do restante da frase.",
+    "paragraph_index": 155,
+    "issue_excerpt": "Na sequência aprofunda-se a compreensão",
+    "suggested_fix": "Na sequência, aprofunda-se a compreensão"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título com estilo heading 2 está em caixa alta/mista além da primeira palavra; em títulos de nível 2, apenas a 1ª palavra deve iniciar em maiúscula e o restante deve ficar em caixa baixa.",
+    "paragraph_index": 156,
+    "issue_excerpt": "Enfoques sobre os resultados da Política Social",
+    "suggested_fix": "Manter negrito e aplicar caixa com apenas a 1ª palavra iniciando em maiúscula e as demais em caixa baixa."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula antes de \"portanto\" para isolar a expressão explicativa/intercalada.",
+    "paragraph_index": 158,
+    "issue_excerpt": "integração social, portanto",
+    "suggested_fix": "integração social, portanto,"
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Uso indevido de maiúscula em adjetivo pátrio/derivado; aqui cabe minúscula.",
+    "paragraph_index": 158,
+    "issue_excerpt": "Durkheimiana",
+    "suggested_fix": "durkheimiana"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 158,
+    "issue_excerpt": "CASTEL, 1998",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a CASTEL (1998) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Há espaço indevido antes do parêntese que inicia a referência.",
+    "paragraph_index": 160,
+    "issue_excerpt": "“custos sociais”. (Kerstenetzky, 2023, p.67)",
+    "suggested_fix": "“custos sociais”.(Kerstenetzky, 2023, p.67)"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula obrigatória antes de \"porque\" em oração explicativa.",
+    "paragraph_index": 161,
+    "issue_excerpt": "entre outras questões porque",
+    "suggested_fix": "entre outras questões, porque"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "A frase inicia com letra minúscula, contrariando a regra de início de frase com maiúscula.",
+    "paragraph_index": 163,
+    "issue_excerpt": "desde las que piensan",
+    "suggested_fix": "Desde las que piensan"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta aspas de abertura antes da citação, já que há aspas de fechamento ao final do trecho.",
+    "paragraph_index": 163,
+    "issue_excerpt": "desde las que piensan",
+    "suggested_fix": "Inserir aspas de abertura antes de \"Desde\"."
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 163,
+    "issue_excerpt": "Draibe e Riesco, 2007, p.12-13",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Draibe (2007) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O sujeito oracional \"Embora tenha sido concebido...\" exige verbo no masculino: \"concebida\" não concorda com o referente elíptico.",
+    "paragraph_index": 164,
+    "issue_excerpt": "Embora tenha sido concebido nos quadros da teoria econômica convencional,",
+    "suggested_fix": "Embora tenha sido concebida nos quadros da teoria econômica convencional,"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deveria concordar com o núcleo plural de \"a influência\", que está no singular.",
+    "paragraph_index": 164,
+    "issue_excerpt": "Pode-se reconhecer nessas formulações a influência da contribuição de Polanyi",
+    "suggested_fix": "Pode-se reconhecer nessas formulações as influências da contribuição de Polanyi"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula obrigatória para isolar o conector \"conforme\".",
+    "paragraph_index": 167,
+    "issue_excerpt": "pois conforme Norbert Elias (1970),",
+    "suggested_fix": "pois, conforme Norbert Elias (1970),"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O particípio deve concordar com \"efeitos de transbordamento\" (plural).",
+    "paragraph_index": 167,
+    "issue_excerpt": "como efeitos de transbordamento resultante de interações",
+    "suggested_fix": "como efeitos de transbordamento resultantes de interações"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 167,
+    "issue_excerpt": "Norbert Elias (1970)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Norbert Elias (1970) na lista final."
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 167,
+    "issue_excerpt": "Viney (2021)",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Viney (2021) na lista final."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula obrigatória antes de \"como\" em comparação correlativa \"não apenas..., como...\".",
+    "paragraph_index": 168,
+    "issue_excerpt": "não são apenas inaceitáveis sob a perspectiva dos direitos humanos, como têm",
+    "suggested_fix": "não são apenas inaceitáveis sob a perspectiva dos direitos humanos, como também têm"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância verbal",
+    "message": "O sujeito \"A oferta de bens e serviços sociais\" está no singular, mas o verbo foi flexionado no plural.",
+    "paragraph_index": 169,
+    "issue_excerpt": "A oferta de bens e serviços sociais podem resultar",
+    "suggested_fix": "A oferta de bens e serviços sociais pode resultar"
+  },
+  {
+    "agent": "ref",
+    "category": "citation_match",
+    "message": "Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+    "paragraph_index": 169,
+    "issue_excerpt": "Fleurbaey, Kanbur e Viney, 2021",
+    "suggested_fix": "Incluir ou revisar a referência correspondente a Kanbur (2021) na lista final."
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título com estilo heading 2 está com maiúsculas internas (ex.: termos em maiúscula) fora do padrão do mesmo nível; em títulos de nível 2, apenas a 1ª palavra deve iniciar em maiúscula e o restante deve ficar em caixa baixa.",
+    "paragraph_index": 170,
+    "issue_excerpt": "Classificação dos resultados das Políticas de Seguridade Social",
+    "suggested_fix": "Manter negrito e aplicar caixa com apenas a 1ª palavra iniciando em maiúscula e as demais em caixa baixa."
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O núcleo está no singular (“inatividade”), mas o complemento está no plural (“decorrente”); é necessário ajustar para o plural.",
+    "paragraph_index": 175,
+    "issue_excerpt": "inatividade de trabalhadores decorrente de adoecimento",
+    "suggested_fix": "inatividade de trabalhadores decorrentes de adoecimento"
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "A expressão composta deve levar hífen.",
+    "paragraph_index": 176,
+    "issue_excerpt": "bem estar",
+    "suggested_fix": "bem-estar"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O substantivo está no plural (“atendimento”), mas o artigo está no singular; é necessário ajustar para o plural.",
+    "paragraph_index": 176,
+    "issue_excerpt": "dos atendimento",
+    "suggested_fix": "dos atendimentos"
+  },
+  {
+    "agent": "gram",
+    "category": "grafia",
+    "message": "Em “et al.”, falta o ponto após “al”.",
+    "paragraph_index": 177,
+    "issue_excerpt": "et al 2019",
+    "suggested_fix": "et al. 2019"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O verbo deve concordar com o sujeito no singular (“a renda ...”).",
+    "paragraph_index": 177,
+    "issue_excerpt": "representaram",
+    "suggested_fix": "representava"
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 178,
+    "issue_excerpt": "Gráfico 5: Composição do rendimento domiciliar por fonte, segundo décimos da renda domiciliar per capita (2020 e 2022)",
+    "suggested_fix": "Separar em duas linhas: `GRÁFICO 5` na primeira linha e `Composição do rendimento domiciliar por fonte, segundo décimos da renda domiciliar per capita (2020 e 2022)` na linha abaixo."
+  },
+  {
+    "agent": "tip",
+    "category": "alinhamento_legendas",
+    "message": "A legenda está como caption em negrito, mas o alinhamento padrão de títulos/legendas de ilustrações no documento é à esquerda (não centralizado).",
+    "paragraph_index": 178,
+    "issue_excerpt": "Gráfico 5: Composição do rendimento domiciliar por fonte, segundo décimos da renda domiciliar per capita (2020 e 2022)",
+    "suggested_fix": "Alinhar a legenda à esquerda (manter negrito)."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Em nota de fonte, falta pontuação final.",
+    "paragraph_index": 179,
+    "issue_excerpt": "Fonte: Portal Beneficiômetro da Seguridade Social",
+    "suggested_fix": "Fonte: Portal Beneficiômetro da Seguridade Social."
+  },
+  {
+    "agent": "tab",
+    "category": "tabelas_figuras",
+    "message": "A tabela não apresenta a linha de fonte logo abaixo do bloco, indicando a origem dos dados (e, se aplicável, a elaboração).",
+    "paragraph_index": 184,
+    "issue_excerpt": "Tabela 1: Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006",
+    "suggested_fix": "Inserir abaixo da tabela (em parágrafo exclusivo):\nFonte: Ipea (2010).\nElaboração: [preencher, se aplicável]."
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 184,
+    "issue_excerpt": "Tabela 1: Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006",
+    "suggested_fix": "Separar em duas linhas: `TABELA 1` na primeira linha e `Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006` na linha abaixo."
+  },
+  {
+    "agent": "tab",
+    "category": "Fonte",
+    "message": "O bloco está sem uma linha de fonte ou elaboração logo abaixo da legenda.",
+    "paragraph_index": 184,
+    "issue_excerpt": "Tabela 1: Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006",
+    "suggested_fix": "Adicionar uma linha própria com `Fonte:` ou `Elaboração:` abaixo do bloco."
+  },
+  {
+    "agent": "tab",
+    "category": "tabelas_figuras",
+    "message": "O cabeçalho está quebrado em três células (“Variação”, “%”, “PIB”), o que prejudica a leitura; o ideal é unificar em um único rótulo com unidade.",
+    "paragraph_index": 184,
+    "issue_excerpt": "Variação\n%\nPIB",
+    "suggested_fix": "Unificar o cabeçalho em uma única célula, por exemplo: “Variação do PIB (%)”."
+  },
+  {
+    "agent": "tip",
+    "category": "alinhamento_legendas",
+    "message": "A legenda está como caption em negrito, mas o alinhamento padrão de títulos/legendas de ilustrações no documento é à esquerda (não centralizado).",
+    "paragraph_index": 184,
+    "issue_excerpt": "Tabela 1: Transferências e pagamento de juros – efeitos multiplicadores decorrentes de choque de 1% do PIB – 2006",
+    "suggested_fix": "Alinhar a legenda à esquerda (manter negrito)."
+  },
+  {
+    "agent": "tab",
+    "category": "tabelas_figuras",
+    "message": "Os valores na coluna “Renda das famílias” usam casas decimais inconsistentes (ex.: “2,02” vs. “2,2” e “2,1”), o que reduz a padronização e comparabilidade visual.",
+    "paragraph_index": 195,
+    "issue_excerpt": "2,2",
+    "suggested_fix": "Padronizar as casas decimais na coluna (ex.: duas casas): substituir “2,2” por “2,20” e “2,1” por “2,10” (e aplicar o mesmo padrão aos demais valores, se necessário)."
+  },
+  {
+    "agent": "tab",
+    "category": "tabela_figura-formatacao_numerica",
+    "message": "Na tabela, há valor numérico com número de casas decimais diferente dos demais (\"2,1\" vs. valores com duas casas), o que prejudica a leitura comparativa.",
+    "paragraph_index": 201,
+    "issue_excerpt": "2,1",
+    "suggested_fix": "Padronize as casas decimais na coluna (ex.: alterar para \"2,10\" para manter duas casas decimais, como nos demais valores)."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta vírgula para isolar a expressão intercalada “ainda”.",
+    "paragraph_index": 215,
+    "issue_excerpt": "podem ainda ser utilizados",
+    "suggested_fix": "podem, ainda, ser utilizados"
+  },
+  {
+    "agent": "gram",
+    "category": "Concordância",
+    "message": "A construção contém partícula expletiva dispensável.",
+    "paragraph_index": 217,
+    "issue_excerpt": "observa-se que",
+    "suggested_fix": "observa-se"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta a preposição e o artigo definidos exigidos pela locução \"no caso da\".",
+    "paragraph_index": 218,
+    "issue_excerpt": "como no caso previdência rural",
+    "suggested_fix": "como no caso da previdência rural"
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Falta acento grave no advérbio interrogativo/relativo \"quanto\" usado com sentido de \"no que diz respeito a\".",
+    "paragraph_index": 218,
+    "issue_excerpt": "Há evidências quanto aos impactos socioeconômicos",
+    "suggested_fix": "Há evidências quanto a impactos socioeconômicos"
+  },
+  {
+    "agent": "gram",
+    "category": "referência",
+    "message": "Falta vírgula obrigatória na referência entre autor e ano, conforme forma padrão de citação no próprio trecho.",
+    "paragraph_index": 218,
+    "issue_excerpt": "(Delgado e Cardoso Jr. 2000)",
+    "suggested_fix": "(Delgado e Cardoso Jr., 2000)"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O substantivo deve ir ao plural para concordar com \"pesquisas\".",
+    "paragraph_index": 219,
+    "issue_excerpt": "Em termo de resultados indiretos",
+    "suggested_fix": "Em termos de resultados indiretos"
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Ponto entre parênteses após ponto final é indevido; a referência deve ficar sem o ponto interno.",
+    "paragraph_index": 222,
+    "issue_excerpt": "14,1%. (Gráfico 6).",
+    "suggested_fix": "14,1% (Gráfico 6)."
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 224,
+    "issue_excerpt": "Gráfico 6: Efeito simulado da ausência de benefícios sociais sobre a pobreza (2019-2022) - Em %",
+    "suggested_fix": "Separar em duas linhas: `GRÁFICO 6` na primeira linha e `Efeito simulado da ausência de benefícios sociais sobre a pobreza (2019-2022) - Em %` na linha abaixo."
+  },
+  {
+    "agent": "tip",
+    "category": "alinhamento_legendas",
+    "message": "A legenda está como caption em negrito, mas o alinhamento padrão de títulos/legendas de ilustrações no documento é à esquerda (não centralizado).",
+    "paragraph_index": 224,
+    "issue_excerpt": "Gráfico 6: Efeito simulado da ausência de benefícios sociais sobre a pobreza (2019-2022) - Em %",
+    "suggested_fix": "Alinhar a legenda à esquerda (manter negrito)."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta ponto final ao fim do período.",
+    "paragraph_index": 225,
+    "issue_excerpt": "Fonte: Portal Beneficiômetro da Seguridade Social",
+    "suggested_fix": "Fonte: Portal Beneficiômetro da Seguridade Social."
+  },
+  {
+    "agent": "gram",
+    "category": "referência",
+    "message": "Falta ponto após “al” na abreviação latina “et al.”.",
+    "paragraph_index": 226,
+    "issue_excerpt": "Silveira et al (2020)",
+    "suggested_fix": "Silveira et al. (2020)"
+  },
+  {
+    "agent": "gram",
+    "category": "capitalização",
+    "message": "O termo no cabeçalho deve iniciar com letra maiúscula.",
+    "paragraph_index": 226,
+    "issue_excerpt": "índice de Gini",
+    "suggested_fix": "Índice de Gini"
+  },
+  {
+    "agent": "tab",
+    "category": "tabelas_figuras.legibilidade_rotulos",
+    "message": "Há inconsistência de capitalização no cabeçalho \"índice de Gini\" em relação aos demais rótulos iniciados por maiúscula.",
+    "paragraph_index": 227,
+    "issue_excerpt": "índice de Gini",
+    "suggested_fix": "Alterar para: \"Índice de Gini\"."
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 227,
+    "issue_excerpt": "Tabela 2: Decomposição do índice de Gini da renda total familiar per capita por fontes de renda – Brasil (2017-2018)",
+    "suggested_fix": "Separar em duas linhas: `TABELA 2` na primeira linha e `Decomposição do índice de Gini da renda total familiar per capita por fontes de renda – Brasil (2017-2018)` na linha abaixo."
+  },
+  {
+    "agent": "tab",
+    "category": "Fonte",
+    "message": "O bloco está sem uma linha de fonte ou elaboração logo abaixo da legenda.",
+    "paragraph_index": 227,
+    "issue_excerpt": "Tabela 2: Decomposição do índice de Gini da renda total familiar per capita por fontes de renda – Brasil (2017-2018)",
+    "suggested_fix": "Adicionar uma linha própria com `Fonte:` ou `Elaboração:` abaixo do bloco."
+  },
+  {
+    "agent": "tip",
+    "category": "alinhamento_legendas",
+    "message": "A legenda está como caption em negrito, mas o alinhamento padrão de títulos/legendas de ilustrações no documento é à esquerda (não centralizado).",
+    "paragraph_index": 227,
+    "issue_excerpt": "Tabela 2: Decomposição do índice de Gini da renda total familiar per capita por fontes de renda – Brasil (2017-2018)",
+    "suggested_fix": "Alinhar a legenda à esquerda (manter negrito)."
+  },
+  {
+    "agent": "tab",
+    "category": "tabelas_figuras.legibilidade_unidades",
+    "message": "O cabeçalho \"Renda (%)\" está sem esclarecer que se trata de participação na renda, o que pode gerar ambiguidade de leitura.",
+    "paragraph_index": 230,
+    "issue_excerpt": "Renda (%)",
+    "suggested_fix": "Trocar o cabeçalho por: \"Participação na renda (%)\"."
+  },
+  {
+    "agent": "tab",
+    "category": "tabela_figura_legibilidade",
+    "message": "Há falta de espaço após a vírgula no rótulo da categoria, o que prejudica a legibilidade da célula.",
+    "paragraph_index": 268,
+    "issue_excerpt": "Pensão alimentícia,mesada e doação",
+    "suggested_fix": "Substituir por: \"Pensão alimentícia, mesada e doação\"."
+  },
+  {
+    "agent": "tab",
+    "category": "Tabela/figura — legibilidade (unidades e casas decimais)",
+    "message": "No mesmo bloco aparecem valores com 3 casas decimais (ex.: “0,291”) e com 1 casa (ex.: “1,1” e “0,6”), o que dificulta a leitura e a comparação na tabela.",
+    "paragraph_index": 275,
+    "issue_excerpt": "0,291\n1,1\n0,6\n-0,003",
+    "suggested_fix": "Padronizar o número de casas decimais em todas as colunas numéricas (por exemplo, 3 casas): 1,1→1,100; 0,6→0,600; 100→100,000 (ou definir outro padrão único e aplicar a todos os valores)."
+  },
+  {
+    "agent": "gram",
+    "category": "pontuação",
+    "message": "Falta espaço após a vírgula.",
+    "paragraph_index": 304,
+    "issue_excerpt": "Pensão alimentícia,mesada e doação",
+    "suggested_fix": "Pensão alimentícia, mesada e doação"
+  },
+  {
+    "agent": "tip",
+    "category": "tipografia_titulos",
+    "message": "O título com estilo heading 1 está em caixa baixa/mista, mas títulos de nível 1 devem estar em caixa alta.",
+    "paragraph_index": 306,
+    "issue_excerpt": "Considerações finais",
+    "suggested_fix": "Aplicar CAIXA ALTA ao título (manter negrito)."
+  },
+  {
+    "agent": "gram",
+    "category": "ortografia",
+    "message": "Há repetição indevida do artigo “o”.",
+    "paragraph_index": 307,
+    "issue_excerpt": "e o os benefícios coletivos",
+    "suggested_fix": "e os benefícios coletivos"
+  },
+  {
+    "agent": "tab",
+    "category": "Legenda",
+    "message": "Na legenda, o identificador deve ficar na primeira linha e o título descritivo na linha abaixo.",
+    "paragraph_index": 308,
+    "issue_excerpt": "Quadro 2: Síntese da classificação dos benefícios coletivos da seguridade social",
+    "suggested_fix": "Separar em duas linhas: `QUADRO 2` na primeira linha e `Síntese da classificação dos benefícios coletivos da seguridade social` na linha abaixo."
+  },
+  {
+    "agent": "tab",
+    "category": "Fonte",
+    "message": "O bloco está sem uma linha de fonte ou elaboração logo abaixo da legenda.",
+    "paragraph_index": 308,
+    "issue_excerpt": "Quadro 2: Síntese da classificação dos benefícios coletivos da seguridade social",
+    "suggested_fix": "Adicionar uma linha própria com `Fonte:` ou `Elaboração:` abaixo do bloco."
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "Falta a preposição exigida por “destinados”: “a toda a coletividade”.",
+    "paragraph_index": 321,
+    "issue_excerpt": "ou toda a coletividade",
+    "suggested_fix": "ou a toda a coletividade"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O sujeito está no singular (“a integração”), mas o predicativo está no plural (“ao princípio”).",
+    "paragraph_index": 321,
+    "issue_excerpt": "permite a integração dos princípios da equidade e reconhecimento ao princípio da universalidade",
+    "suggested_fix": "permite a integração dos princípios da equidade e do reconhecimento ao princípio da universalidade"
+  },
+  {
+    "agent": "gram",
+    "category": "concordância",
+    "message": "O pronome “Eles” não concorda com o antecedente plural feminino (“Essas diferentes formas”).",
+    "paragraph_index": 322,
+    "issue_excerpt": "Eles também representam",
+    "suggested_fix": "Elas também representam"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há referências na lista que não foram localizadas nas citações do corpo do texto.",
+    "paragraph_index": 327,
+    "issue_excerpt": "Referências",
+    "suggested_fix": "Verificar estas obras: ASENSI (2010); BALBANI (2005); Barros. P. B. de Azevedo. Os bens públicos na Nova Economia Institucional. Dissertação de mestrado. Instituto de Pesquisas Econômicas da Universidade de São Paulo (2003); Chitolina (2013); DE BRAUW (2014); Delgado (2023); e mais 41."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Na lista de referências, a editora e a série aparecem sem local e sem a estrutura mínima do item (ex.: local: editora, ano), deixando a referência incompleta para o tipo “Texto para Discussão”.",
+    "paragraph_index": 328,
+    "issue_excerpt": "IPEA, Texto para Discussão (TD) 2941, 2023.",
+    "suggested_fix": "Incluir o local e reorganizar o trecho final no padrão “Local: Editora, ano. (Série/Tipo e número)”, mantendo “Texto para Discussão (TD) 2941” como elemento de série/número."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "O artigo não informa o número do fascículo, e a paginação está sem “n.” e sem indicação de número quando já há volume.",
+    "paragraph_index": 329,
+    "issue_excerpt": "Physis: Revista de Saúde Coletiva, v. 20, p. 33-55, 2010.",
+    "suggested_fix": "Completar com o número do fascículo após o volume (\"v. 20, n. ...\") antes da paginação."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "O artigo não informa o número do fascículo, e a paginação está sem indicação de número quando já há volume.",
+    "paragraph_index": 330,
+    "issue_excerpt": "Revista de Direito do Consumidor, v. 67, p. 62-99, 2008.",
+    "suggested_fix": "Completar com o número do fascículo após o volume (\"v. 67, n. ...\") antes da paginação, se houver."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há divergência no sobrenome do segundo autor (\"MONTOVANI\") em relação ao padrão de autoria, sugerindo erro de grafia no nome.",
+    "paragraph_index": 331,
+    "issue_excerpt": "BALBANI, Aracy; MONTOVANI, Jair.",
+    "suggested_fix": "Conferir e corrigir a grafia do sobrenome do segundo autor no trecho \"MONTOVANI, Jair\"."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "O órgão autor está abreviado como “BRASIL. Ministério do Desenvolvimento Social”, mas a referência indica outro órgão (“... e Combate à Fome”), gerando inconsistência interna no item.",
+    "paragraph_index": 337,
+    "issue_excerpt": "BRASIL. Ministério do Desenvolvimento Social. Orientações Técnicas sobre o PAIF volume 2. Brasília: Ministério do Desenvolvimento Social e Combate à Fome, 2012.",
+    "suggested_fix": "Uniformizar a autoria institucional no início da referência para corresponder ao órgão citado no bloco editorial (ajustar o trecho \"BRASIL. Ministério do Desenvolvimento Social.\" para o mesmo nome institucional usado no restante do item)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência está em padrão não-ABNT (uso de “and”, vírgulas em sequência e ausência de sobrenome em maiúsculas), divergindo do padrão adotado nas demais entradas.",
+    "paragraph_index": 338,
+    "issue_excerpt": "Chitolina, Lia, Miguel Nathan Foguel, and Naercio Menezes-Filho.",
+    "suggested_fix": "Reescrever apenas o bloco de autoria para o padrão ABNT (sobrenome em maiúsculas; autores separados por “; ”) e substituir “and” por “;”."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência termina com um número isolado (“No. 234”) sem identificar claramente o que é (número de relatório/série/evento), deixando o tipo do documento ambíguo.",
+    "paragraph_index": 338,
+    "issue_excerpt": "No. 234. 2013.",
+    "suggested_fix": "Especificar no próprio item o que representa “No. 234” (ex.: número de relatório/série/working paper) e completar com os dados editoriais correspondentes."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência está em padrão não-ABNT (uso de “&”, ano entre parênteses e pontuação de estilo autor-data), além de trazer ano duplicado/inconsistente (2000 no início e 2023 no final).",
+    "paragraph_index": 340,
+    "issue_excerpt": "Delgado, G., & Cardoso Jr, J. C.. (2000). ... Rio de Janeiro: IPEA, 2023. (Texto para Discussão n. 734.",
+    "suggested_fix": "Padronizar para ABNT (autores em maiúsculas; sem “&” e sem ano entre parênteses) e corrigir a divergência de ano, mantendo apenas o ano correto da publicação no final do item."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há parêntese não fechado no final da referência, deixando o item truncado.",
+    "paragraph_index": 340,
+    "issue_excerpt": "(Texto para Discussão n. 734.",
+    "suggested_fix": "Fechar o parêntese ao final do trecho: \"(Texto para Discussão n. 734).\""
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "O ano final da referência diverge do ano informado na abertura do registro.",
+    "paragraph_index": 340,
+    "issue_excerpt": "2023",
+    "suggested_fix": "2000"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência de parte de livro está sem a paginação da parte (capítulo/trecho), que é elemento obrigatório quando o item é apresentado como “In:”.",
+    "paragraph_index": 342,
+    "issue_excerpt": "ELIAS, N. Modelos de jogo. In: ELIAS, N. Introdução à Sociologia. Lisboa: Edições 70, 1970.",
+    "suggested_fix": "Incluir a paginação da parte após os dados da obra (ex.: \"p. x-y\")."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência do artigo está com ordem e pontuação não padronizadas para volume/número/páginas (ano aparece antes do volume e há “pp.”).",
+    "paragraph_index": 343,
+    "issue_excerpt": "Social Research: An International Quarterly, 2021, 88 (1), pp. 171-202.",
+    "suggested_fix": "Reordenar o bloco para “..., v. 88, n. 1, p. 171-202, 2021.” (substituindo “pp.” por “p.” e movendo o ano para o final)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A paginação está com “pp.” e sem espaço após o ponto, fugindo do padrão de paginação usado em outras referências.",
+    "paragraph_index": 344,
+    "issue_excerpt": "pp.246-82.",
+    "suggested_fix": "Substituir por \"p. 246-82\"."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência de artigo usa travessão na paginação, mas o intervalo está com caractere inconsistente (“30–54”).",
+    "paragraph_index": 346,
+    "issue_excerpt": "p. 30–54",
+    "suggested_fix": "p. 30-54"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência do artigo não informa o número do fascículo (n.), embora traga volume e páginas.",
+    "paragraph_index": 348,
+    "issue_excerpt": "Revista Jurídica da Escola Superior do Ministério Público de São Paulo, v. 8, p. 129-148, 2015.",
+    "suggested_fix": "Inserir o número do fascículo (n.) após o volume, se houver, antes da paginação."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há duplicação de local e editora no trecho final da referência.",
+    "paragraph_index": 349,
+    "issue_excerpt": "Rio de Janeiro: Rio de Janeiro, 2009.",
+    "suggested_fix": "Revisar a editora no trecho final, pois local e editora foram repetidos."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência online informa a URL, mas não traz “Acesso em:” ao final.",
+    "paragraph_index": 350,
+    "issue_excerpt": "Disponível em: https://www.epsjv.fiocruz.br/sites/default/files/livro1.pdf.",
+    "suggested_fix": "Inserir “Acesso em:” com a data de consulta após a URL."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "Referência de livro sem local de publicação claramente identificado.",
+    "paragraph_index": 352,
+    "issue_excerpt": "HALL, P. A. Policy paradigms, social learning, and the state: the case of economic policymaking in Britain. Comparative Politics, p. 275-296, 1993.",
+    "suggested_fix": "Completar a referência com o local de publicação."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência termina sem ponto final.",
+    "paragraph_index": 355,
+    "issue_excerpt": "IPEA. POLÍTICAS SOCIAIS: Acompanhamento e Análise. Brasília, DF: Ipea, n. 31, 2024",
+    "suggested_fix": "IPEA. POLÍTICAS SOCIAIS: Acompanhamento e Análise. Brasília, DF: Ipea, n. 31, 2024."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência online informa a URL, mas não traz `Acesso em:` ao final.",
+    "paragraph_index": 356,
+    "issue_excerpt": "IPEA. Agenda 2030:objetivos de desenvolvimento sustentável, avaliação do progresso das principais metas globais para o Brasil: ODS  2:fome zero e agricultura sustentável. Brasília:Ipea, 2024. 23p (cadernos ODS, 2). DOI: http://dx.doi.org/10.38116/ ri2024ODS2",
+    "suggested_fix": "Inserir `Acesso em:` com a data de consulta após a URL."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência termina sem ponto final.",
+    "paragraph_index": 356,
+    "issue_excerpt": "IPEA. Agenda 2030:objetivos de desenvolvimento sustentável, avaliação do progresso das principais metas globais para o Brasil: ODS  2:fome zero e agricultura sustentável. Brasília:Ipea, 2024. 23p (cadernos ODS, 2). DOI: http://dx.doi.org/10.38116/ ri2024ODS2",
+    "suggested_fix": "IPEA. Agenda 2030:objetivos de desenvolvimento sustentável, avaliação do progresso das principais metas globais para o Brasil: ODS  2:fome zero e agricultura sustentável. Brasília:Ipea, 2024. 23p (cadernos ODS, 2). DOI: http://dx.doi.org/10.38116/ ri2024ODS2."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Falta espaço após dois-pontos no início do título.",
+    "paragraph_index": 356,
+    "issue_excerpt": "Agenda 2030:objetivos",
+    "suggested_fix": "Agenda 2030: objetivos"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há espaçamento duplicado após “ODS” e falta espaço após dois-pontos no trecho do subtítulo.",
+    "paragraph_index": 356,
+    "issue_excerpt": "ODS  2:fome zero",
+    "suggested_fix": "ODS 2: fome zero"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "O DOI está com espaço indevido dentro da URL, quebrando o identificador.",
+    "paragraph_index": 356,
+    "issue_excerpt": "DOI: http://dx.doi.org/10.38116/ ri2024ODS2",
+    "suggested_fix": "DOI: http://dx.doi.org/10.38116/ri2024ODS2"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A autoria está fora do padrão de sobrenome em maiúsculas (aparece como “Jaccoud, Luciana”).",
+    "paragraph_index": 357,
+    "issue_excerpt": "Jaccoud, Luciana.",
+    "suggested_fix": "JACCOUD, Luciana."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência usa vírgulas onde se espera a separação “Local: Editora, ano” após a obra citada com “In:”.",
+    "paragraph_index": 357,
+    "issue_excerpt": "Brasília, IPEA, 2020.",
+    "suggested_fix": "Brasília: Ipea, 2020."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há erro de pontuação na indicação do organizador (falta ponto após a inicial e falta fechamento de parêntese).",
+    "paragraph_index": 357,
+    "issue_excerpt": "Jaccoud, L (org).",
+    "suggested_fix": "Jaccoud, L. (org.)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência termina no ano e não informa elementos de acesso online (URL/DOI e “Acesso em:”), embora o próprio veículo seja uma enciclopédia online.",
+    "paragraph_index": 361,
+    "issue_excerpt": "The Stanford Encyclopedia of Philosophy. 2022",
+    "suggested_fix": "Completar com “Disponível em:” (URL) e “Acesso em:” ao final."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência termina sem ponto final.",
+    "paragraph_index": 361,
+    "issue_excerpt": "Jones, Peter. Group Rights. The Stanford Encyclopedia of Philosophy. 2022",
+    "suggested_fix": "Jones, Peter. Group Rights. The Stanford Encyclopedia of Philosophy. 2022."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "O elemento de responsabilidade (“Ed.”) está fora do padrão para indicar organizador/editor (usar forma por extenso e com pontuação consistente).",
+    "paragraph_index": 363,
+    "issue_excerpt": "Ed. Sebastian Berger.",
+    "suggested_fix": "Sebastian Berger (ed.)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência está em formato de citação APA/estilo de periódico (ano entre parênteses e “Recuperado de”), destoando do padrão ABNT do restante da lista.",
+    "paragraph_index": 364,
+    "issue_excerpt": "Kerstenetzky, Celia. (2023). ... Recuperado de https://revista.enap.gov.br/index.php/RSP/article/view/9952",
+    "suggested_fix": "Reescrever a referência no padrão ABNT (remover ano entre parênteses; trocar “Recuperado de” por “Disponível em:” e incluir “Acesso em:” ao final)."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência online informa a URL, mas não traz `Acesso em:` ao final.",
+    "paragraph_index": 364,
+    "issue_excerpt": "Kerstenetzky, Celia. (2023). Investimento público em serviços sociais como componente central de uma agenda de desenvolvimento. Revista Do Serviço Público, 74(1), 64 - 86. Recuperado de https://revista.enap.gov.br/index.php/RSP/article/view/9952",
+    "suggested_fix": "Inserir `Acesso em:` com a data de consulta após a URL."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência termina sem ponto final.",
+    "paragraph_index": 364,
+    "issue_excerpt": "Kerstenetzky, Celia. (2023). Investimento público em serviços sociais como componente central de uma agenda de desenvolvimento. Revista Do Serviço Público, 74(1), 64 - 86. Recuperado de https://revista.enap.gov.br/index.php/RSP/article/view/9952",
+    "suggested_fix": "Kerstenetzky, Celia. (2023). Investimento público em serviços sociais como componente central de uma agenda de desenvolvimento. Revista Do Serviço Público, 74(1), 64 - 86. Recuperado de https://revista.enap.gov.br/index.php/RSP/article/view/9952."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Falta o número do fascículo (n.) do periódico, embora haja volume e identificação do artigo.",
+    "paragraph_index": 366,
+    "issue_excerpt": "Cadernos de Saúde Pública, v. 37, p. e00049821, 2021.",
+    "suggested_fix": "Inserir o número do fascículo (n.) após o volume, se houver, antes da identificação/paginação."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência não apresenta paginação do artigo, embora traga volume, número e data.",
+    "paragraph_index": 367,
+    "issue_excerpt": "Revista Pós Ciências Sociais, v.9, n.18, jul/dez. 2012.",
+    "suggested_fix": "Inserir a paginação do artigo no formato “p. x-y” antes da data."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A autoria está fora do padrão de sobrenome em maiúsculas (aparece como “Le Galès, P.”).",
+    "paragraph_index": 368,
+    "issue_excerpt": "Le Galès, P.",
+    "suggested_fix": "LE GALÈS, P."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há um sinal estranho inserido na autoria (“=”) antes de “et al.”, quebrando o padrão de autoria.",
+    "paragraph_index": 371,
+    "issue_excerpt": "MATTOS, Bruna = et al.",
+    "suggested_fix": "MATTOS, Bruna et al."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A autoria institucional não está no padrão de entrada por elemento principal (começa por “Ministério...”, mas inclui a sigla entre parênteses sem padronização para uso como autor).",
+    "paragraph_index": 372,
+    "issue_excerpt": "Ministério do Desenvolvimento e Assistência Social, Família e Combate à Fome (MDS).",
+    "suggested_fix": "Padronizar a autoria institucional escolhendo uma forma única de entrada (por extenso ou pela sigla), mantendo-a igual nas demais referências do mesmo órgão."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência de parte de livro não usa “In:” antes do título da obra e apresenta pontuação de título com aspas e pontos fora do padrão ABNT.",
+    "paragraph_index": 373,
+    "issue_excerpt": "\"Beyond the welfare state as we knew it?.\" Towards a social investment welfare state?.",
+    "suggested_fix": "Substituir o trecho por: \"Beyond the welfare state as we knew it? In: Towards a social investment welfare state.\""
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência de parte de obra não apresenta o elemento “In:” antes do título da obra, e a paginação final está sem “p.”.",
+    "paragraph_index": 373,
+    "issue_excerpt": "Towards a social investment welfare state?. Policy Press, 2011. 1-30.",
+    "suggested_fix": "Inserir \"In: \" antes do título da obra e substituir o trecho final \"2011. 1-30.\" por \"2011. p. 1-30.\""
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência usa conectivo em inglês na autoria (“and”) e não separa autores por ponto e vírgula.",
+    "paragraph_index": 373,
+    "issue_excerpt": "Morel, Nathalie, Bruno Palier, and Joakim Palme.",
+    "suggested_fix": "MOREL, Nathalie; PALIER, Bruno; PALME, Joakim."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há uso de aspas e do conector “and” na lista de autores, em desacordo com o separador padrão por ponto e vírgula.",
+    "paragraph_index": 373,
+    "issue_excerpt": "Morel, Nathalie, Bruno Palier, and Joakim Palme. \"Beyond the welfare state as we knew it?.\"",
+    "suggested_fix": "Padronizar a autoria para SOBRENOME, Prenome; SOBRENOME, Prenome; SOBRENOME, Prenome e remover as aspas do título do capítulo."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há uso de “and” na autoria e aspas no título do capítulo; além disso, o trecho está no formato de citação entre parênteses, não como referência ABNT.",
+    "paragraph_index": 374,
+    "issue_excerpt": "Mostafa, Joana, Pedro SOUZA, and Fabio Monteiro Vaz. \"Efeitos econômicos do gasto social no Brasil.\" Perspectivas da política social no Brasil (2010): 109-160.",
+    "suggested_fix": "Reescrever a entrada como parte de obra em ABNT (autores separados por \"; \", título do capítulo sem aspas, \"In:\", dados da obra e \"p.\" antes da paginação)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "No periódico, o volume e a paginação aparecem sem os marcadores “v.” e “p.”.",
+    "paragraph_index": 376,
+    "issue_excerpt": "Bulletin of the World Health Organization, 89, 496-503.",
+    "suggested_fix": "Bulletin of the World Health Organization, v. 89, p. 496-503."
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência termina sem ponto final.",
+    "paragraph_index": 381,
+    "issue_excerpt": "Rawls, J. A Theory of Justice. Cambridge: Harvard University Press, 1971",
+    "suggested_fix": "Rawls, J. A Theory of Justice. Cambridge: Harvard University Press, 1971."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência está em estilo de citação (parênteses e número do fascículo entre parênteses), e não no formato ABNT com elementos separados por vírgulas e “n.”.",
+    "paragraph_index": 383,
+    "issue_excerpt": "Rego, W. L. (2008).",
+    "suggested_fix": "Padronizar para ABNT sem parênteses: \"REGO, W. L. Aspectos teóricos das políticas de cidadania: uma aproximação ao Bolsa Família. Lua Nova: Revista de Cultura e Política, n. 73, p. 147-185, 2008.\""
+  },
+  {
+    "agent": "ref",
+    "category": "reference_format",
+    "message": "A referência termina sem ponto final.",
+    "paragraph_index": 386,
+    "issue_excerpt": "SARLET, Ingo Wolfgang. A titularidade simultaneamente individual e transindividual dos direitos sociais analisada à luz do exemplo do direito à proteção e promoção da saúde. Revista Brasileira de Direitos Fundamentais & Justiça, v. 4, n. 10, p. 205-228, 2010",
+    "suggested_fix": "SARLET, Ingo Wolfgang. A titularidade simultaneamente individual e transindividual dos direitos sociais analisada à luz do exemplo do direito à proteção e promoção da saúde. Revista Brasileira de Direitos Fundamentais & Justiça, v. 4, n. 10, p. 205-228, 2010."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Referência incompleta: o trecho termina no ano e não informa local e editora (ou instituição, se for relatório), nem o tipo de documento.",
+    "paragraph_index": 387,
+    "issue_excerpt": "Benefícios sociais e pobreza: programas não contributivos da seguridade social brasileira. 2002.",
+    "suggested_fix": "Completar após o título com os dados editoriais ou institucionais do documento (local, editora/instituição e demais elementos cabíveis)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há uso de ponto no lugar de “:” entre local e editora.",
+    "paragraph_index": 389,
+    "issue_excerpt": "São Paulo. Companhia das Letras. 2000.",
+    "suggested_fix": "São Paulo: Companhia das Letras, 2000."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A referência de parte de obra não traz os dados editoriais da obra após o título (local, editora e ano) e usa “Vol 1” fora do padrão.",
+    "paragraph_index": 393,
+    "issue_excerpt": "In: BOUERI, Rogério et al. Brasil em desenvolvimento 2013: estado, planejamento e políticas públicas. Vol 1. 2013.",
+    "suggested_fix": "Após o título da obra, inserir local e editora; e substituir \"Vol 1\" por \"v. 1\" (se a informação de volume for mantida)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Referência incompleta: o trecho termina no ano e não informa o tipo de documento nem os dados editoriais/institucionais (local, editora/instituição).",
+    "paragraph_index": 394,
+    "issue_excerpt": "Impactos redistributivos das transferências públicas monetárias e da tributação direta: evidências com a POF 2017-2018. 2020.",
+    "suggested_fix": "Completar a referência com o tipo de documento e os dados editoriais/institucionais (local e editora/instituição, conforme o caso)."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Há ponto indevido após o sobrenome e antes de “et al.”.",
+    "paragraph_index": 395,
+    "issue_excerpt": "SOUZA, P. H. G. F. de. et al.",
+    "suggested_fix": "SOUZA, P. H. G. F. de et al."
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "A paginação está sem espaço após “p.”.",
+    "paragraph_index": 396,
+    "issue_excerpt": "p.77-116",
+    "suggested_fix": "p. 77-116"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Na indicação de organizadores, há forma abreviada inconsistente (“et. al”) e falta padronização de pontuação antes de “(orgs.)”.",
+    "paragraph_index": 396,
+    "issue_excerpt": "CASTRO, Iná E., et. al (orgs.),",
+    "suggested_fix": "CASTRO, Iná E. et al. (orgs.),"
+  },
+  {
+    "agent": "ref",
+    "category": "inconsistency",
+    "message": "Referência incompleta: o item termina em “n. 11,” sem informar paginação e ano (e demais dados do fascículo, se aplicável).",
+    "paragraph_index": 398,
+    "issue_excerpt": "Revista da Faculdade de Direito da UFRGS, n. 11,",
+    "suggested_fix": "Completar após \"n. 11,\" com a paginação (p. x-x) e o ano; se houver, incluir também volume e/ou mês."
+  }
+]

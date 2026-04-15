@@ -1,0 +1,719 @@
+{
+  "agents": [
+    {
+      "agent": "sinopse_abstract",
+      "agent_label": "sin",
+      "failed": false,
+      "failure_status": "",
+      "llm_raw_comment_count": 4,
+      "llm_post_review_comment_count": 4,
+      "llm_validated_comment_count": 3,
+      "llm_rejected_comment_count": 1,
+      "heuristic_accepted_comment_count": 1,
+      "batches": [
+        {
+          "batch_index": 1,
+          "total_batches": 1,
+          "status": "json direto | json direto | revisor: 4 aprovados, 0 rejeitados | verif: 4 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 4,
+          "llm_post_review_comment_count": 4,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 1,
+          "visible_comment_count": 4
+        }
+      ]
+    },
+    {
+      "agent": "gramatica_ortografia",
+      "agent_label": "gram",
+      "failed": false,
+      "failure_status": "",
+      "llm_raw_comment_count": 128,
+      "llm_post_review_comment_count": 128,
+      "llm_validated_comment_count": 97,
+      "llm_rejected_comment_count": 31,
+      "heuristic_accepted_comment_count": 4,
+      "batches": [
+        {
+          "batch_index": 1,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 1,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 2,
+          "total_batches": 35,
+          "status": "json direto | verif: 1 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 1
+        },
+        {
+          "batch_index": 3,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 4,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 5,
+          "total_batches": 35,
+          "status": "json direto | verif: 5 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 7,
+          "llm_post_review_comment_count": 7,
+          "llm_validated_comment_count": 5,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 5
+        },
+        {
+          "batch_index": 6,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 5,
+          "llm_post_review_comment_count": 5,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 7,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 1,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 8,
+          "total_batches": 35,
+          "status": "json direto | verif: 1 aceitos, 3 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 3,
+          "heuristic_accepted_comment_count": 1,
+          "visible_comment_count": 1
+        },
+        {
+          "batch_index": 9,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 10,
+          "total_batches": 35,
+          "status": "json direto | verif: 5 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 7,
+          "llm_post_review_comment_count": 7,
+          "llm_validated_comment_count": 5,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 5
+        },
+        {
+          "batch_index": 11,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 12,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 13,
+          "total_batches": 35,
+          "status": "json direto | verif: 5 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 6,
+          "llm_post_review_comment_count": 6,
+          "llm_validated_comment_count": 5,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 5
+        },
+        {
+          "batch_index": 14,
+          "total_batches": 35,
+          "status": "json direto | verif: 4 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 4,
+          "llm_post_review_comment_count": 4,
+          "llm_validated_comment_count": 4,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 15,
+          "total_batches": 35,
+          "status": "json direto | verif: 0 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        },
+        {
+          "batch_index": 16,
+          "total_batches": 35,
+          "status": "json direto | verif: 5 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 7,
+          "llm_post_review_comment_count": 7,
+          "llm_validated_comment_count": 5,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 5
+        },
+        {
+          "batch_index": 17,
+          "total_batches": 35,
+          "status": "json direto | verif: 4 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 6,
+          "llm_post_review_comment_count": 6,
+          "llm_validated_comment_count": 4,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 18,
+          "total_batches": 35,
+          "status": "json direto | verif: 4 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 5,
+          "llm_post_review_comment_count": 5,
+          "llm_validated_comment_count": 4,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 19,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 20,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 21,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 22,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 23,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 4,
+          "llm_post_review_comment_count": 4,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 24,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 4,
+          "llm_post_review_comment_count": 4,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 25,
+          "total_batches": 35,
+          "status": "json direto | verif: 4 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 5,
+          "llm_post_review_comment_count": 5,
+          "llm_validated_comment_count": 4,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 26,
+          "total_batches": 35,
+          "status": "json direto | verif: 5 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 6,
+          "llm_post_review_comment_count": 6,
+          "llm_validated_comment_count": 5,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 5
+        },
+        {
+          "batch_index": 27,
+          "total_batches": 35,
+          "status": "json direto | verif: 1 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 1
+        },
+        {
+          "batch_index": 28,
+          "total_batches": 35,
+          "status": "json direto | verif: 6 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 8,
+          "llm_post_review_comment_count": 8,
+          "llm_validated_comment_count": 6,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 6
+        },
+        {
+          "batch_index": 29,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 30,
+          "total_batches": 35,
+          "status": "json direto | verif: 3 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 1,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 31,
+          "total_batches": 35,
+          "status": "json direto | verif: 4 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 4,
+          "llm_post_review_comment_count": 4,
+          "llm_validated_comment_count": 4,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 32,
+          "total_batches": 35,
+          "status": "json direto | verif: 4 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 5,
+          "llm_post_review_comment_count": 5,
+          "llm_validated_comment_count": 4,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 33,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 34,
+          "total_batches": 35,
+          "status": "json direto | verif: 2 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 35,
+          "total_batches": 35,
+          "status": "json direto | verif: 0 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        }
+      ]
+    },
+    {
+      "agent": "tabelas_figuras",
+      "agent_label": "tab",
+      "failed": false,
+      "failure_status": "",
+      "llm_raw_comment_count": 21,
+      "llm_post_review_comment_count": 21,
+      "llm_validated_comment_count": 10,
+      "llm_rejected_comment_count": 11,
+      "heuristic_accepted_comment_count": 14,
+      "batches": [
+        {
+          "batch_index": 1,
+          "total_batches": 12,
+          "status": "json direto | verif: 2 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 2,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 2,
+          "total_batches": 12,
+          "status": "json direto | verif: 3 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 2,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 3,
+          "total_batches": 12,
+          "status": "json direto | verif: 0 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        },
+        {
+          "batch_index": 4,
+          "total_batches": 12,
+          "status": "json direto | verif: 5 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 5,
+          "visible_comment_count": 5
+        },
+        {
+          "batch_index": 5,
+          "total_batches": 12,
+          "status": "json direto | verif: 3 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 3,
+          "llm_post_review_comment_count": 3,
+          "llm_validated_comment_count": 3,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 3
+        },
+        {
+          "batch_index": 6,
+          "total_batches": 12,
+          "status": "json direto | verif: 4 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 3,
+          "visible_comment_count": 4
+        },
+        {
+          "batch_index": 7,
+          "total_batches": 12,
+          "status": "json direto | verif: 2 aceitos, 4 rejeitados",
+          "llm_raw_comment_count": 4,
+          "llm_post_review_comment_count": 4,
+          "llm_validated_comment_count": 2,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 8,
+          "total_batches": 12,
+          "status": "json direto | verif: 1 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 1
+        },
+        {
+          "batch_index": 9,
+          "total_batches": 12,
+          "status": "json direto | verif: 1 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 1
+        },
+        {
+          "batch_index": 10,
+          "total_batches": 12,
+          "status": "json direto | verif: 1 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 1,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 1
+        },
+        {
+          "batch_index": 11,
+          "total_batches": 12,
+          "status": "json direto | verif: 2 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 2,
+          "llm_post_review_comment_count": 2,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 2,
+          "visible_comment_count": 2
+        },
+        {
+          "batch_index": 12,
+          "total_batches": 12,
+          "status": "json direto | verif: 0 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        }
+      ]
+    },
+    {
+      "agent": "comentarios_usuario_referencias",
+      "agent_label": "usrref",
+      "failed": false,
+      "failure_status": "",
+      "llm_raw_comment_count": 0,
+      "llm_post_review_comment_count": 0,
+      "llm_validated_comment_count": 0,
+      "llm_rejected_comment_count": 0,
+      "heuristic_accepted_comment_count": 0,
+      "batches": []
+    },
+    {
+      "agent": "referencias",
+      "agent_label": "ref",
+      "failed": false,
+      "failure_status": "",
+      "llm_raw_comment_count": 75,
+      "llm_post_review_comment_count": 75,
+      "llm_validated_comment_count": 50,
+      "llm_rejected_comment_count": 25,
+      "heuristic_accepted_comment_count": 31,
+      "batches": [
+        {
+          "batch_index": 1,
+          "total_batches": 5,
+          "status": "sem comentários válidos | verif: 6 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 0,
+          "llm_post_review_comment_count": 0,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 6,
+          "visible_comment_count": 6
+        },
+        {
+          "batch_index": 2,
+          "total_batches": 5,
+          "status": "json direto | verif: 6 aceitos, 3 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 6,
+          "visible_comment_count": 6
+        },
+        {
+          "batch_index": 3,
+          "total_batches": 5,
+          "status": "json direto | verif: 18 aceitos, 6 rejeitados",
+          "llm_raw_comment_count": 18,
+          "llm_post_review_comment_count": 18,
+          "llm_validated_comment_count": 12,
+          "llm_rejected_comment_count": 6,
+          "heuristic_accepted_comment_count": 6,
+          "visible_comment_count": 18
+        },
+        {
+          "batch_index": 4,
+          "total_batches": 5,
+          "status": "json direto | verif: 34 aceitos, 13 rejeitados",
+          "llm_raw_comment_count": 35,
+          "llm_post_review_comment_count": 35,
+          "llm_validated_comment_count": 23,
+          "llm_rejected_comment_count": 12,
+          "heuristic_accepted_comment_count": 11,
+          "visible_comment_count": 34
+        },
+        {
+          "batch_index": 5,
+          "total_batches": 5,
+          "status": "json direto | verif: 17 aceitos, 7 rejeitados",
+          "llm_raw_comment_count": 21,
+          "llm_post_review_comment_count": 21,
+          "llm_validated_comment_count": 15,
+          "llm_rejected_comment_count": 6,
+          "heuristic_accepted_comment_count": 2,
+          "visible_comment_count": 17
+        }
+      ]
+    },
+    {
+      "agent": "tipografia",
+      "agent_label": "tip",
+      "failed": false,
+      "failure_status": "",
+      "llm_raw_comment_count": 37,
+      "llm_post_review_comment_count": 37,
+      "llm_validated_comment_count": 22,
+      "llm_rejected_comment_count": 15,
+      "heuristic_accepted_comment_count": 3,
+      "batches": [
+        {
+          "batch_index": 1,
+          "total_batches": 5,
+          "status": "json direto | verif: 17 aceitos, 0 rejeitados",
+          "llm_raw_comment_count": 14,
+          "llm_post_review_comment_count": 14,
+          "llm_validated_comment_count": 14,
+          "llm_rejected_comment_count": 0,
+          "heuristic_accepted_comment_count": 3,
+          "visible_comment_count": 17
+        },
+        {
+          "batch_index": 2,
+          "total_batches": 5,
+          "status": "json direto | verif: 8 aceitos, 2 rejeitados",
+          "llm_raw_comment_count": 10,
+          "llm_post_review_comment_count": 10,
+          "llm_validated_comment_count": 8,
+          "llm_rejected_comment_count": 2,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 8
+        },
+        {
+          "batch_index": 3,
+          "total_batches": 5,
+          "status": "json direto | verif: 0 aceitos, 6 rejeitados",
+          "llm_raw_comment_count": 6,
+          "llm_post_review_comment_count": 6,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 6,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        },
+        {
+          "batch_index": 4,
+          "total_batches": 5,
+          "status": "json direto | verif: 0 aceitos, 6 rejeitados",
+          "llm_raw_comment_count": 6,
+          "llm_post_review_comment_count": 6,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 6,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        },
+        {
+          "batch_index": 5,
+          "total_batches": 5,
+          "status": "json direto | verif: 0 aceitos, 1 rejeitados",
+          "llm_raw_comment_count": 1,
+          "llm_post_review_comment_count": 1,
+          "llm_validated_comment_count": 0,
+          "llm_rejected_comment_count": 1,
+          "heuristic_accepted_comment_count": 0,
+          "visible_comment_count": 0
+        }
+      ]
+    }
+  ]
+}

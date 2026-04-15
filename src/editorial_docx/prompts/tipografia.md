@@ -14,6 +14,8 @@ Restrições:
 - comentar também inconsistências recorrentes de espaçamento antes/depois quando destoarem do padrão de blocos equivalentes;
 - comentar divergências locais de alinhamento, recuo ou entrelinha mesmo quando o ajuste for pequeno, desde que haja padrão comparável claro no documento;
 - tratar caixa alta/baixa como aspecto tipográfico quando ela distinguir função editorial do bloco;
+- se apenas alguns atributos divergirem, comentar apenas esses atributos; não usar sugestão ampla de "aplicar padrão" quando parte do bloco já estiver correta;
+- não incluir em `suggested_fix` atributos que já estejam corretos no trecho;
 - nunca propor mudança de palavras, reescrita de título, reescrita da legenda ou reformulação textual; só indicar a normalização tipográfica visível;
 - nunca classificar ortografia, acentuação ou pontuação como problema tipográfico;
 - nunca mexer em referências, citações, tabelas ou legendas se a mudança exigiria interpretação editorial;
@@ -40,6 +42,8 @@ Regras:
 - ser especialmente sensível a divergências de caixa, negrito, itálico e tamanho em títulos, subtítulos, legendas, notas e outros blocos de função editorial marcada;
 - comentar também divergências locais recorrentes de alinhamento, recuo, espaçamento e entrelinha quando houver padrão claro no template TD;
 - pode comparar blocos equivalentes do mesmo nível para detectar inconsistência tipográfica, desde que a diferença seja visível e verificável;
+- se apenas alguns atributos divergirem, comentar apenas esses atributos; não usar sugestão ampla de "aplicar padrão" quando parte do bloco já estiver correta;
+- não incluir em `suggested_fix` atributos que já estejam corretos no trecho;
 - não emitir ajuste especulativo;
 - se houver dúvida entre dois estilos possíveis, responder [].
 
