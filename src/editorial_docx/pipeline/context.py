@@ -3,15 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ..config import (
+    DEFAULT_REVIEW_FOCUS_EXCERPT_MAX_CHARS,
     DEFAULT_REVIEW_MAX_BATCH_CHARS,
     DEFAULT_REVIEW_MAX_BATCH_CHUNKS,
     DEFAULT_REVIEW_WINDOW_RADIUS,
-    GRAMMAR_BATCH_OVERLAP,
-    GRAMMAR_BATCH_SIZE,
+    DEFAULT_REVIEW_WINDOW_EXCERPT_MAX_CHARS,
+    GRAMMAR_CONTEXT_MODE,
+    TEXTO_INTEIRO,
 )
 from ..context_selector import build_excerpt
 from ..document_loader import Section
-from ..models import DocumentUserComment
+from ..models import DocumentUserComment, ReferencePipelineArtifact
+from ..references.analysis import build_reference_pipeline_artifact
 from ..token_utils import TokenChunkConfig, chunk_index_windows
 
 
@@ -33,6 +36,7 @@ class PreparedReviewDocument:
     toc: list[str]
     user_comments: list[DocumentUserComment] = field(default_factory=list)
     agent_batches: dict[str, list[ReviewBatch]] = field(default_factory=dict)
+    reference_pipeline: ReferencePipelineArtifact = field(default_factory=ReferencePipelineArtifact)
 
 
 def _build_batches(
@@ -65,20 +69,9 @@ def _build_agent_batches(
     max_chars: int,
     max_chunks: int,
 ) -> list[list[int]]:
-    if agent == "gramatica_ortografia":
+    if agent == "gramatica_ortografia" and GRAMMAR_CONTEXT_MODE == TEXTO_INTEIRO:
         filtered = [idx for idx in indexes if 0 <= idx < len(chunks)]
-        if not filtered:
-            return []
-        batches: list[list[int]] = []
-        step = max(1, GRAMMAR_BATCH_SIZE - GRAMMAR_BATCH_OVERLAP)
-        for start in range(0, len(filtered), step):
-            batch = filtered[start : start + GRAMMAR_BATCH_SIZE]
-            if not batch:
-                continue
-            batches.append(batch)
-            if start + GRAMMAR_BATCH_SIZE >= len(filtered):
-                break
-        return batches
+        return [filtered] if filtered else []
     return _build_batches(
         chunks=chunks,
         refs=refs,
@@ -86,6 +79,24 @@ def _build_agent_batches(
         max_chars=max_chars,
         max_chunks=max_chunks,
     )
+
+
+def _batch_excerpt_limit(
+    agent: str,
+    batch_indexes: list[int],
+    chunks: list[str],
+    refs: list[str],
+    default_max_chars: int,
+) -> int:
+    if agent != "gramatica_ortografia" or GRAMMAR_CONTEXT_MODE != TEXTO_INTEIRO:
+        return default_max_chars
+    total = 0
+    for idx in batch_indexes:
+        if idx < 0 or idx >= len(chunks):
+            continue
+        ref = refs[idx] if idx < len(refs) else "sem referência"
+        total += len(f"[{idx}] ({ref}) {chunks[idx]}") + 1
+    return max(default_max_chars, total + 1)
 
 
 def _window_indexes(indexes: list[int], total: int, radius: int = 2) -> list[int]:
@@ -122,6 +133,8 @@ def prepare_review_document(
     max_batch_chars: int = DEFAULT_REVIEW_MAX_BATCH_CHARS,
     max_batch_chunks: int = DEFAULT_REVIEW_MAX_BATCH_CHUNKS,
     window_radius: int = DEFAULT_REVIEW_WINDOW_RADIUS,
+    focus_excerpt_max_chars: int = DEFAULT_REVIEW_FOCUS_EXCERPT_MAX_CHARS,
+    window_excerpt_max_chars: int = DEFAULT_REVIEW_WINDOW_EXCERPT_MAX_CHARS,
 ) -> PreparedReviewDocument:
     """Prepara lotes, janelas de contexto e TOC para todos os agentes."""
     toc = [f"{section.title} [{section.start_idx}-{section.end_idx}]" for section in sections]
@@ -131,6 +144,7 @@ def prepare_review_document(
         sections=sections,
         toc=toc,
         user_comments=list(user_comments or []),
+        reference_pipeline=build_reference_pipeline_artifact(chunks, refs),
     )
 
     for agent in agent_order:
@@ -146,12 +160,23 @@ def prepare_review_document(
         prepared.agent_batches[agent] = [
             ReviewBatch(
                 indexes=batch_indexes,
-                focus_excerpt=build_excerpt(indexes=batch_indexes, chunks=chunks, refs=refs, max_chars=1_000_000),
+                focus_excerpt=build_excerpt(
+                    indexes=batch_indexes,
+                    chunks=chunks,
+                    refs=refs,
+                    max_chars=_batch_excerpt_limit(
+                        agent,
+                        batch_indexes,
+                        chunks,
+                        refs,
+                        focus_excerpt_max_chars,
+                    ),
+                ),
                 window_excerpt=build_excerpt(
                     indexes=_window_indexes(batch_indexes, total=len(chunks), radius=window_radius),
                     chunks=chunks,
                     refs=refs,
-                    max_chars=1_000_000,
+                    max_chars=window_excerpt_max_chars,
                 ),
                 headings=_headings_for_batch(sections, batch_indexes),
                 start_idx=batch_indexes[0],

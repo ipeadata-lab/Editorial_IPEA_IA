@@ -11,7 +11,7 @@ from ..agents.validation import (
     remap_comment_index as _remap_comment_index,
     semantic_comment_key as _semantic_comment_key,
 )
-from ..models import AgentComment, VerificationDecision, VerificationSummary
+from ..models import AgentComment, ReferencePipelineArtifact, VerificationDecision, VerificationSummary
 from ..prompts import build_comment_review_prompt
 from ..review_heuristics import _heuristic_comments_for_agent
 from ..review_patterns import (
@@ -91,6 +91,7 @@ def _verify_batch_comments(
     batch_indexes: list[int],
     chunks: list[str],
     refs: list[str],
+    reference_pipeline: ReferencePipelineArtifact | None = None,
     existing_comments: list[AgentComment] | None = None,
     batch_index: int | None = None,
 ) -> tuple[list[AgentComment], list[VerificationDecision]]:
@@ -99,7 +100,13 @@ def _verify_batch_comments(
     for comment in comments:
         remapped = _limit_auto_apply(_remap_comment_index(comment, batch_indexes=batch_indexes, chunks=chunks))
         candidates.append(("llm", remapped))
-    for comment in _heuristic_comments_for_agent(agent=agent, batch_indexes=batch_indexes, chunks=chunks, refs=refs):
+    for comment in _heuristic_comments_for_agent(
+        agent=agent,
+        batch_indexes=batch_indexes,
+        chunks=chunks,
+        refs=refs,
+        reference_pipeline=reference_pipeline,
+    ):
         candidates.append(("heuristic", comment))
 
     accepted: list[AgentComment] = []
@@ -168,6 +175,7 @@ def _normalize_batch_comments(
     batch_indexes: list[int],
     chunks: list[str],
     refs: list[str],
+    reference_pipeline: ReferencePipelineArtifact | None = None,
 ) -> list[AgentComment]:
     """Retorna apenas os comentários aprovados para um lote de revisão."""
     accepted, _ = _verify_batch_comments(
@@ -176,6 +184,7 @@ def _normalize_batch_comments(
         batch_indexes=batch_indexes,
         chunks=chunks,
         refs=refs,
+        reference_pipeline=reference_pipeline,
         existing_comments=[],
     )
     return accepted

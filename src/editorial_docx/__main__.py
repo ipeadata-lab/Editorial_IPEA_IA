@@ -76,8 +76,8 @@ def _write_history_snapshot(main_path: Path, content: str | bytes) -> Path:
 def main() -> int:
     ensure_runtime_directories()
 
-    parser = argparse.ArgumentParser(description="Executa revisão editorial em arquivo DOCX/PDF.")
-    parser.add_argument("input", type=Path, help="Caminho do arquivo de entrada (.docx ou .pdf)")
+    parser = argparse.ArgumentParser(description="Executa revisao editorial em arquivo DOCX, PDF ou normalized JSON.")
+    parser.add_argument("input", type=Path, help="Caminho do arquivo de entrada (.docx, .pdf ou .json)")
     parser.add_argument(
         "--question",
         default="Faça uma revisão completa com todos os agentes ativos e liste ajustes prioritários.",

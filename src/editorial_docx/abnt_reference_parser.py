@@ -13,10 +13,11 @@ from .abnt_document_types import (
     ABNT_TYPE_ONLINE,
     ABNT_TYPE_THESIS,
 )
-from .abnt_normalizer import canonical_author_key, publication_year_from_reference
+from .abnt_normalizer import _REFERENCE_YEAR_RE, canonical_author_key, canonical_author_keys, citation_label, publication_year_from_reference
 from .review_patterns import _ascii_fold
 
-_GLUED_REFERENCE_RE = re.compile(r"\.\s*(?=[A-Z][A-Z'`\-]+,\s)")
+_GLUED_REFERENCE_RE = re.compile(r"\.\s*(?=[A-Z][A-Z'`\-]+,\s+[A-ZÀ-Ý])")
+_AUTHOR_SEGMENT_RE = re.compile(r"^(?P<author>.+?\.)\s+(?P<body>(?=[A-ZÀ-Ý][a-zà-ÿ]).+)$")
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class ParsedReferenceEntry:
     raw_text: str
     author_raw: str
     author_key: str
+    author_keys: tuple[str, ...]
     publication_year: str
     label: str
     year_candidates: tuple[str, ...]
@@ -55,6 +57,13 @@ def _primary_reference_segment(text: str) -> str:
     return segments[0].strip() if segments else source
 
 
+def _split_author_and_body(source: str) -> tuple[str, str]:
+    match = _AUTHOR_SEGMENT_RE.match(source)
+    if match:
+        return match.group("author").strip(), match.group("body").strip()
+    return source, ""
+
+
 def _infer_reference_document_type(text: str) -> str:
     source = _ascii_fold(text).casefold()
     if any(marker in source for marker in ("lei ", "decreto ", "portaria ", "resolucao ")):
@@ -69,13 +78,13 @@ def _infer_reference_document_type(text: str) -> str:
         return ABNT_TYPE_ARTICLE
     if any(marker in source for marker in ("texto para discussao", "relatorio", "ipea")):
         return ABNT_TYPE_INSTITUTIONAL_REPORT
-    if re.search(r":[^:]+,\s*(?:19|20)\d{2}", text):
+    if re.search(r":[^:.,;]{1,80},\s*(?:19|20)\d{2}", text):
         return ABNT_TYPE_BOOK
     return ABNT_TYPE_GENERIC
 
 
-def _extract_reference_title(source: str, author_raw: str) -> str:
-    tail = source[len(author_raw) :].lstrip(" ,.;")
+def _extract_reference_title(body: str) -> str:
+    tail = (body or "").lstrip(" ,.;")
     if not tail:
         return ""
     segments = [segment.strip(" .") for segment in re.split(r"\.\s+", tail) if segment.strip()]
@@ -118,19 +127,14 @@ def parse_reference_entry(text: str, *, blocked_author_tokens: set[str] | None =
     if not publication_year:
         return None
 
-    if "," in primary_entry:
-        author_raw = primary_entry.split(",", 1)[0].strip()
-    elif "." in primary_entry:
-        author_raw = primary_entry.split(".", 1)[0].strip()
-    else:
-        author_raw = primary_entry
-
+    author_raw, body = _split_author_and_body(primary_entry)
     author_key = canonical_author_key(author_raw, extra_blocked_tokens=blocked_author_tokens)
     if author_key is None:
         return None
+    author_keys = canonical_author_keys(author_raw, extra_blocked_tokens=blocked_author_tokens) or (author_key,)
 
     document_type = _infer_reference_document_type(primary_entry)
-    title = _extract_reference_title(primary_entry, author_raw)
+    title = _extract_reference_title(body or primary_entry)
     container_title = _extract_container_title(primary_entry, title)
     place, publisher = _extract_place_and_publisher(primary_entry)
     has_url = bool(re.search(r"https?://\S+", primary_entry, flags=re.IGNORECASE))
@@ -141,14 +145,15 @@ def parse_reference_entry(text: str, *, blocked_author_tokens: set[str] | None =
     has_number = bool(re.search(r"\bn\.\s*\d+", primary_entry, flags=re.IGNORECASE))
     has_pages = bool(re.search(r"\bp{1,2}\.\s*\d+", primary_entry, flags=re.IGNORECASE))
     institution = _extract_institution(primary_entry, author_raw, publisher)
-    year_candidates = tuple(re.findall(r"\b(?:19|20)\d{2}[a-z]?\b", primary_entry, flags=re.IGNORECASE))
+    year_candidates = tuple(_REFERENCE_YEAR_RE.findall(primary_entry))
 
     return ParsedReferenceEntry(
         raw_text=source,
         author_raw=author_raw,
         author_key=author_key,
+        author_keys=author_keys,
         publication_year=publication_year,
-        label=f"{author_raw} ({publication_year})",
+        label=citation_label(author_raw, publication_year),
         year_candidates=year_candidates,
         document_type=document_type,
         title=title,

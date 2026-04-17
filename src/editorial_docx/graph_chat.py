@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 from .agents.user_reference_agent import USER_REFERENCE_AGENT
-from .llm import get_chat_model, get_chat_models, get_grammar_agent_max_workers, get_llm_retry_config
+from .llm import get_chat_model, get_chat_models, get_llm_retry_config
 from .models import (
     AgentBatchTrace,
     AgentComment,
@@ -97,7 +97,7 @@ def _invoke_with_model_fallback(prompt, payload: dict[str, str], operation: str)
 
 _REVIEWER_ENABLED_AGENTS = {"sinopse_abstract"}
 _build_graph = _default_build_graph
-_PARALLEL_BATCH_AGENTS = {"gramatica_ortografia"}
+_PARALLEL_BATCH_AGENTS: set[str] = set()
 
 
 def _review_comments_with_llm(
@@ -150,7 +150,7 @@ def _review_comments_with_llm(
 def _parallel_batch_workers(agent: str, batch_count: int) -> int:
     if agent not in _PARALLEL_BATCH_AGENTS:
         return 1
-    return max(1, min(batch_count, get_grammar_agent_max_workers()))
+    return 1
 
 
 def _execute_agent_batch(
@@ -165,7 +165,12 @@ def _execute_agent_batch(
     existing_comments: list[AgentComment],
     running_summary: str,
 ):
-    excerpt = _build_batch_review_excerpt(prepared=prepared_document, batch=batch, running_summary=running_summary)
+    excerpt = _build_batch_review_excerpt(
+        prepared=prepared_document,
+        batch=batch,
+        running_summary=running_summary,
+        agent=agent,
+    )
     comments_before_batch = len(existing_comments)
     accepted_in_batch = []
     batch_decisions: list[VerificationDecision] = []
@@ -200,6 +205,7 @@ def _execute_agent_batch(
                 batch_indexes=batch.indexes,
                 chunks=prepared_document.chunks,
                 refs=prepared_document.refs,
+                reference_pipeline=prepared_document.reference_pipeline,
                 existing_comments=old_comments,
                 batch_index=batch_idx,
             )
@@ -511,7 +517,12 @@ def run_prepared_review(
             continue
 
         for batch_idx, batch in enumerate(batches, start=1):
-            excerpt = _build_batch_review_excerpt(prepared=prepared_document, batch=batch, running_summary=running_summaries.get(agent, ""))
+            excerpt = _build_batch_review_excerpt(
+                prepared=prepared_document,
+                batch=batch,
+                running_summary=running_summaries.get(agent, ""),
+                agent=agent,
+            )
             comments_before_batch = len(final_comments)
             accepted_in_batch = []
             batch_failed = False
@@ -540,6 +551,7 @@ def run_prepared_review(
                         batch_indexes=batch.indexes,
                         chunks=prepared_document.chunks,
                         refs=prepared_document.refs,
+                        reference_pipeline=prepared_document.reference_pipeline,
                         existing_comments=old_comments,
                         batch_index=batch_idx,
                     )

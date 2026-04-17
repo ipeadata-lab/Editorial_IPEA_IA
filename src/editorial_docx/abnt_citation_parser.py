@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
-from .abnt_normalizer import canonical_reference_key, citation_label, is_plausible_reference_author, strip_leading_citation_context
+from .abnt_normalizer import (
+    canonical_author_keys,
+    canonical_reference_key,
+    citation_label,
+    is_plausible_reference_author,
+    strip_leading_citation_context,
+)
 
 
 @dataclass(frozen=True)
@@ -12,15 +18,18 @@ class CitationCandidate:
     excerpt: str
     author_raw: str
     year: str
+    author_keys: tuple[str, ...]
     key: tuple[str, str]
     label: str
 
 
 _NARRATIVE_PATTERN = re.compile(
-    r"\b([A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+(?:\s+(?:de|da|do|das|dos)\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+|\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+|\s+et\s+al\.?)*)\s*\((\d{4}[a-z]?)\)"
+    r"\b([A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+(?:\s+(?:de|da|do|das|dos)\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+|\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+|\s+(?:e|and|&)\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’`\-]+|\s+et\s+al\.?)*)\s*\((\d{4}[a-z]?)\)"
 )
 _PARENTHETICAL_PATTERN = re.compile(r"\(([^)]*\d{4}[a-z]?[^)]*)\)")
-_PARENTHETICAL_SEGMENT_PATTERN = re.compile(r"([A-ZÀ-Ý][^,;()]*)\s*,\s*(\d{4}[a-z]?)")
+_PARENTHETICAL_SEGMENT_PATTERN = re.compile(
+    r"([A-ZÀ-Ý][^()]*)\s*,\s*(\d{4}[a-z]?)(?:\s*,\s*p\.\s*\d+(?:[-–]\d+)?)?$"
+)
 
 
 def extract_citation_candidates(
@@ -38,6 +47,9 @@ def extract_citation_candidates(
         key = canonical_reference_key(author_raw, year_raw, extra_blocked_tokens=blocked_author_tokens)
         if key is None:
             return
+        author_keys = canonical_author_keys(author_raw, extra_blocked_tokens=blocked_author_tokens)
+        if not author_keys:
+            return
         clean_excerpt = strip_leading_citation_context(excerpt)
         label = citation_label(author_raw, year_raw)
         identity = (idx, clean_excerpt, key, label)
@@ -50,6 +62,7 @@ def extract_citation_candidates(
                 excerpt=clean_excerpt,
                 author_raw=author_raw.strip(),
                 year=(year_raw or "").strip(),
+                author_keys=author_keys,
                 key=key,
                 label=label,
             )

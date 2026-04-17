@@ -13,7 +13,7 @@ from ...abnt_normalizer import (
 )
 from ...abnt_reference_parser import parse_reference_entry
 from ...abnt_validator import validate_reference_entry
-from ...models import AgentComment
+from ...models import AgentComment, ReferencePipelineArtifact
 from ...review_patterns import _is_non_body_reference_context, _ref_block_type
 
 NON_AUTHOR_REFERENCE_TOKENS = {
@@ -56,6 +56,8 @@ NON_AUTHOR_REFERENCE_TOKENS = {
     "pis",
     "fgts",
 }
+
+_CITATION_PLACEHOLDER_RE = re.compile(r"\(?\s*X{2,}\s*CITAR\s*X{2,}\s*\)?", flags=re.IGNORECASE)
 
 
 def looks_like_reference_author(author_raw: str) -> bool:
@@ -133,6 +135,19 @@ def probable_reference_match_comment(match: ProbableReferenceMatch) -> AgentComm
             ),
         )
 
+    if match.match_type == "partial_author_conflict":
+        return AgentComment(
+            agent="referencias",
+            category="citation_match",
+            paragraph_index=citation.paragraph_index,
+            message="A citação tem correspondência parcial com a lista final, mas a autoria não coincide integralmente.",
+            issue_excerpt=citation.excerpt,
+            suggested_fix=(
+                f"Conferir {citation.label} no corpo do texto com `{reference.label}` na lista final: "
+                "há sobreposição parcial de autoria, mas pelo menos um autor ou o ano diverge."
+            ),
+        )
+
     return AgentComment(
         agent="referencias",
         category="citation_match",
@@ -178,9 +193,15 @@ def find_reference_citation_indexes(chunks: list[str], refs: list[str], body_lim
     return sorted({idx for idx, _, _, _ in reference_body_citation_mentions(chunks, refs, body_limit)})
 
 
-def heuristic_reference_comments(batch_indexes: list[int], chunks: list[str], refs: list[str]) -> list[AgentComment]:
+def heuristic_reference_comments(
+    batch_indexes: list[int],
+    chunks: list[str],
+    refs: list[str],
+    reference_pipeline: ReferencePipelineArtifact | None = None,
+) -> list[AgentComment]:
     comments: list[AgentComment] = []
     seen: set[tuple[int, str, str]] = set()
+    batch_set = set(batch_indexes)
 
     def add(idx: int, issue: str, fix: str, message: str, category: str = "reference_format") -> None:
         key = (idx, issue, fix)
@@ -231,7 +252,7 @@ def heuristic_reference_comments(batch_indexes: list[int], chunks: list[str], re
         duplicated_place = re.search(r"([A-ZÀ-Ý][A-Za-zÀ-ÿ\s]+):\s*\1,\s*\d{4}", text)
         if block_type == "reference_entry" and duplicated_place:
             add(idx, duplicated_place.group(0), duplicated_place.group(0), "Há duplicação de local e editora no trecho final da referência.", "reference_format")
-        if parsed_entry is not None:
+        if parsed_entry is not None and reference_pipeline is None:
             for issue in validate_reference_entry(parsed_entry):
                 add(idx, parsed_entry.raw_text, issue.suggested_fix, issue.message, issue.category)
         if block_type == "reference_entry":
@@ -248,15 +269,92 @@ def heuristic_reference_comments(batch_indexes: list[int], chunks: list[str], re
                         "reference_format",
                     )
 
+    if reference_pipeline is not None:
+        for issue in reference_pipeline.abnt_issues:
+            if issue.paragraph_index not in batch_set:
+                continue
+            source_text = chunks[issue.paragraph_index] if 0 <= issue.paragraph_index < len(chunks) else ""
+            add(issue.paragraph_index, source_text, issue.suggested_fix, issue.message, issue.category)
+
     return comments
 
 
-def heuristic_reference_global_comments(chunks: list[str], refs: list[str], batch_indexes: list[int]) -> list[AgentComment]:
+def heuristic_reference_global_comments(
+    chunks: list[str],
+    refs: list[str],
+    batch_indexes: list[int],
+    reference_pipeline: ReferencePipelineArtifact | None = None,
+) -> list[AgentComment]:
     reference_heading_idx = next((idx for idx, ref in enumerate(refs) if _ref_block_type(ref) == "reference_heading"), None)
     if reference_heading_idx is None:
         return []
 
     body_limit = reference_heading_idx
+    comments = reference_body_format_comments(chunks, refs, body_limit, batch_indexes=batch_indexes)
+    batch_set = set(batch_indexes)
+
+    if reference_pipeline is not None:
+        uncited_labels = [entry.label for entry in reference_pipeline.uncited_references]
+        missing_labels = [candidate.label for candidate in reference_pipeline.missing_citations]
+
+        for anchor in reference_pipeline.probable_anchors:
+            if anchor.citation_paragraph_index not in batch_set:
+                continue
+            message = "A citação provavelmente corresponde a uma referência já existente, mas há divergência entre o corpo e a lista final."
+            if anchor.status == "format_problem":
+                message = "A citação foi localizada na lista final, mas a entrada correspondente está malformada ou concatenada."
+            elif anchor.status == "partial_author_conflict":
+                message = "A citação tem correspondência parcial com a lista final, mas a autoria não coincide integralmente."
+            comments.append(
+                AgentComment(
+                    agent="referencias",
+                    category="citation_match",
+                    paragraph_index=anchor.citation_paragraph_index,
+                    message=message,
+                    issue_excerpt=anchor.citation_excerpt,
+                    suggested_fix=f"Conferir {anchor.citation_label} no corpo do texto com `{anchor.reference_label}` na lista final.",
+                )
+            )
+
+        for candidate in reference_pipeline.missing_citations:
+            if candidate.paragraph_index not in batch_set:
+                continue
+            comments.append(
+                AgentComment(
+                    agent="referencias",
+                    category="citation_match",
+                    paragraph_index=candidate.paragraph_index,
+                    message="Esta citação no corpo do texto não tem correspondência clara na lista de referências.",
+                    issue_excerpt=candidate.excerpt,
+                    suggested_fix=f"Incluir ou revisar a referência correspondente a {candidate.label} na lista final.",
+                )
+            )
+
+        if uncited_labels and reference_heading_idx in batch_set:
+            comments.append(
+                AgentComment(
+                    agent="referencias",
+                    category="inconsistency",
+                    paragraph_index=reference_heading_idx,
+                    message="Há referências na lista que não foram localizadas nas citações do corpo do texto.",
+                    issue_excerpt=chunks[reference_heading_idx],
+                    suggested_fix=f"Verificar estas obras: {summarize_reference_labels(uncited_labels)}.",
+                )
+            )
+
+        if missing_labels and reference_heading_idx in batch_set:
+            comments.append(
+                AgentComment(
+                    agent="referencias",
+                    category="inconsistency",
+                    paragraph_index=reference_heading_idx,
+                    message="Há citações no corpo do texto sem correspondência clara na lista de referências.",
+                    issue_excerpt=chunks[reference_heading_idx],
+                    suggested_fix=f"Incluir ou revisar as referências correspondentes a: {summarize_reference_labels(missing_labels)}.",
+                )
+            )
+        return comments
+
     citation_candidates = extract_citation_candidates(
         chunks,
         refs,
@@ -264,9 +362,6 @@ def heuristic_reference_global_comments(chunks: list[str], refs: list[str], batc
         is_non_body_context=_is_non_body_reference_context,
         blocked_author_tokens=NON_AUTHOR_REFERENCE_TOKENS,
     )
-    comments = reference_body_format_comments(chunks, refs, body_limit, batch_indexes=batch_indexes)
-    batch_set = set(batch_indexes)
-
     reference_entries = [
         (idx, parsed)
         for idx, (chunk, ref) in enumerate(zip(chunks[reference_heading_idx + 1 :], refs[reference_heading_idx + 1 :]), start=reference_heading_idx + 1)
@@ -325,13 +420,52 @@ def heuristic_reference_global_comments(chunks: list[str], refs: list[str], batc
     return comments
 
 
+def heuristic_reference_placeholder_comments(
+    batch_indexes: list[int],
+    chunks: list[str],
+    refs: list[str],
+) -> list[AgentComment]:
+    comments: list[AgentComment] = []
+    seen: set[tuple[int, str]] = set()
+
+    for idx in batch_indexes:
+        if not (0 <= idx < len(chunks)) or idx >= len(refs):
+            continue
+        if _ref_block_type(refs[idx]) != "paragraph":
+            continue
+
+        text = chunks[idx] or ""
+        if _is_non_body_reference_context(refs[idx], text, index=idx, chunks=chunks, refs=refs):
+            continue
+
+        for match in _CITATION_PLACEHOLDER_RE.finditer(text):
+            key = (idx, match.group(0))
+            if key in seen:
+                continue
+            seen.add(key)
+            comments.append(
+                AgentComment(
+                    agent="referencias",
+                    category="citation_placeholder",
+                    message="Ha um marcador provisorio de citacao no corpo do texto, indicando referencia ainda nao resolvida.",
+                    paragraph_index=idx,
+                    issue_excerpt=match.group(0),
+                    suggested_fix="Substituir este marcador pela citacao autor-data correspondente ou remover o placeholder antes da versao final.",
+                )
+            )
+
+    return comments
+
+
 __all__ = [
     "NON_AUTHOR_REFERENCE_TOKENS",
     "canonical_author_key",
     "find_reference_citation_indexes",
     "heuristic_reference_comments",
     "heuristic_reference_global_comments",
+    "heuristic_reference_placeholder_comments",
     "looks_like_reference_author",
+    "probable_reference_match_comment",
     "reference_body_citation_keys",
     "reference_body_citation_mentions",
     "reference_body_format_comments",
@@ -340,4 +474,5 @@ __all__ = [
     "reference_entry_key",
     "reference_entry_label",
     "reference_entry_publication_year",
+    "summarize_reference_labels",
 ]

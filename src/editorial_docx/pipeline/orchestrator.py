@@ -6,6 +6,7 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from ..agents import USER_REFERENCE_AGENT, run_user_reference_agent
+from ..config import DEFAULT_REVIEW_SUMMARY_UPDATE_INTERVAL
 from ..document_loader import Section
 from ..llm import get_chat_model
 from ..models import AgentComment, ConversationResult, DocumentUserComment, VerificationDecision
@@ -167,6 +168,7 @@ def run_prepared_review(
                 prepared=prepared_document,
                 batch=batch,
                 running_summary=running_summaries.get(agent, ""),
+                agent=agent,
             )
             comments_before_batch = len(final_comments)
             accepted_in_batch: list[AgentComment] = []
@@ -197,6 +199,7 @@ def run_prepared_review(
                         batch_indexes=batch.indexes,
                         chunks=prepared_document.chunks,
                         refs=prepared_document.refs,
+                        reference_pipeline=prepared_document.reference_pipeline,
                         existing_comments=old_comments,
                         batch_index=batch_idx,
                     )
@@ -223,12 +226,17 @@ def run_prepared_review(
             if batch_failed:
                 continue
 
+            should_refresh_summary = (
+                batch_idx == len(batches)
+                or batch_idx % max(1, DEFAULT_REVIEW_SUMMARY_UPDATE_INTERVAL) == 0
+            )
             running_summaries[agent] = _update_running_summary(
                 agent=agent,
                 question=question,
                 running_summary=running_summaries.get(agent, ""),
                 batch=batch,
                 accepted_comments=accepted_in_batch,
+                use_llm=should_refresh_summary,
             )
 
     consolidated_comments = _consolidate_final_comments(final_comments, prepared_document.refs)

@@ -5,140 +5,184 @@ Sistema de revisao editorial para `.docx`, `.pdf` e `normalized_document.json`, 
 O projeto combina:
 - extracao estruturada do documento;
 - revisao por agentes especializados;
-- validacao e consolidacao final;
+- heuristicas e validacao deterministica;
+- consolidacao final dos comentarios;
 - exportacao em DOCX comentado e JSON.
 
-## Estrutura Atual
+## Visao geral
 
-### Pastas de dados
+O pipeline atual trabalha em quatro camadas:
+
+1. `document_loader.py` carrega o arquivo de entrada e gera um `NormalizedDocument`.
+2. `pipeline/scope.py` define quais trechos cada agente pode revisar.
+3. `pipeline/context.py`, `pipeline/runtime.py` e `pipeline/orchestrator.py` executam a revisao lote a lote.
+4. `pipeline/validation.py`, `pipeline/consolidation.py` e `pipeline/coordinator.py` limpam a saida e produzem a resposta final.
+
+Os comentarios produzidos pelos agentes passam por filtros de seguranca e deduplicacao antes de aparecer na saida final.
+
+## Agentes
+
+Agentes editoriais atualmente ativos:
+
+- `sinopse_abstract`
+- `gramatica_ortografia`
+- `tabelas_figuras`
+- `estrutura`
+- `tipografia`
+- `referencias`
+- `comentarios_usuario_referencias`
+
+Organizacao do codigo:
+
+- `src/editorial_docx/agents/heuristics/`: heuristicas por agente.
+- `src/editorial_docx/agents/scopes/`: regras de escopo.
+- `src/editorial_docx/agents/validation/`: regras de validacao.
+- `src/editorial_docx/prompts/`: prompts e perfis.
+
+## Comportamento atual importante
+
+### Gramatica e ortografia
+
+O agente de gramatica foi simplificado para operar, por padrao, em modo `TEXTO_INTEIRO`.
+
+Isso significa que:
+
+- o texto inteiro do escopo de gramatica vai em uma unica chamada por passagem;
+- nao ha micro-lotes paralelos para esse agente;
+- o ponto central dessa configuracao fica em `src/editorial_docx/config.py`, via `GRAMMAR_CONTEXT_MODE`.
+
+Arquivos principais desse fluxo:
+
+- `src/editorial_docx/pipeline/context.py`
+- `src/editorial_docx/pipeline/runtime.py`
+- `src/editorial_docx/prompts/prompt.py`
+
+### Referencias
+
+O fluxo de referencias agora separa com mais clareza tres responsabilidades:
+
+1. mapear citacoes no corpo do texto;
+2. relacionar corpo e lista final de referencias;
+3. validar a lista final segundo regras ABNT.
+
+O artefato interno dessa etapa e `ReferencePipelineArtifact`, definido em:
+
+- `src/editorial_docx/models.py`
+
+Ele e construido em:
+
+- `src/editorial_docx/references/analysis.py`
+
+e depois reaproveitado por:
+
+- `src/editorial_docx/agents/heuristics/references.py`
+- `src/editorial_docx/pipeline/validation.py`
+
+Hoje esse artefato agrega:
+
+- citacoes do corpo;
+- entradas da lista final;
+- ancoras exatas;
+- ancoras provaveis;
+- citacoes sem correspondencia clara;
+- referencias nao citadas no corpo;
+- problemas ABNT por entrada.
+
+## Estrutura do projeto
+
+### Pastas principais
 
 - `input_data/`
-  Aqui ficam os arquivos de entrada que o usuario quer revisar.
+  Arquivos de entrada para revisao.
 - `output_data/`
-  Aqui ficam os artefatos gerados: DOCX comentado, relatorio JSON, diagnostico e `normalized_document.json`.
+  Artefatos gerados pelo pipeline.
+- `docs/`
+  Documentacao complementar e notas de estado.
+- `testes/`
+  Suite de testes automatizados.
 
-### Nucleo da aplicacao
+### Modulos principais
 
 - `src/editorial_docx/config.py`
-  Configuracoes compartilhadas do projeto: caminhos, timeout, retries, limites de batch e constantes globais.
+  Configuracoes globais do projeto.
 - `src/editorial_docx/document_loader.py`
-  Carrega DOCX, PDF ou `normalized_document.json`.
+  Carregamento de DOCX, PDF e JSON normalizado.
 - `src/editorial_docx/normalized_document.py`
-  Gera e serializa o artefato independente de extracao.
-- `src/editorial_docx/pipeline/context.py`
-  Prepara lotes, janelas e contexto progressivo.
-- `src/editorial_docx/pipeline/scope.py`
-  Despacha a selecao de escopo por agente.
-- `src/editorial_docx/pipeline/runtime.py`
-  Executa chamadas LLM, retries, parsing de saida e coordenador.
-- `src/editorial_docx/pipeline/validation.py`
-  Coordena a validacao de comentarios por agente.
-- `src/editorial_docx/pipeline/consolidation.py`
-  Consolida comentarios equivalentes.
-- `src/editorial_docx/pipeline/orchestrator.py`
-  Orquestra o pipeline de revisao.
-- `src/editorial_docx/pipeline/coordinator.py`
-  Gera a sintese final do resultado.
+  Modelo intermediario independente da origem do arquivo.
 - `src/editorial_docx/graph_chat.py`
-  Fachada compativel usada pelo restante do projeto e pelos testes.
-
-### Agentes
-
-- `src/editorial_docx/agents/user_reference_agent.py`
-  Agente especial para comentarios do usuario pedindo busca de referencia.
-- `src/editorial_docx/agents/heuristics/`
-  Heuristicas organizadas por agente:
-  - `grammar.py`
-  - `synopsis.py`
-  - `tables_figures.py`
-  - `structure.py`
-  - `typography.py`
-  - `references.py`
-  - `dispatch.py`
-- `src/editorial_docx/agents/scopes/`
-  Regras de escopo por agente:
-  - `metadata.py`
-  - `synopsis.py`
-  - `structure.py`
-  - `tables_figures.py`
-  - `references.py`
-  - `typography.py`
-  - `grammar.py`
-  - `default.py`
-  - `shared.py`
-  - `dispatch.py`
-- `src/editorial_docx/agents/validation/`
-  Regras de validacao por agente:
-  - `structure.py`
-  - `metadata.py`
-  - `tables_figures.py`
-  - `typography.py`
-  - `references.py`
-  - `style_conformity.py`
-  - `synopsis.py`
-  - `grammar.py`
-  - `shared.py`
-  - `dispatch.py`
-
-### IO e artefatos
-
-- `src/editorial_docx/io/`
-  Fachada para carregamento, serializacao e localizacao de comentarios:
-  - `document_loader.py`
-  - `normalized_document.py`
-  - `docx_utils.py`
-  - `comment_localizer.py`
-
-### Regras ABNT e matching bibliografico
-
+  Fachada principal usada pela aplicacao e pelos testes.
+- `src/editorial_docx/pipeline/`
+  Preparacao de contexto, execucao, validacao, consolidacao e coordenacao final.
 - `src/editorial_docx/references/`
-  Fachada da camada bibliografica:
-  - `normalizer.py`
-  - `citations.py`
-  - `parser.py`
-  - `matcher.py`
-  - `rules.py`
-  - `validator.py`
-  - `document_types.py`
+  Fachada da camada bibliografica.
+- `src/editorial_docx/io/`
+  Funcoes de IO e localizacao de comentarios.
 
-## Fluxo do Codigo
+### Camada ABNT
+
+O projeto mantem a base bibliografica em dois niveis:
+
+- modulos `abnt_*` em `src/editorial_docx/` com parser, matcher e validator;
+- fachada em `src/editorial_docx/references/` para o uso interno do restante do pipeline.
+
+## Fluxo do codigo
 
 ```mermaid
 flowchart TD
     A["Usuario envia DOCX, PDF ou normalized JSON"] --> B["document_loader.py"]
-    B --> C["normalized_document.py<br/>extrai blocos, secoes, comentarios e referencias"]
-    C --> D["pipeline/scope.py<br/>despacha escopo por agente"]
-    D --> D1["agents/scopes/*.py"]
-    D --> E["pipeline/context.py<br/>monta lotes e janelas"]
-    E --> F["pipeline/orchestrator.py"]
-    F --> G["Agentes LLM + heuristicas"]
-    G --> G1["agents/heuristics/*.py"]
-    G --> G2["agents/user_reference_agent.py"]
-    G --> H["pipeline/validation.py<br/>coordena validacao"]
-    H --> H1["agents/validation/*.py"]
-    H --> I["pipeline/consolidation.py<br/>deduplica e consolida"]
-    I --> J["pipeline/runtime.py + pipeline/coordinator.py<br/>sintese final"]
-    J --> K["docx_utils.py / CLI / Streamlit"]
-    K --> L["output_data/<artefatos>"]
+    B --> C["normalized_document.py<br/>gera blocos, secoes, TOC e comentarios do usuario"]
+    C --> D["pipeline/scope.py<br/>seleciona o escopo por agente"]
+    D --> E["pipeline/context.py<br/>monta lotes e contexto"]
+    E --> F["pipeline/orchestrator.py / graph_chat.py"]
+    F --> G["prompts + LLM + heuristicas"]
+    G --> H["pipeline/validation.py"]
+    H --> I["pipeline/consolidation.py"]
+    I --> J["pipeline/coordinator.py"]
+    J --> K["CLI / Streamlit / docx_utils.py"]
 ```
 
-## Fluxo de Referencias
+## Fluxo de referencias
 
 ```mermaid
 flowchart LR
-    A["Texto do corpo"] --> B["references/citations.py"]
-    C["Lista de referencias"] --> D["references/parser.py"]
-    B --> E["references/matcher.py"]
+    A["Corpo do texto"] --> B["Extracao de citacoes"]
+    C["Lista final"] --> D["Parser de referencias"]
+    B --> E["Matcher corpo -> referencias"]
     D --> E
-    E --> F["match exato"]
-    E --> G["match provavel<br/>ano divergente"]
-    E --> H["match provavel<br/>entrada colada ou malformada"]
-    E --> I["ausencia real"]
-    F --> J["agents/heuristics/references.py"]
-    G --> J
-    H --> J
-    I --> J
+    E --> F["Ancoras exatas"]
+    E --> G["Ancoras provaveis"]
+    E --> H["Citacoes ausentes"]
+    E --> I["Referencias nao citadas"]
+    D --> J["Validador ABNT"]
+    F --> K["ReferencePipelineArtifact"]
+    G --> K
+    H --> K
+    I --> K
+    J --> K
+    K --> L["Heuristicas e validacao final"]
 ```
+
+## Instalacao
+
+Requisitos:
+
+- Python 3.10+
+- uma LLM configurada via `.env`
+
+Instalacao basica no ambiente virtual:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -U pip
+python -m pip install -e .[dev]
+```
+
+O grupo `dev` instala:
+
+- `pytest`
+- `ruff`
+- `mypy`
 
 ## Execucao
 
@@ -149,8 +193,9 @@ streamlit run streamlit_app.py
 ```
 
 O app:
-- le documentos de `input_data/`;
-- permite subir novos arquivos direto para `input_data/`;
+
+- lista documentos de `input_data/`;
+- permite subir novos arquivos;
 - salva artefatos em `output_data/`.
 
 ### CLI
@@ -159,26 +204,52 @@ O app:
 python -m editorial_docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
 ```
 
-Saidas padrao:
-- `output_data/<nome>_normalized_document.json`
-- `output_data/<nome>_output_<modelo>.relatorio.json`
-- `output_data/<nome>_output_<modelo>.relatorio.diagnostics.json`
-- `output_data/<nome>_output_<modelo>.docx`
+Tambem aceita:
+
+- `.pdf`
+- `.json` com `normalized_document`
+
+Argumentos principais:
+
+- `--question`
+- `--output-docx`
+- `--output-json`
+- `--output-normalized-json`
+
+## Saidas
+
+Saidas padrao em `output_data/`:
+
+- `<nome>_normalized_document.json`
+- `<nome>_output_<modelo>.relatorio.json`
+- `<nome>_output_<modelo>.relatorio.diagnostics.json`
+- `<nome>_output_<modelo>.docx`
+
+O pipeline tambem grava snapshots em `output_data/historico/`.
+
+O arquivo `diagnostics.json` resume rastros de execucao por agente e por lote, incluindo:
+
+- falhas de conexao;
+- contagem de comentarios do LLM;
+- comentarios aceitos por heuristica;
+- status de cada lote.
 
 ## Configuracao
 
-As constantes centrais estao em:
+As constantes centrais ficam em:
+
 - `src/editorial_docx/config.py`
 
-Exemplos:
+Exemplos de configuracao:
+
 - diretorios de entrada e saida;
 - modelo padrao;
 - timeout;
 - retries;
-- tamanho de batch;
-- overlap de micro-lotes.
+- limites de batch;
+- modo de contexto do agente de gramatica.
 
-As credenciais e provedores continuam sendo lidos do `.env`.
+As credenciais e provedores sao lidos do `.env`.
 
 ### Exemplo OpenAI
 
@@ -197,7 +268,7 @@ OLLAMA_MODEL=llama3.1:8b
 OLLAMA_API_KEY=ollama
 ```
 
-### Exemplo compativel com OpenAI
+### Exemplo OpenAI-compatible
 
 ```env
 LLM_PROVIDER=openai_compatible
@@ -206,31 +277,18 @@ LLM_MODEL=nome-do-modelo
 LLM_API_KEY=token-opcional
 ```
 
-## Organizacao dos Agentes
-
-Hoje os agentes estao separados por responsabilidade:
-
-- agentes de revisao editorial geral:
-  - `sinopse_abstract`
-  - `gramatica_ortografia`
-  - `tabelas_figuras`
-  - `estrutura`
-  - `tipografia`
-  - `referencias`
-- agente especial:
-  - `comentarios_usuario_referencias`
-
-O codigo especifico de heuristicas fica em `src/editorial_docx/agents/heuristics/`.
-As regras de escopo ficam em `src/editorial_docx/agents/scopes/`.
-As regras de validacao ficam em `src/editorial_docx/agents/validation/`.
-Os modulos antigos `review_*.py` foram removidos; a estrutura vigente do projeto passa a ser `pipeline/`, `agents/`, `references/` e `io/`.
-
 ## Testes
 
-Rodadas principais:
+Rodada principal:
 
 ```bash
 pytest testes/test_llm.py testes/test_architecture_modular.py testes/test_graph_chat.py -q
+```
+
+Rodada focada no pipeline atual de gramatica e referencias:
+
+```bash
+pytest testes/test_architecture_modular.py testes/test_graph_chat.py -q
 ```
 
 Validacao de import e sintaxe:
@@ -239,8 +297,8 @@ Validacao de import e sintaxe:
 python -m compileall src/editorial_docx streamlit_app.py
 ```
 
-## Documentacao Complementar
+## Observacoes
 
-O estado editorial consolidado continua documentado em:
-
-- `docs/ESTADO_ATUAL_EDITORIAL.md`
+- `src/editorial_docx/review_heuristics.py` continua existindo como fachada de compatibilidade para imports antigos.
+- A interface publica principal do pacote esta em `src/editorial_docx/graph_chat.py`.
+- O estado editorial consolidado tambem esta documentado em `docs/ESTADO_ATUAL_EDITORIAL.md`.

@@ -46,6 +46,55 @@ class DocumentUserComment:
 
 
 @dataclass(slots=True)
+class ReferenceBodyCitation:
+    paragraph_index: int
+    excerpt: str
+    label: str
+    key: tuple[str, str] | None = None
+
+
+@dataclass(slots=True)
+class ReferenceEntryRecord:
+    paragraph_index: int
+    raw_text: str
+    label: str
+    key: tuple[str, str] | None = None
+    document_type: str = ""
+    publication_year: str = ""
+
+
+@dataclass(slots=True)
+class ReferenceAnchor:
+    citation_paragraph_index: int
+    citation_excerpt: str
+    citation_label: str
+    reference_paragraph_index: int | None = None
+    reference_label: str = ""
+    status: str = ""
+    confidence: float | None = None
+
+
+@dataclass(slots=True)
+class ReferenceAbntIssueRecord:
+    paragraph_index: int
+    code: str
+    message: str
+    suggested_fix: str
+    category: str
+
+
+@dataclass(slots=True)
+class ReferencePipelineArtifact:
+    body_citations: list[ReferenceBodyCitation] = field(default_factory=list)
+    reference_entries: list[ReferenceEntryRecord] = field(default_factory=list)
+    exact_anchors: list[ReferenceAnchor] = field(default_factory=list)
+    probable_anchors: list[ReferenceAnchor] = field(default_factory=list)
+    missing_citations: list[ReferenceBodyCitation] = field(default_factory=list)
+    uncited_references: list[ReferenceEntryRecord] = field(default_factory=list)
+    abnt_issues: list[ReferenceAbntIssueRecord] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class VerificationDecision:
     comment: AgentComment
     accepted: bool

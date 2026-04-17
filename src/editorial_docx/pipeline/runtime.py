@@ -7,9 +7,11 @@ from json import JSONDecodeError
 
 from langchain_core.prompts import ChatPromptTemplate
 
+from ..config import GRAMMAR_CONTEXT_MODE, TEXTO_INTEIRO
 from ..llm import get_chat_model, get_chat_models, get_llm_retry_config
 from ..models import AgentComment, agent_short_label
 from ..prompts import AgentCommentsPayload, CommentReviewsPayload, build_coordinator_prompt
+from ..token_utils import truncate_text
 from .context import PreparedReviewDocument, ReviewBatch
 
 _CTRL_RE = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F]")
@@ -243,9 +245,10 @@ def _update_running_summary(
     running_summary: str,
     batch: ReviewBatch,
     accepted_comments: list[AgentComment],
+    use_llm: bool = True,
 ) -> str:
     fallback = _deterministic_progressive_summary(agent, running_summary, batch, accepted_comments)
-    if agent == "gramatica_ortografia" or get_chat_model() is None:
+    if not use_llm or agent == "gramatica_ortografia" or get_chat_model() is None:
         return fallback
 
     prompt = ChatPromptTemplate.from_messages(
@@ -296,7 +299,22 @@ def _build_batch_review_excerpt(
     prepared: PreparedReviewDocument,
     batch: ReviewBatch,
     running_summary: str,
+    agent: str | None = None,
 ) -> str:
+    if agent == "gramatica_ortografia":
+        if GRAMMAR_CONTEXT_MODE == TEXTO_INTEIRO:
+            return batch.focus_excerpt
+        headings = " > ".join(batch.headings) if batch.headings else "sem seção explícita"
+        compact_window = truncate_text(batch.window_excerpt, max_tokens=450)
+        return (
+            "JANELA MÍNIMA DE CONTEXTO:\n"
+            f"- Faixa atual: {batch.start_idx}-{batch.end_idx}\n"
+            f"- Seções relacionadas: {headings}\n"
+            f"{compact_window}\n\n"
+            "TRECHO-ALVO DESTA PASSAGEM:\n"
+            f"{batch.focus_excerpt}"
+        )
+
     toc_text = "\n".join(f"- {line}" for line in prepared.toc[:20]) if prepared.toc else "- (sem seções explícitas)"
     memory_text = running_summary.strip() or "(sem histórico consolidado para este agente até agora)"
     headings = " > ".join(batch.headings) if batch.headings else "sem seção explícita"

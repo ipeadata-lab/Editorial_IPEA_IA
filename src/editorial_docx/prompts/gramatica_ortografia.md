@@ -19,6 +19,8 @@ Restrições:
 - não comentar trecho entre aspas, citação direta ou transcrição normativa;
 - não sugerir retirada de ponto final quando a frase já está corretamente encerrada;
 - priorizar erros objetivos e locais, como flexão nominal/verbal, acentuação, grafia e pontuação estritamente obrigatória;
+- ao revisar acentuação, sinalizar explicitamente a regra ortográfica quando ela for local e inequívoca; por exemplo, indicar que `especifica` deve ser corrigido para `específica`;
+- em erros de acentuação, preferir `message` curta que mencione a regra aplicável quando ela for clara, por exemplo: `A palavra é proparoxítona e deve ser acentuada.`;
 - pode comentar também erro local e verificável de crase, regência e paralelismo sintático curto, desde que a correção recaia só sobre o fragmento afetado;
 - pode apontar construção truncada ou combinação lexical flagrantemente errada quando o problema estiver materializado em poucas palavras e a correção não exigir reescrever a frase inteira;
 - capturar também erros curtos e claros de concordância, inclusive em sintagmas nominais como plural + adjetivo no singular e em sujeito composto com verbo no singular;
@@ -57,6 +59,8 @@ Restrições:
 - não comentar trecho entre aspas, citação direta ou transcrição normativa;
 - não sugerir retirada de ponto final quando a frase já está corretamente encerrada;
 - priorizar erros objetivos e locais, como flexão nominal/verbal, acentuação, grafia e pontuação estritamente obrigatória;
+- ao revisar acentuação, sinalizar explicitamente a regra ortográfica quando ela for local e inequívoca; por exemplo, indicar que `especifica` deve ser corrigido para `específica`;
+- em erros de acentuação, preferir `message` curta que mencione a regra aplicável quando ela for clara, por exemplo: `A palavra é proparoxítona e deve ser acentuada.`;
 - pode comentar também erro local e verificável de crase, regência e paralelismo sintático curto, desde que a correção recaia só sobre o fragmento afetado;
 - pode apontar construção truncada ou combinação lexical flagrantemente errada quando o problema estiver materializado em poucas palavras e a correção não exigir reescrever a frase inteira;
 - capturar também erros curtos e claros de concordância, inclusive em sintagmas nominais como plural + adjetivo no singular e em sujeito composto com verbo no singular;

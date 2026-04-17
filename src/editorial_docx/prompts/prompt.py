@@ -8,6 +8,7 @@ from zipfile import ZipFile
 from langchain_core.prompts import ChatPromptTemplate
 from lxml import etree
 
+from ..config import GRAMMAR_CONTEXT_MODE, TEXTO_INTEIRO
 from .profiles import get_prompt_profile
 from .schemas import agent_output_contract_text, review_output_contract_text
 
@@ -202,10 +203,38 @@ def _build_profile_context(profile_key: str | None) -> dict[str, str]:
     }
 
 
+def _agent_context_guidance(agent_name: str) -> str:
+    if agent_name == "gramatica_ortografia":
+        if GRAMMAR_CONTEXT_MODE == TEXTO_INTEIRO:
+            return (
+                "O contexto abaixo traz o texto inteiro enviado para esta passagem do agente de gramática e ortografia.\n"
+                "- analise somente problemas gramaticais, ortográficos, de pontuação e concordância sustentados pelo próprio texto;\n"
+                "- ancore cada comentário no trecho exato onde o problema aparece;\n"
+                "- se a correção depender de informação externa ou de decisão editorial, responda `[]`;\n"
+                "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
+            )
+        return (
+            "O contexto abaixo vem separado em duas zonas: janela mínima de contexto e trecho-alvo.\n"
+            "- use a janela mínima apenas para desambiguar o trecho-alvo;\n"
+            "- ancore cada comentário no trecho-alvo ou em evidência local explícita da janela;\n"
+            "- se a correção depender de contexto documental mais amplo, responda `[]`;\n"
+            "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
+        )
+
+    return (
+        "O contexto abaixo vem separado em quatro zonas: mapa do documento, memória progressiva do agente, janela de contexto e trecho-alvo.\n"
+        "- use o mapa e a memória apenas para orientação e coerência;\n"
+        "- use a janela de contexto para desambiguar o trecho-alvo;\n"
+        "- ancore cada comentário no trecho-alvo ou em evidência local explícita da janela;\n"
+        "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
+    )
+
+
 def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatPromptTemplate:
     instruction = load_agent_instruction(agent_name, profile_key=profile_key)
     profile_ctx = _build_profile_context(profile_key)
     support_context = _build_agent_support_context(agent_name)
+    context_guidance = _agent_context_guidance(agent_name)
 
     return ChatPromptTemplate.from_messages(
         [
@@ -224,11 +253,7 @@ def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatP
                     "- não repita o mesmo comentário no mesmo bloco com formulações equivalentes;\n"
                     "- se apenas parte do bloco divergir, comente apenas a parte divergente;\n"
                     "- se a conclusão depender de contexto ausente ou inferência externa, retorne `[]`;\n\n"
-                    "O contexto abaixo vem separado em quatro zonas: mapa do documento, memória progressiva do agente, janela de contexto e trecho-alvo.\n"
-                    "- use o mapa e a memória apenas para orientação e coerência;\n"
-                    "- use a janela de contexto para desambiguar o trecho-alvo;\n"
-                    "- ancore cada comentário no trecho-alvo ou em evidência local explícita da janela;\n"
-                    "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
+                    "{context_guidance}"
                     "Cada linha do trecho vem no formato [indice_global] (referência | tipo=...). "
                     "Se preencher paragraph_index, use exatamente o número entre colchetes [N] daquela linha; "
                     "nunca use a posição do item no lote.\n"
@@ -242,6 +267,7 @@ def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatP
         ]
     ).partial(
         **profile_ctx,
+        context_guidance=context_guidance,
         support_context=support_context or "(nenhuma norma auxiliar carregada para este agente)",
         output_contract=agent_output_contract_text(),
     )
