@@ -9,6 +9,7 @@ from ...review_patterns import (
 
 
 def build_scope(chunks: list[str], refs: list[str], sections, total: int) -> list[int]:
+    """Builds scope."""
     typed = _indexes_by_ref_type(refs, {"heading", "reference_heading"})
     section_starts = sorted(dict.fromkeys(sec.start_idx for sec in sections))
     intro_start = next(

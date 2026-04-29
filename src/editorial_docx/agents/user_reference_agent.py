@@ -21,6 +21,7 @@ USER_REFERENCE_AGENT = "comentarios_usuario_referencias"
 
 
 def _reference_entry_texts(chunks: list[str], refs: list[str]) -> list[str]:
+    """Handles reference entry texts."""
     return [
         chunk
         for chunk, ref in zip(chunks, refs)
@@ -29,6 +30,7 @@ def _reference_entry_texts(chunks: list[str], refs: list[str]) -> list[str]:
 
 
 def _reference_insertion_index(refs: list[str]) -> int | None:
+    """Handles reference insertion index."""
     last_entry = next(
         (idx for idx in range(len(refs) - 1, -1, -1) if _ref_block_type(refs[idx]) == "reference_entry"),
         None,
@@ -44,6 +46,7 @@ def _build_user_reference_excerpt(
     refs: list[str],
     chunks: list[str],
 ) -> str:
+    """Handles build user reference excerpt."""
     ref_lines = [
         f"[{idx}] {chunk}"
         for idx, (chunk, ref) in enumerate(zip(chunks, refs))
@@ -70,6 +73,7 @@ def _accept_user_reference_comment(
     request: ReferenceSearchRequest,
     refs: list[str],
 ) -> AgentComment | None:
+    """Handles accept user reference comment."""
     insertion_index = _reference_insertion_index(refs)
     if insertion_index is None:
         return None

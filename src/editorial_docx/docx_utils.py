@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from difflib import SequenceMatcher
 import re
@@ -44,18 +44,22 @@ class _StyleMeta:
 
 
 def _qname(ns: str, tag: str) -> str:
+    """Handles qname."""
     return f"{{{ns}}}{tag}"
 
 
 def _parse_xml(raw: bytes) -> etree._Element:
+    """Handles parse xml."""
     return etree.fromstring(raw)
 
 
 def _serialize_xml(root: etree._Element) -> bytes:
+    """Handles serialize xml."""
     return etree.tostring(root, encoding="UTF-8", xml_declaration=True, standalone="yes")
 
 
 def _ensure_comments_part(parts: dict[str, bytes]) -> etree._Element:
+    """Handles ensure comments part."""
     comments_raw = parts.get(COMMENTS_PART)
     if comments_raw is None:
         root = etree.Element(_qname(W_NS, "comments"), nsmap={"w": W_NS})
@@ -65,6 +69,7 @@ def _ensure_comments_part(parts: dict[str, bytes]) -> etree._Element:
 
 
 def _ensure_comments_content_type(content_types_root: etree._Element) -> None:
+    """Handles ensure comments content type."""
     for override in content_types_root.findall(_qname(CT_NS, "Override")):
         if override.get("PartName") == "/word/comments.xml":
             return
@@ -77,6 +82,7 @@ def _ensure_comments_content_type(content_types_root: etree._Element) -> None:
 
 
 def _ensure_comments_relationship(rels_root: etree._Element) -> None:
+    """Handles ensure comments relationship."""
     for rel in rels_root.findall(_qname(PR_NS, "Relationship")):
         if rel.get("Type") == COMMENTS_REL_TYPE:
             return
@@ -101,6 +107,7 @@ def _ensure_comments_relationship(rels_root: etree._Element) -> None:
 
 
 def _next_comment_id(comments_root: etree._Element) -> int:
+    """Handles next comment id."""
     ids = []
     for comment in comments_root.findall(_qname(W_NS, "comment")):
         raw_id = comment.get(_qname(W_NS, "id"))
@@ -110,6 +117,7 @@ def _next_comment_id(comments_root: etree._Element) -> int:
 
 
 def _paragraph_text(paragraph: etree._Element) -> str:
+    """Handles paragraph text."""
     text_parts = []
     for t in paragraph.findall(".//w:t", namespaces=NS):
         text_parts.append(t.text or "")
@@ -117,6 +125,7 @@ def _paragraph_text(paragraph: etree._Element) -> str:
 
 
 def _paragraph_alignment(paragraph: etree._Element) -> str:
+    """Handles paragraph alignment."""
     ppr = paragraph.find("w:pPr", namespaces=NS)
     if ppr is None:
         return ""
@@ -134,6 +143,7 @@ def _paragraph_alignment(paragraph: etree._Element) -> str:
 
 
 def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
+    """Handles normalize text with mapping."""
     normalized_chars: list[str] = []
     mapping: list[int] = []
 
@@ -168,6 +178,7 @@ def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
 
 
 def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
+    """Handles find excerpt span."""
     if not text or not target:
         return None
 
@@ -228,6 +239,7 @@ def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
 
 
 def _load_style_map(parts: dict[str, bytes]) -> dict[str, str]:
+    """Handles load style map."""
     raw = parts.get("word/styles.xml")
     if raw is None:
         return {}
@@ -243,6 +255,7 @@ def _load_style_map(parts: dict[str, bytes]) -> dict[str, str]:
 
 
 def _parse_on_off(element: etree._Element | None) -> bool | None:
+    """Handles parse on off."""
     if element is None:
         return None
     value = element.get(_qname(W_NS, "val"))
@@ -257,6 +270,7 @@ def _parse_on_off(element: etree._Element | None) -> bool | None:
 
 
 def _load_style_meta(parts: dict[str, bytes]) -> dict[str, _StyleMeta]:
+    """Handles load style meta."""
     raw = parts.get("word/styles.xml")
     if raw is None:
         return {}
@@ -280,6 +294,7 @@ def _load_style_meta(parts: dict[str, bytes]) -> dict[str, _StyleMeta]:
 
 
 def _paragraph_style_name(paragraph: etree._Element, style_map: dict[str, str]) -> str:
+    """Handles paragraph style name."""
     style = paragraph.find("./w:pPr/w:pStyle", namespaces=NS)
     if style is None:
         return ""
@@ -288,6 +303,7 @@ def _paragraph_style_name(paragraph: etree._Element, style_map: dict[str, str]) 
 
 
 def _paragraph_style_id(paragraph: etree._Element) -> str:
+    """Handles paragraph style id."""
     style = paragraph.find("./w:pPr/w:pStyle", namespaces=NS)
     if style is None:
         return ""
@@ -300,6 +316,7 @@ def _resolve_style_flag(
     attr: str,
     seen: set[str] | None = None,
 ) -> bool | None:
+    """Handles resolve style flag."""
     if not style_id:
         return None
     if seen is None:
@@ -319,6 +336,7 @@ def _resolve_style_flag(
 
 
 def _paragraph_emphasis(paragraph: etree._Element, style_meta: dict[str, _StyleMeta]) -> tuple[bool, bool]:
+    """Handles paragraph emphasis."""
     style_id = _paragraph_style_id(paragraph)
     default_bold = _resolve_style_flag(style_id, style_meta, "bold")
     default_italic = _resolve_style_flag(style_id, style_meta, "italic")
@@ -339,10 +357,12 @@ def _paragraph_emphasis(paragraph: etree._Element, style_meta: dict[str, _StyleM
 
 
 def _paragraph_has_numbering(paragraph: etree._Element) -> bool:
+    """Handles paragraph has numbering."""
     return paragraph.find("./w:pPr/w:numPr", namespaces=NS) is not None
 
 
 def _has_ancestor(paragraph: etree._Element, tag: str) -> bool:
+    """Handles has ancestor."""
     parent = paragraph.getparent()
     while parent is not None:
         if parent.tag == _qname(W_NS, tag):
@@ -368,16 +388,19 @@ _QUOTE_MARKERS = "\"“”‘’«»"
 
 
 def _strip_accents(value: str) -> str:
+    """Handles strip accents."""
     normalized = unicodedata.normalize("NFD", value or "")
     return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
 
 
 def _normalize_marker(value: str) -> str:
+    """Handles normalize marker."""
     stripped = re.sub(r"\s+", " ", (value or "").strip().upper())
     return _strip_accents(stripped)
 
 
 def _looks_like_reference_entry_text(text: str, *, in_reference_section: bool = False) -> bool:
+    """Handles looks like reference entry text."""
     candidate = (text or "").strip()
     if len(candidate) < 20:
         return False
@@ -402,6 +425,7 @@ def _looks_like_reference_entry_text(text: str, *, in_reference_section: bool = 
 
 
 def _looks_like_author_line(text: str) -> bool:
+    """Handles looks like author line."""
     candidate = (text or "").strip()
     if not candidate or len(candidate) > 90:
         return False
@@ -430,6 +454,7 @@ def _looks_like_heading(
     previous_text: str = "",
     next_text: str = "",
 ) -> bool:
+    """Handles looks like heading."""
     t = (text or "").strip()
     normalized_style = (style_name or "").strip().lower()
     if not t or len(t) > 140:
@@ -470,6 +495,7 @@ def _classify_paragraph(
     previous_text: str = "",
     next_text: str = "",
 ) -> str:
+    """Handles classify paragraph."""
     normalized_style = (style_name or "").strip().lower()
     normalized_text = (text or "").strip()
     normalized_text_lower = normalized_text.lower()
@@ -514,6 +540,7 @@ def _classify_paragraph(
 
 
 def _refine_contextual_block_types(items: list[ExtractedParagraph]) -> list[ExtractedParagraph]:
+    """Handles refine contextual block types."""
     if not items:
         return items
 
@@ -637,6 +664,7 @@ def _refine_contextual_block_types(items: list[ExtractedParagraph]) -> list[Extr
 
 
 def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagraph]:
+    """Extracts paragraphs with metadata."""
     with zipfile.ZipFile(input_path, "r") as zin:
         parts = {name: zin.read(name) for name in zin.namelist()}
 
@@ -681,6 +709,7 @@ def extract_paragraphs_with_metadata(input_path: Path) -> list[ExtractedParagrap
 
 
 def _comment_text(comment: etree._Element) -> str:
+    """Handles comment text."""
     paragraphs: list[str] = []
     for paragraph in comment.findall("w:p", namespaces=NS):
         text = "".join(node.text or "" for node in paragraph.findall(".//w:t", namespaces=NS)).strip()
@@ -690,6 +719,7 @@ def _comment_text(comment: etree._Element) -> str:
 
 
 def _paragraph_comment_excerpts(paragraph: etree._Element) -> dict[int, str]:
+    """Handles paragraph comment excerpts."""
     active_ids: set[int] = set()
     fragments: dict[int, list[str]] = {}
 
@@ -721,6 +751,7 @@ def _paragraph_comment_excerpts(paragraph: etree._Element) -> dict[int, str]:
 
 
 def extract_docx_user_comments(input_path: Path) -> list[DocumentUserComment]:
+    """Extracts docx user comments."""
     with zipfile.ZipFile(input_path, "r") as zin:
         parts = {name: zin.read(name) for name in zin.namelist()}
 
@@ -783,6 +814,7 @@ def extract_docx_user_comments(input_path: Path) -> list[DocumentUserComment]:
 
 
 def _clone_run_with_text(run: etree._Element, text: str) -> etree._Element:
+    """Handles clone run with text."""
     cloned_run = etree.Element(_qname(W_NS, "r"))
     rpr = run.find("w:rPr", namespaces=NS)
     if rpr is not None:
@@ -795,15 +827,18 @@ def _clone_run_with_text(run: etree._Element, text: str) -> etree._Element:
 
 
 def _run_text(run: etree._Element) -> str:
+    """Handles run text."""
     return "".join(node.text or "" for node in run.findall(".//w:t", namespaces=NS))
 
 
 def _can_split_run(run: etree._Element) -> bool:
+    """Handles can split run."""
     allowed = {_qname(W_NS, "rPr"), _qname(W_NS, "t")}
     return all(child.tag in allowed for child in run)
 
 
 def _split_run_at_offset(run: etree._Element, offset: int) -> tuple[etree._Element, etree._Element] | None:
+    """Handles split run at offset."""
     text = _run_text(run)
     if not text or offset <= 0 or offset >= len(text) or not _can_split_run(run):
         return None
@@ -821,6 +856,7 @@ def _split_run_at_offset(run: etree._Element, offset: int) -> tuple[etree._Eleme
 
 
 def _apply_yellow_highlight(run: etree._Element) -> None:
+    """Handles apply yellow highlight."""
     rpr = run.find("w:rPr", namespaces=NS)
     if rpr is None:
         rpr = etree.Element(_qname(W_NS, "rPr"))
@@ -832,6 +868,7 @@ def _apply_yellow_highlight(run: etree._Element) -> None:
 
 
 def _attach_comment(paragraph: etree._Element, comment_id: int, issue_excerpt: str | None = None) -> None:
+    """Handles attach comment."""
     excerpt_span = _find_excerpt_span(_paragraph_text(paragraph), issue_excerpt or "")
     if excerpt_span:
         anchored = _attach_comment_to_span(paragraph, comment_id, excerpt_span)
@@ -866,6 +903,7 @@ def _attach_comment(paragraph: etree._Element, comment_id: int, issue_excerpt: s
 
 
 def _attach_comment_to_span(paragraph: etree._Element, comment_id: int, span: tuple[int, int]) -> bool:
+    """Handles attach comment to span."""
     start_offset, end_offset = span
     if start_offset < 0 or end_offset <= start_offset:
         return False
@@ -945,6 +983,7 @@ def _attach_comment_to_span(paragraph: etree._Element, comment_id: int, span: tu
 
 
 def _append_comment_paragraph(comment: etree._Element, text: str) -> None:
+    """Handles append comment paragraph."""
     p = etree.SubElement(comment, _qname(W_NS, "p"))
     r = etree.SubElement(p, _qname(W_NS, "r"))
     t = etree.SubElement(r, _qname(W_NS, "t"))
@@ -954,6 +993,7 @@ def _append_comment_paragraph(comment: etree._Element, text: str) -> None:
 
 
 def _append_comment(comments_root: etree._Element, comment_id: int, author: str, paragraphs: list[str]) -> None:
+    """Handles append comment."""
     comment = etree.SubElement(comments_root, _qname(W_NS, "comment"))
     comment.set(_qname(W_NS, "id"), str(comment_id))
     comment.set(_qname(W_NS, "author"), author)
@@ -964,10 +1004,12 @@ def _append_comment(comments_root: etree._Element, comment_id: int, author: str,
 
 
 def _normalized_text(value: str) -> str:
+    """Handles normalized text."""
     return re.sub(r"\s+", " ", (value or "").strip().casefold())
 
 
 def _build_review_note(item: AgentComment) -> str:
+    """Handles build review note."""
     if item.agent == "tipografia" and item.auto_apply:
         return "Ajuste tipográfico aplicado automaticamente."
     if item.agent == "estrutura" and item.auto_apply:
@@ -992,10 +1034,12 @@ def _build_review_note(item: AgentComment) -> str:
 
 
 def extract_paragraphs(input_path: Path) -> list[str]:
+    """Extracts paragraphs."""
     return [item.text for item in extract_paragraphs_with_metadata(input_path)]
 
 
 def _bool_from_spec(value: str) -> bool | None:
+    """Handles bool from spec."""
     normalized = (value or "").strip().lower()
     if normalized in {"true", "1", "sim", "yes"}:
         return True
@@ -1005,6 +1049,7 @@ def _bool_from_spec(value: str) -> bool | None:
 
 
 def _parse_format_spec(raw: str) -> dict[str, str]:
+    """Handles parse format spec."""
     spec: dict[str, str] = {}
     for part in (raw or "").split(";"):
         piece = part.strip()
@@ -1019,10 +1064,12 @@ def _parse_format_spec(raw: str) -> dict[str, str]:
 
 
 def _text_tokens(value: str) -> list[str]:
+    """Handles text tokens."""
     return re.findall(r"[A-Za-zÀ-ÿ0-9]+", (value or "").casefold())
 
 
 def _is_safe_heading_normalization(item: AgentComment, original_text: str) -> bool:
+    """Handles is safe heading normalization."""
     if item.agent != "estrutura" or not item.auto_apply:
         return False
     issue = (item.issue_excerpt or "").strip()
@@ -1036,6 +1083,7 @@ def _is_safe_heading_normalization(item: AgentComment, original_text: str) -> bo
 
 
 def _is_safe_plain_text_normalization(item: AgentComment, original_text: str) -> bool:
+    """Handles is safe plain text normalization."""
     if item.agent not in {"estrutura", "referencias", "tabelas_figuras"} or not item.auto_apply:
         return False
     issue = (item.issue_excerpt or "").strip()
@@ -1049,6 +1097,7 @@ def _is_safe_plain_text_normalization(item: AgentComment, original_text: str) ->
 
 
 def _replace_paragraph_text(paragraph: etree._Element, new_text: str) -> None:
+    """Handles replace paragraph text."""
     ppr = paragraph.find("w:pPr", namespaces=NS)
     first_run = paragraph.find("w:r", namespaces=NS)
     preserved_rpr = None
@@ -1070,6 +1119,7 @@ def _replace_paragraph_text(paragraph: etree._Element, new_text: str) -> None:
 
 
 def _new_paragraph_like(paragraph: etree._Element, text: str) -> etree._Element:
+    """Handles new paragraph like."""
     new_paragraph = etree.Element(_qname(W_NS, "p"))
     ppr = paragraph.find("w:pPr", namespaces=NS)
     if ppr is not None:
@@ -1089,6 +1139,7 @@ def _new_paragraph_like(paragraph: etree._Element, text: str) -> etree._Element:
 
 
 def _ensure_child(parent: etree._Element, tag: str) -> etree._Element:
+    """Handles ensure child."""
     child = parent.find(tag, namespaces=NS)
     if child is None:
         child = etree.SubElement(parent, _qname(W_NS, tag.split(":")[-1]))
@@ -1096,6 +1147,7 @@ def _ensure_child(parent: etree._Element, tag: str) -> etree._Element:
 
 
 def _set_on_off(rpr: etree._Element, tag: str, enabled: bool | None) -> None:
+    """Handles set on off."""
     existing = rpr.find(tag, namespaces=NS)
     if enabled is None:
         return
@@ -1107,6 +1159,7 @@ def _set_on_off(rpr: etree._Element, tag: str, enabled: bool | None) -> None:
 
 
 def _apply_run_formatting(run: etree._Element, spec: dict[str, str]) -> None:
+    """Handles apply run formatting."""
     rpr = run.find("w:rPr", namespaces=NS)
     if rpr is None:
         rpr = etree.Element(_qname(W_NS, "rPr"))
@@ -1140,6 +1193,7 @@ def _apply_run_formatting(run: etree._Element, spec: dict[str, str]) -> None:
 
 
 def _apply_paragraph_formatting(paragraph: etree._Element, spec: dict[str, str]) -> None:
+    """Handles apply paragraph formatting."""
     ppr = paragraph.find("w:pPr", namespaces=NS)
     if ppr is None:
         ppr = etree.Element(_qname(W_NS, "pPr"))
@@ -1196,6 +1250,7 @@ def _apply_paragraph_formatting(paragraph: etree._Element, spec: dict[str, str])
 
 
 def _apply_auto_formatting(paragraphs: list[etree._Element], non_empty_indexes: list[int], comments: list[AgentComment]) -> None:
+    """Handles apply auto formatting."""
     for item in comments:
         paragraph_index = item.paragraph_index
         if paragraph_index is None or not (0 <= paragraph_index < len(non_empty_indexes)):
@@ -1209,6 +1264,7 @@ def _insert_auto_references(
     non_empty_indexes: list[int],
     comments: list[AgentComment],
 ) -> None:
+    """Handles insert auto references."""
     insertions: list[tuple[int, str]] = []
     seen_refs: set[str] = set()
 
@@ -1240,7 +1296,48 @@ def _insert_auto_references(
         anchor.addnext(_new_paragraph_like(anchor, suggested_fix))
 
 
+def _apply_approved_text_replacements(
+    paragraphs: list[etree._Element],
+    non_empty_indexes: list[int],
+    comments: list[AgentComment],
+) -> set[int]:
+    """Applies user-approved text edits directly to document paragraphs."""
+    applied_indexes: set[int] = set()
+
+    for item_idx, item in enumerate(comments):
+        if item.review_status != "resolvido":
+            continue
+        approved_text = (item.approved_text or "").strip()
+        if not approved_text:
+            continue
+
+        paragraph_index = _resolve_docx_paragraph_index(item, non_empty_indexes)
+        if paragraph_index is None or paragraph_index < 0 or paragraph_index >= len(paragraphs):
+            continue
+
+        paragraph = paragraphs[paragraph_index]
+        original_text = _paragraph_text(paragraph)
+        if not original_text.strip():
+            continue
+
+        issue_excerpt = (item.issue_excerpt or "").strip()
+        if issue_excerpt:
+            span = _find_excerpt_span(original_text, issue_excerpt)
+            if span is None:
+                continue
+            new_text = original_text[: span[0]] + approved_text + original_text[span[1] :]
+        else:
+            new_text = approved_text
+
+        if new_text != original_text:
+            _replace_paragraph_text(paragraph, new_text)
+            applied_indexes.add(item_idx)
+
+    return applied_indexes
+
+
 def _resolve_docx_paragraph_index(item: AgentComment, non_empty_indexes: list[int]) -> int | None:
+    """Handles resolve docx paragraph index."""
     paragraph_index = item.paragraph_index
     if paragraph_index is not None and 0 <= paragraph_index < len(non_empty_indexes):
         return non_empty_indexes[paragraph_index]
@@ -1250,6 +1347,7 @@ def _resolve_docx_paragraph_index(item: AgentComment, non_empty_indexes: list[in
 
 
 def _build_comment_lines_for_item(item: AgentComment, ordinal: int) -> list[str]:
+    """Handles build comment lines for item."""
     message = (item.message or "").strip()
     suggestion = (item.suggested_fix or "").strip()
 
@@ -1266,12 +1364,14 @@ def _build_comment_lines_for_item(item: AgentComment, ordinal: int) -> list[str]
 
 
 def _spans_overlap(left: tuple[int, int] | None, right: tuple[int, int] | None) -> bool:
+    """Handles spans overlap."""
     if left is None or right is None:
         return False
     return not (left[1] <= right[0] or right[1] <= left[0])
 
 
 def _group_comments_for_paragraph(paragraph_text: str, items: list[AgentComment]) -> list[list[AgentComment]]:
+    """Handles group comments for paragraph."""
     groups: list[dict[str, object]] = []
 
     for item in items:
@@ -1307,6 +1407,7 @@ def _group_comments_for_paragraph(paragraph_text: str, items: list[AgentComment]
 
 
 def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> bytes:
+    """Applies comments to docx."""
     with zipfile.ZipFile(input_path, "r") as zin:
         parts = {name: zin.read(name) for name in zin.namelist()}
 
@@ -1322,7 +1423,12 @@ def apply_comments_to_docx(input_path: Path, comments: list[AgentComment]) -> by
     non_empty_indexes = [i for i, p in enumerate(paragraphs) if _paragraph_text(p).strip()]
     _apply_auto_formatting(paragraphs, non_empty_indexes, comments)
     _insert_auto_references(paragraphs, non_empty_indexes, comments)
-    visible_comments = comments[:]
+    applied_comment_indexes = _apply_approved_text_replacements(paragraphs, non_empty_indexes, comments)
+    visible_comments = [
+        item
+        for item_idx, item in enumerate(comments)
+        if item.review_status != "rejeitado" and item_idx not in applied_comment_indexes
+    ]
 
     grouped_comments: dict[int, list[AgentComment]] = {}
     for item in visible_comments:

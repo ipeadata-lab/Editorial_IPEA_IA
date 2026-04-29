@@ -61,22 +61,27 @@ _CITATION_PLACEHOLDER_RE = re.compile(r"\(?\s*X{2,}\s*CITAR\s*X{2,}\s*\)?", flag
 
 
 def looks_like_reference_author(author_raw: str) -> bool:
+    """Returns whether reference author."""
     return _abnt_is_plausible_reference_author(author_raw, extra_blocked_tokens=NON_AUTHOR_REFERENCE_TOKENS)
 
 
 def canonical_author_key(author_raw: str) -> str | None:
+    """Handles canonical author key."""
     return _abnt_canonical_author_key(author_raw, extra_blocked_tokens=NON_AUTHOR_REFERENCE_TOKENS)
 
 
 def reference_citation_key(author_raw: str, year_raw: str) -> tuple[str, str] | None:
+    """Handles reference citation key."""
     return _abnt_canonical_reference_key(author_raw, year_raw, extra_blocked_tokens=NON_AUTHOR_REFERENCE_TOKENS)
 
 
 def reference_citation_label(author_raw: str, year_raw: str) -> str:
+    """Handles reference citation label."""
     return _abnt_citation_label(author_raw, year_raw)
 
 
 def reference_entry_publication_year(text: str) -> str | None:
+    """Handles reference entry publication year."""
     return _abnt_publication_year_from_reference(text)
 
 
@@ -85,6 +90,7 @@ def reference_body_citation_mentions(
     refs: list[str],
     body_limit: int,
 ) -> list[tuple[int, str, tuple[str, str], str]]:
+    """Handles reference body citation mentions."""
     candidates = extract_citation_candidates(
         chunks,
         refs,
@@ -96,20 +102,24 @@ def reference_body_citation_mentions(
 
 
 def reference_body_citation_keys(chunks: list[str], refs: list[str], body_limit: int) -> set[tuple[str, str]]:
+    """Handles reference body citation keys."""
     return {key for _, _, key, _ in reference_body_citation_mentions(chunks, refs, body_limit)}
 
 
 def reference_entry_key(text: str) -> tuple[str, str] | None:
+    """Handles reference entry key."""
     parsed = parse_reference_entry(text, blocked_author_tokens=NON_AUTHOR_REFERENCE_TOKENS)
     return parsed.key if parsed is not None else None
 
 
 def reference_entry_label(text: str) -> str:
+    """Handles reference entry label."""
     parsed = parse_reference_entry(text, blocked_author_tokens=NON_AUTHOR_REFERENCE_TOKENS)
     return parsed.label if parsed is not None else (text or "").strip()[:80]
 
 
 def summarize_reference_labels(labels: list[str], max_items: int = 6) -> str:
+    """Handles summarize reference labels."""
     cleaned = [label.strip() for label in labels if label.strip()]
     if not cleaned:
         return ""
@@ -120,6 +130,7 @@ def summarize_reference_labels(labels: list[str], max_items: int = 6) -> str:
 
 
 def probable_reference_match_comment(match: ProbableReferenceMatch) -> AgentComment:
+    """Handles probable reference match comment."""
     citation = match.citation
     reference = match.reference
     if match.match_type == "format_problem":
@@ -168,6 +179,7 @@ def reference_body_format_comments(
     *,
     batch_indexes: list[int],
 ) -> list[AgentComment]:
+    """Handles reference body format comments."""
     comments: list[AgentComment] = []
     batch_set = set(batch_indexes)
     for idx, text in enumerate(chunks[:body_limit]):
@@ -190,6 +202,7 @@ def reference_body_format_comments(
 
 
 def find_reference_citation_indexes(chunks: list[str], refs: list[str], body_limit: int) -> list[int]:
+    """Finds reference citation indexes."""
     return sorted({idx for idx, _, _, _ in reference_body_citation_mentions(chunks, refs, body_limit)})
 
 
@@ -199,11 +212,13 @@ def heuristic_reference_comments(
     refs: list[str],
     reference_pipeline: ReferencePipelineArtifact | None = None,
 ) -> list[AgentComment]:
+    """Handles heuristic reference comments."""
     comments: list[AgentComment] = []
     seen: set[tuple[int, str, str]] = set()
     batch_set = set(batch_indexes)
 
     def add(idx: int, issue: str, fix: str, message: str, category: str = "reference_format") -> None:
+        """Adds an item to the current collection."""
         key = (idx, issue, fix)
         if key in seen:
             return
@@ -285,6 +300,7 @@ def heuristic_reference_global_comments(
     batch_indexes: list[int],
     reference_pipeline: ReferencePipelineArtifact | None = None,
 ) -> list[AgentComment]:
+    """Handles heuristic reference global comments."""
     reference_heading_idx = next((idx for idx, ref in enumerate(refs) if _ref_block_type(ref) == "reference_heading"), None)
     if reference_heading_idx is None:
         return []
@@ -425,6 +441,7 @@ def heuristic_reference_placeholder_comments(
     chunks: list[str],
     refs: list[str],
 ) -> list[AgentComment]:
+    """Handles heuristic reference placeholder comments."""
     comments: list[AgentComment] = []
     seen: set[tuple[int, str]] = set()
 

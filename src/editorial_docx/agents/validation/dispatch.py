@@ -5,6 +5,7 @@ from .shared import ValidationContext
 
 
 def keep_rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles keep rejection reason."""
     if ctx.agent == "estrutura":
         return structure.rejection_reason(ctx)
     if ctx.agent == "metadados":
@@ -25,6 +26,7 @@ def keep_rejection_reason(ctx: ValidationContext) -> str | None:
 
 
 def detailed_rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles detailed rejection reason."""
     if ctx.agent == "sinopse_abstract":
         return synopsis.detailed_rejection_reason(ctx)
     if ctx.agent == "gramatica_ortografia":

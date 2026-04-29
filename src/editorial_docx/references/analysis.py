@@ -16,6 +16,7 @@ from ..agents.heuristics.references import NON_AUTHOR_REFERENCE_TOKENS
 
 
 def build_reference_pipeline_artifact(chunks: list[str], refs: list[str]) -> ReferencePipelineArtifact:
+    """Builds reference pipeline artifact."""
     reference_heading_idx = next((idx for idx, ref in enumerate(refs) if _ref_block_type(ref) == "reference_heading"), None)
     if reference_heading_idx is None:
         return ReferencePipelineArtifact()

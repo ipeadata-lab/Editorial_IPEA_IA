@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 
@@ -9,6 +9,7 @@ _TOKEN_RE = re.compile(r"[a-zA-ZÀ-ÿ0-9]{3,}")
 
 
 def _tokens(text: str) -> set[str]:
+    """Handles tokens."""
     return {t.lower() for t in _TOKEN_RE.findall(text)}
 
 
@@ -18,6 +19,7 @@ def select_chunk_indexes(
     sections: list[Section],
     max_chunks: int = 36,
 ) -> list[int]:
+    """Selects chunk indexes."""
     if not chunks:
         return []
 
@@ -75,6 +77,7 @@ def build_excerpt(
     refs: list[str],
     max_chars: int = DEFAULT_REVIEW_MAX_BATCH_CHARS,
 ) -> str:
+    """Builds excerpt."""
     lines: list[str] = []
     total = 0
     for idx in indexes:

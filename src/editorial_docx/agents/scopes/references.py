@@ -6,6 +6,7 @@ from .shared import expand_section_ranges, find_content_indexes
 
 
 def build_scope(chunks: list[str], refs: list[str], sections, total: int) -> list[int]:
+    """Builds scope."""
     sec = expand_section_ranges(sections, ("refer", "bibliograf", "references", "bibliography"))
     reference_heading_idx = next((idx for idx, ref in enumerate(refs) if _ref_block_type(ref) == "reference_heading"), total)
     citation_like = _find_reference_citation_indexes(chunks, refs, body_limit=reference_heading_idx)

@@ -5,6 +5,7 @@ from .shared import ValidationContext
 
 
 def keep_rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles keep rejection reason."""
     comment = ctx.comment
     source_text = ctx.source_text
     synopsis_blob = _normalized_text(" ".join([comment.message or "", comment.suggested_fix or ""]))
@@ -35,6 +36,7 @@ def keep_rejection_reason(ctx: ValidationContext) -> str | None:
 
 
 def detailed_rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles detailed rejection reason."""
     comment = ctx.comment
     source_text = ctx.source_text
     word_limit = _extract_word_limit(" ".join([comment.message or "", comment.suggested_fix or ""]))

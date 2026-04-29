@@ -46,10 +46,12 @@ class ParsedReferenceEntry:
 
     @property
     def key(self) -> tuple[str, str]:
+        """Handles key."""
         return self.author_key, self.publication_year
 
 
 def _primary_reference_segment(text: str) -> str:
+    """Handles primary reference segment."""
     source = (text or "").strip()
     if not source:
         return ""
@@ -58,6 +60,7 @@ def _primary_reference_segment(text: str) -> str:
 
 
 def _split_author_and_body(source: str) -> tuple[str, str]:
+    """Handles split author and body."""
     match = _AUTHOR_SEGMENT_RE.match(source)
     if match:
         return match.group("author").strip(), match.group("body").strip()
@@ -65,6 +68,7 @@ def _split_author_and_body(source: str) -> tuple[str, str]:
 
 
 def _infer_reference_document_type(text: str) -> str:
+    """Handles infer reference document type."""
     source = _ascii_fold(text).casefold()
     if any(marker in source for marker in ("lei ", "decreto ", "portaria ", "resolucao ")):
         return ABNT_TYPE_LEGAL
@@ -84,6 +88,7 @@ def _infer_reference_document_type(text: str) -> str:
 
 
 def _extract_reference_title(body: str) -> str:
+    """Handles extract reference title."""
     tail = (body or "").lstrip(" ,.;")
     if not tail:
         return ""
@@ -92,6 +97,7 @@ def _extract_reference_title(body: str) -> str:
 
 
 def _extract_container_title(source: str, title: str) -> str:
+    """Handles extract container title."""
     if " In: " in source or " in: " in source:
         match = re.search(r"\bIn:\s*([^.,]+)", source, flags=re.IGNORECASE)
         return match.group(1).strip() if match else ""
@@ -101,6 +107,7 @@ def _extract_container_title(source: str, title: str) -> str:
 
 
 def _extract_place_and_publisher(source: str) -> tuple[str, str]:
+    """Handles extract place and publisher."""
     match = re.search(r"([A-Z][^:.,;]{1,80}):\s*([^,.;]+)", source)
     if not match:
         return "", ""
@@ -108,6 +115,7 @@ def _extract_place_and_publisher(source: str) -> tuple[str, str]:
 
 
 def _extract_institution(source: str, author_raw: str, publisher: str) -> str:
+    """Handles extract institution."""
     if author_raw.isupper():
         return author_raw.strip()
     folded = _ascii_fold(source).casefold()
@@ -118,6 +126,7 @@ def _extract_institution(source: str, author_raw: str, publisher: str) -> str:
 
 
 def parse_reference_entry(text: str, *, blocked_author_tokens: set[str] | None = None) -> ParsedReferenceEntry | None:
+    """Parses reference entry."""
     source = (text or "").strip()
     if not source:
         return None

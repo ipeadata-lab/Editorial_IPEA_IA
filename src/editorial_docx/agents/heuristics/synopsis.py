@@ -7,6 +7,7 @@ from ...review_patterns import _folded_text, _ref_align, _ref_block_type
 
 
 def heuristic_synopsis_comments(batch_indexes: list[int], chunks: list[str], refs: list[str]) -> list[AgentComment]:
+    """Handles heuristic synopsis comments."""
     comments: list[AgentComment] = []
     for idx in batch_indexes:
         if not (0 <= idx < len(chunks)) or idx >= len(refs):

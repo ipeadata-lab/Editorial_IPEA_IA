@@ -59,6 +59,7 @@ def agent_output_contract_text() -> str:
 
 
 def review_output_contract_text() -> str:
+    """Handles review output contract text."""
     schema = CommentReviewsPayload.model_json_schema()
     return (
         "Você DEVE responder APENAS com um JSON válido, sem markdown nem texto extra. "

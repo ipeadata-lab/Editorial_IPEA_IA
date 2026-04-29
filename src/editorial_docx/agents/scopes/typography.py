@@ -4,6 +4,7 @@ from ...review_patterns import _indexes_by_ref_type, _ref_block_type, _ref_style
 
 
 def build_scope(chunks: list[str], refs: list[str], sections, total: int) -> list[int]:
+    """Builds scope."""
     typed = _indexes_by_ref_type(refs, {"heading", "caption", "reference_entry", "reference_heading"})
     styled = [
         idx

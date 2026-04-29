@@ -7,10 +7,12 @@ from ...review_patterns import _ref_block_type
 
 
 def heuristic_grammar_comments(batch_indexes: list[int], chunks: list[str], refs: list[str]) -> list[AgentComment]:
+    """Handles heuristic grammar comments."""
     comments: list[AgentComment] = []
     seen: set[tuple[int, str, str]] = set()
 
     def add(idx: int, issue: str, fix: str, message: str, category: str = "grammar") -> None:
+        """Adds an item to the current collection."""
         key = (idx, issue, fix)
         if key in seen:
             return
@@ -44,6 +46,18 @@ def heuristic_grammar_comments(batch_indexes: list[int], chunks: list[str], refs
             add(idx, "que assenta o acesso", "que assentam o acesso", "O verbo deve concordar com o sujeito composto.", "Concordância")
         if re.search(r"\be sugerem\b", text, flags=re.IGNORECASE) and re.search(r"\bexerc[ií]cio realizado\b", text, flags=re.IGNORECASE):
             add(idx, "e sugerem", "e sugere", "O verbo deve concordar com o núcleo singular do sujeito.", "Concordância")
+        for match in re.finditer(r"\S+ {2,}\S+", text):
+            issue = match.group(0)
+            fix = re.sub(r" {2,}", " ", issue)
+            add(idx, issue, fix, "Há espaço duplo indevido no trecho.", "Pontuação")
+        for match in re.finditer(r"\S+\s+[,.;:!?]", text):
+            issue = match.group(0)
+            fix = re.sub(r"\s+([,.;:!?])$", r"\1", issue)
+            add(idx, issue, fix, "Há espaço indevido antes do sinal de pontuação.", "Pontuação")
+        for match in re.finditer(r"\S+[.?!][A-ZÀ-Ý]\S*", text):
+            issue = match.group(0)
+            fix = re.sub(r"([.?!])([A-ZÀ-Ý])", r"\1 \2", issue, count=1)
+            add(idx, issue, fix, "Falta espaço após a pontuação final.", "Pontuação")
 
     return comments
 

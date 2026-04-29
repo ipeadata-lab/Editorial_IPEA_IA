@@ -56,7 +56,7 @@ Restrições:
 - nunca tratar `Tabela`, `Figura`, `Gráfico`, `Quadro` ou `Imagem` como seção ou subseção;
 - só sugerir seção faltante quando houver evidência estrutural clara no próprio documento;
 - não comentar elementos cuja natureza estrutural não possa ser confirmada pelo `tipo=...` do trecho;
-- se um subtítulo já estiver numerado, mas só precisar ser normalizado para o padrão editorial, aplicar autocorreção silenciosa com `auto_apply=true`;
+- se um subtítulo já estiver numerado, mas só precisar ser normalizado para o padrão editorial;
 - se o autor esqueceu de numerar um subtítulo que deveria ser numerado, apenas informe o problema; não autocorrija;
 - se a dúvida decorrer de ambiguidade da extração, abster-se e responder [].
 """

@@ -13,6 +13,7 @@ from .shared import ValidationContext, is_safe_text_normalization_auto_apply
 
 
 def rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles rejection reason."""
     comment = ctx.comment
     block_type = ctx.block_type
     if block_type not in {"reference_entry", "reference_heading"}:

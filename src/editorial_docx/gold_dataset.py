@@ -13,11 +13,13 @@ VALID_MISSED_LABELS = ["faltou"]
 
 
 def _slugify(value: str) -> str:
+    """Handles slugify."""
     slug = re.sub(r"[^a-z0-9]+", "_", (value or "").strip().lower())
     return slug.strip("_") or "item"
 
 
 def _annotation_id(agent: str, ordinal: int) -> str:
+    """Handles annotation id."""
     return f"{_slugify(agent)}_{ordinal:04d}"
 
 
@@ -29,6 +31,7 @@ def build_gold_annotation_template(
     model_name: str = "",
     run_label: str = "",
 ) -> dict[str, object]:
+    """Builds gold annotation template."""
     by_agent = Counter(str(item.get("agent") or "") for item in report_items)
     annotations: list[dict[str, object]] = []
 
@@ -94,6 +97,7 @@ def build_gold_annotation_template_from_report(
     model_name: str = "",
     run_label: str = "",
 ) -> dict[str, object]:
+    """Builds gold annotation template from report."""
     items = json.loads(report_path.read_text(encoding="utf-8"))
     if not isinstance(items, list):
         raise ValueError("O relatório deve ser uma lista JSON de comentários.")
@@ -107,6 +111,7 @@ def build_gold_annotation_template_from_report(
 
 
 def main() -> int:
+    """Runs the command-line entry point."""
     parser = argparse.ArgumentParser(description="Gera um scaffold de anotação para dataset ouro a partir de um relatório JSON.")
     parser.add_argument("report_json", type=Path, help="Caminho do relatório JSON de comentários aceitos.")
     parser.add_argument("--output", type=Path, required=True, help="Caminho do JSON de saída do scaffold ouro.")

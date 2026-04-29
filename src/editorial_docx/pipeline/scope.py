@@ -19,6 +19,7 @@ def _build_batches(
     max_chars: int = DEFAULT_REVIEW_MAX_BATCH_CHARS,
     max_chunks: int = DEFAULT_REVIEW_MAX_BATCH_CHUNKS,
 ) -> list[list[int]]:
+    """Handles build batches."""
     if not chunks or not indexes:
         return []
 
@@ -78,6 +79,7 @@ def prepare_review_batches(
 
 
 def _comment_priority(comment: AgentComment, refs: list[str]) -> tuple[int, int, int]:
+    """Handles comment priority."""
     block_type = ""
     if isinstance(comment.paragraph_index, int) and 0 <= comment.paragraph_index < len(refs):
         block_type = _ref_block_type(refs[comment.paragraph_index])
@@ -93,6 +95,7 @@ def _comment_priority(comment: AgentComment, refs: list[str]) -> tuple[int, int,
 
 
 def _comment_sort_key(comment: AgentComment) -> tuple[int, str, str]:
+    """Handles comment sort key."""
     paragraph_index = comment.paragraph_index if isinstance(comment.paragraph_index, int) else 10**9
     return paragraph_index, agent_short_label(comment.agent), _normalized_text(comment.message)
 

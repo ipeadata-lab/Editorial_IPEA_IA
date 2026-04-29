@@ -5,6 +5,7 @@ from .shared import ValidationContext, matches_whole_paragraph
 
 
 def rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles rejection reason."""
     comment = ctx.comment
     suggestion = (comment.suggested_fix or "").strip().upper()
     if not matches_whole_paragraph(comment, ctx.chunks):

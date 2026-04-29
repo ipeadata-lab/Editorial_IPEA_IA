@@ -49,10 +49,14 @@ Isso significa que:
 
 - o texto inteiro do escopo de gramatica vai em uma unica chamada por passagem;
 - nao ha micro-lotes paralelos para esse agente;
+- o agente foi ampliado para buscar nao so ortografia, pontuacao, concordancia e regencia, mas tambem microerros mecanicos de escrita, como espaco duplo, falta de espaco apos pontuacao e espaco indevido antes de pontuacao;
+- heuristicas locais complementam a LLM para capturar erros objetivos recorrentes de concordancia e espacamento;
 - o ponto central dessa configuracao fica em `src/editorial_docx/config.py`, via `GRAMMAR_CONTEXT_MODE`.
 
 Arquivos principais desse fluxo:
 
+- `src/editorial_docx/agents/heuristics/grammar.py`
+- `src/editorial_docx/agents/validation/grammar.py`
 - `src/editorial_docx/pipeline/context.py`
 - `src/editorial_docx/pipeline/runtime.py`
 - `src/editorial_docx/prompts/prompt.py`
@@ -128,7 +132,7 @@ O projeto mantem a base bibliografica em dois niveis:
 ## Fluxo do codigo
 
 ```mermaid
-flowchart TD
+flowchart LR
     A["Usuario envia DOCX, PDF ou normalized JSON"] --> B["document_loader.py"]
     B --> C["normalized_document.py<br/>gera blocos, secoes, TOC e comentarios do usuario"]
     C --> D["pipeline/scope.py<br/>seleciona o escopo por agente"]
@@ -140,6 +144,38 @@ flowchart TD
     I --> J["pipeline/coordinator.py"]
     J --> K["CLI / Streamlit / docx_utils.py"]
 ```
+
+## Fluxo de atuacao dos agentes
+
+```mermaid
+flowchart LR
+    A["NormalizedDocument<br/>chunks, refs, secoes e comentarios do usuario"] --> B["pipeline/scope.py<br/>seleciona o escopo por agente"]
+    B --> C["pipeline/context.py<br/>monta lotes, headings e janelas de contexto"]
+    C --> D["PreparedReviewDocument"]
+    D --> E1["sinopse_abstract"]
+    D --> E2["gramatica_ortografia"]
+    D --> E3["tabelas_figuras"]
+    D --> E4["estrutura"]
+    D --> E5["tipografia"]
+    D --> E6["referencias"]
+    D --> E7["comentarios_usuario_referencias"]
+    E1 --> F["Cada agente opera em sua copia logica<br/>e percorre seus lotes em sequencia"]
+    E2 --> F
+    E3 --> F
+    E4 --> F
+    E5 --> F
+    E6 --> F
+    E7 --> F
+    F --> G["Prompt do agente + excerpt do lote"]
+    G --> H["LLM gera comentarios candidatos"]
+    H --> I["Parser + revisor LLM opcional + heuristicas"]
+    I --> J["Resultado independente por agente"]
+    J --> K["Merge global dos resultados"]
+    K --> L["Validacao e deduplicacao final"]
+    L --> M["Coordenador monta a resposta final"]
+```
+
+Observacao: no fluxo principal atual, implementado em `src/editorial_docx/graph_chat.py`, os agentes operam de forma independente sobre a mesma preparacao do documento, com ate 3 agentes em paralelo, sem fallback automatico e com seed fixa. A memoria progressiva continua local a cada agente, lote a lote, e o merge acontece apenas depois que todos terminam.
 
 ## Fluxo de referencias
 
@@ -162,12 +198,48 @@ flowchart LR
     K --> L["Heuristicas e validacao final"]
 ```
 
+Observacao: aqui as ramificacoes representam produtos derivados do matcher e do validador, nao execucao paralela. A construcao de `ReferencePipelineArtifact` tambem ocorre de forma sequencial em `src/editorial_docx/references/analysis.py`.
+
 ## Instalacao
 
 Requisitos:
 
 - Python 3.10+
 - uma LLM configurada via `.env`
+
+### Instalacao com uv
+
+Se voce quiser rodar o projeto com `uv`, o fluxo recomendado e este:
+
+```bash
+uv sync --dev
+```
+
+Isso cria/sincroniza o ambiente virtual do projeto e instala o proprio pacote em modo de desenvolvimento.
+
+Depois configure o `.env` na raiz, por exemplo:
+
+```bash
+copy .env.example .env
+```
+
+Para executar a CLI com `uv`:
+
+```bash
+uv run editorial-docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+```
+
+Alternativa equivalente:
+
+```bash
+uv run python -m editorial_docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+```
+
+Para abrir a interface web:
+
+```bash
+uv run streamlit run streamlit_app.py
+```
 
 Instalacao basica no ambiente virtual:
 
@@ -196,12 +268,19 @@ O app:
 
 - lista documentos de `input_data/`;
 - permite subir novos arquivos;
+- mostra progresso geral e progresso por agente durante a execucao;
 - salva artefatos em `output_data/`.
 
 ### CLI
 
 ```bash
 python -m editorial_docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+```
+
+Com `uv`, o comando equivalente fica:
+
+```bash
+uv run editorial-docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
 ```
 
 Tambem aceita:
@@ -233,6 +312,10 @@ O arquivo `diagnostics.json` resume rastros de execucao por agente e por lote, i
 - contagem de comentarios do LLM;
 - comentarios aceitos por heuristica;
 - status de cada lote.
+- decisao de verificacao por comentario;
+- motivo de aceite ou rejeicao (`VerificationDecision.reason`);
+- origem da decisao (`llm` ou `heuristic`);
+- comentario serializado, com trecho, sugestao e batch de origem.
 
 ## Configuracao
 
@@ -249,23 +332,40 @@ Exemplos de configuracao:
 - limites de batch;
 - modo de contexto do agente de gramatica.
 
+Comportamento atual fixo do runtime:
+
+- execucao deterministica sempre ativa;
+- seed fixa por padrao;
+- sem fallback automatico entre providers/modelos;
+- ate 3 agentes executados em paralelo no fluxo principal.
+
 As credenciais e provedores sao lidos do `.env`.
+Use como regra principal:
+
+```env
+LLM_PROVIDER=<openai|openai_compatible|ollama>
+LLM_MODEL=<nome-do-modelo>
+LLM_BASE_URL=<opcional para openai, obrigatorio para openai_compatible e ollama>
+LLM_API_KEY=<obrigatorio para openai, opcional para ollama local>
+```
+
+As variaveis legadas `OPENAI_*` e `OLLAMA_*` continuam aceitas como fallback de compatibilidade, mas `LLM_*` passou a ser a nomenclatura preferencial.
 
 ### Exemplo OpenAI
 
 ```env
 LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5.2
+LLM_MODEL=gpt-5.2
+LLM_API_KEY=sk-...
 ```
 
 ### Exemplo Ollama
 
 ```env
 LLM_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_MODEL=llama3.1:8b
-OLLAMA_API_KEY=ollama
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL=llama3.1:8b
+LLM_API_KEY=ollama
 ```
 
 ### Exemplo OpenAI-compatible

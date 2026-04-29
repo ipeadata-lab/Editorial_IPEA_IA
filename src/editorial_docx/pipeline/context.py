@@ -46,6 +46,7 @@ def _build_batches(
     max_chars: int = DEFAULT_REVIEW_MAX_BATCH_CHARS,
     max_chunks: int = DEFAULT_REVIEW_MAX_BATCH_CHUNKS,
 ) -> list[list[int]]:
+    """Handles build batches."""
     if not chunks or not indexes:
         return []
     items: list[tuple[int, str]] = []
@@ -69,6 +70,7 @@ def _build_agent_batches(
     max_chars: int,
     max_chunks: int,
 ) -> list[list[int]]:
+    """Handles build agent batches."""
     if agent == "gramatica_ortografia" and GRAMMAR_CONTEXT_MODE == TEXTO_INTEIRO:
         filtered = [idx for idx in indexes if 0 <= idx < len(chunks)]
         return [filtered] if filtered else []
@@ -88,6 +90,7 @@ def _batch_excerpt_limit(
     refs: list[str],
     default_max_chars: int,
 ) -> int:
+    """Handles batch excerpt limit."""
     if agent != "gramatica_ortografia" or GRAMMAR_CONTEXT_MODE != TEXTO_INTEIRO:
         return default_max_chars
     total = 0
@@ -100,6 +103,7 @@ def _batch_excerpt_limit(
 
 
 def _window_indexes(indexes: list[int], total: int, radius: int = 2) -> list[int]:
+    """Handles window indexes."""
     if not indexes or total <= 0:
         return []
     start = max(0, min(indexes) - radius)
@@ -108,6 +112,7 @@ def _window_indexes(indexes: list[int], total: int, radius: int = 2) -> list[int
 
 
 def _headings_for_batch(sections: list[Section], indexes: list[int]) -> list[str]:
+    """Handles headings for batch."""
     if not sections or not indexes:
         return []
 

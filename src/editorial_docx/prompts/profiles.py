@@ -30,6 +30,7 @@ _PROFILE_BY_KEY = {
 
 
 def detect_prompt_profile(filename: str) -> PromptProfile:
+    """Handles detect prompt profile."""
     if not filename:
         return _DEFAULT_PROFILE
 
@@ -43,6 +44,7 @@ def detect_prompt_profile(filename: str) -> PromptProfile:
 
 
 def get_prompt_profile(profile_key: str | None) -> PromptProfile:
+    """Returns prompt profile."""
     if not profile_key:
         return _DEFAULT_PROFILE
     return _PROFILE_BY_KEY.get(profile_key.upper(), _DEFAULT_PROFILE)

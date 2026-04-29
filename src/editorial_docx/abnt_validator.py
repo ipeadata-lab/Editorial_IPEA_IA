@@ -15,6 +15,7 @@ class AbntValidationIssue:
 
 
 def _missing_requirement(entry: ParsedReferenceEntry, code: str) -> bool:
+    """Handles missing requirement."""
     if code == "container":
         return not entry.container_title
     if code == "place":
@@ -33,6 +34,7 @@ def _missing_requirement(entry: ParsedReferenceEntry, code: str) -> bool:
 
 
 def validate_reference_entry(entry: ParsedReferenceEntry) -> list[AbntValidationIssue]:
+    """Validates reference entry."""
     issues: list[AbntValidationIssue] = []
     for requirement in rule_set_for_document_type(entry.document_type).requirements:
         if _missing_requirement(entry, requirement.code):

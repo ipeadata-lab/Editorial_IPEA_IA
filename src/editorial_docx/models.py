@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 
@@ -17,6 +17,7 @@ AGENT_SHORT_LABELS = {
 
 
 def agent_short_label(agent: str) -> str:
+    """Handles agent short label."""
     return AGENT_SHORT_LABELS.get((agent or "").strip(), (agent or "").strip())
 
 

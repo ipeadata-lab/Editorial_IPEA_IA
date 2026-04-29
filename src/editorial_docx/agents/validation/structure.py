@@ -5,6 +5,7 @@ from .shared import ValidationContext, is_safe_structure_auto_apply, matches_who
 
 
 def rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles rejection reason."""
     comment = ctx.comment
     folded_message = ctx.folded_message
     folded_blob = ctx.folded_blob

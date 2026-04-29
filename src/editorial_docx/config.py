@@ -15,6 +15,8 @@ DEFAULT_OLLAMA_API_KEY = "ollama"
 DEFAULT_LLM_MAX_RETRIES = 3
 DEFAULT_LLM_RETRY_BACKOFF_SECONDS = 1.0
 DEFAULT_LLM_TIMEOUT_SECONDS = 120.0
+DEFAULT_LLM_SEED = 7
+DEFAULT_REVIEW_AGENT_MAX_WORKERS = 4
 DEFAULT_GRAMMAR_AGENT_MAX_WORKERS = 3
 
 GRAMMAR_BATCH_SIZE = 4
@@ -32,11 +34,13 @@ GRAMMAR_CONTEXT_MODE = TEXTO_INTEIRO
 
 
 def ensure_runtime_directories() -> None:
+    """Ensures runtime directories."""
     for directory in (INPUT_DATA_DIR, OUTPUT_DATA_DIR, TMP_DATA_DIR):
         directory.mkdir(parents=True, exist_ok=True)
 
 
 def resolve_input_path(path: Path) -> Path:
+    """Resolves input path."""
     candidate = path.expanduser()
     if candidate.exists():
         return candidate.resolve()
@@ -49,6 +53,7 @@ def resolve_input_path(path: Path) -> Path:
 
 
 def build_output_paths(source_path: Path, model_tag: str) -> dict[str, Path]:
+    """Builds output paths."""
     ensure_runtime_directories()
 
     stem = source_path.stem

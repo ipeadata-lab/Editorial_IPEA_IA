@@ -6,6 +6,7 @@ from ...document_loader import Section
 
 
 def expand_neighbors(indexes: list[int], total: int, radius: int = 1) -> list[int]:
+    """Expands neighbors."""
     expanded: set[int] = set()
     for idx in indexes:
         for candidate in range(max(0, idx - radius), min(total, idx + radius + 1)):
@@ -14,6 +15,7 @@ def expand_neighbors(indexes: list[int], total: int, radius: int = 1) -> list[in
 
 
 def expand_section_ranges(sections: list[Section], keywords: tuple[str, ...]) -> list[int]:
+    """Expands section ranges."""
     selected: list[int] = []
     for sec in sections:
         title = sec.title.lower()
@@ -23,6 +25,7 @@ def expand_section_ranges(sections: list[Section], keywords: tuple[str, ...]) ->
 
 
 def find_content_indexes(chunks: list[str], pattern: str) -> list[int]:
+    """Finds content indexes."""
     rx = re.compile(pattern, re.IGNORECASE)
     out: list[int] = []
     for idx, chunk in enumerate(chunks):

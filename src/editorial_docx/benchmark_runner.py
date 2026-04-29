@@ -46,7 +46,7 @@ def run_benchmark_document(input_path: Path, output_dir: Path) -> BenchmarkRunRe
         paragraphs=loaded.chunks,
         refs=loaded.refs,
         sections=loaded.sections,
-        question="Faça uma revisão completa com todos os agentes ativos e liste ajustes prioritários.",
+        question="Faça uma revisão completa com todos os agentes ativos e liste ajustes.",
         selected_agents=AGENT_ORDER.copy(),
         user_comments=loaded.user_comments,
     )
@@ -81,6 +81,7 @@ def run_benchmark_document(input_path: Path, output_dir: Path) -> BenchmarkRunRe
 
 
 def main() -> int:
+    """Runs the command-line entry point."""
     parser = argparse.ArgumentParser(description="Executa benchmark reproduzível do pipeline editorial.")
     parser.add_argument("inputs", nargs="*", type=Path, help="Documentos DOCX/PDF a serem avaliados.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Diretório onde os artefatos serão salvos.")

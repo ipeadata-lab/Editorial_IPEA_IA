@@ -7,6 +7,7 @@ from ...review_patterns import _folded_text, _ref_block_type
 
 
 def heuristic_table_figure_comments(batch_indexes: list[int], chunks: list[str], refs: list[str]) -> list[AgentComment]:
+    """Handles heuristic table figure comments."""
     comments: list[AgentComment] = []
     source_prefixes = ("fonte:", "elaboração:", "elaboracao:")
 

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from functools import lru_cache
@@ -33,6 +33,7 @@ AGENT_ORDER = [
     "sinopse_abstract",
     "gramatica_ortografia",
     "tabelas_figuras",
+    "estrutura",
     "comentarios_usuario_referencias",
     "referencias",
     "tipografia",
@@ -42,6 +43,7 @@ _PROFILE_BLOCK_RE = re.compile(r"(?ms)^\s*([A-Z][A-Z0-9_]*)\s*=\s*\"\"\"\s*(.*?)
 
 
 def _extract_tag_block(raw_text: str, tag_name: str, anchor: str | None = None) -> str:
+    """Handles extract tag block."""
     if anchor:
         anchor_idx = raw_text.find(anchor)
         if anchor_idx != -1:
@@ -52,9 +54,11 @@ def _extract_tag_block(raw_text: str, tag_name: str, anchor: str | None = None) 
 
 
 def _load_reference_support_context() -> str:
+    """Handles load reference support context."""
     snippets: list[str] = []
 
     def first_existing(filename: str) -> Path | None:
+        """Handles first existing."""
         for base_dir in (AUX_NORMAS_DIR, AUX_UTILIDADES_DIR):
             candidate = base_dir / filename
             if candidate.exists():
@@ -91,6 +95,7 @@ def _load_reference_support_context() -> str:
 
 @lru_cache(maxsize=1)
 def _load_editorial_tasks() -> dict[str, str]:
+    """Handles load editorial tasks."""
     docx_path = AUX_UTILIDADES_DIR / "Agente IA Editorial (tarefas) (1).docx"
     if not docx_path.exists():
         return {}
@@ -114,6 +119,7 @@ def _load_editorial_tasks() -> dict[str, str]:
 
 
 def _build_tasks_context(agent_name: str) -> str:
+    """Handles build tasks context."""
     tasks = _load_editorial_tasks()
     prefix_map = {
         "estrutura": ["1.1]", "1.6]", "1.8]"],
@@ -132,6 +138,7 @@ def _build_tasks_context(agent_name: str) -> str:
 
 @lru_cache(maxsize=1)
 def _load_typography_support_context() -> str:
+    """Handles load typography support context."""
     snippets = [
         "[TUTORIAL:tipografia]",
         "A família de fonte é apenas referência de template e não deve gerar comentário por si só.",
@@ -163,6 +170,7 @@ def _load_typography_support_context() -> str:
 
 
 def _build_agent_support_context(agent_name: str) -> str:
+    """Handles build agent support context."""
     parts: list[str] = []
     tasks_context = _build_tasks_context(agent_name)
     if tasks_context:
@@ -175,11 +183,13 @@ def _build_agent_support_context(agent_name: str) -> str:
 
 
 def _parse_instruction_profiles(raw_text: str) -> dict[str, str]:
+    """Handles parse instruction profiles."""
     blocks = {name.upper(): body.strip() for name, body in _PROFILE_BLOCK_RE.findall(raw_text or "")}
     return blocks
 
 
 def load_agent_instruction(agent_name: str, profile_key: str | None = None) -> str:
+    """Loads agent instruction."""
     path = PROMPT_FILES.get(agent_name)
     if path is None:
         raise ValueError(f"Agente de prompt desconhecido: {agent_name}")
@@ -196,6 +206,7 @@ def load_agent_instruction(agent_name: str, profile_key: str | None = None) -> s
 
 
 def _build_profile_context(profile_key: str | None) -> dict[str, str]:
+    """Handles build profile context."""
     profile = get_prompt_profile(profile_key)
     return {
         "profile_description": profile.description,
@@ -204,11 +215,13 @@ def _build_profile_context(profile_key: str | None) -> dict[str, str]:
 
 
 def _agent_context_guidance(agent_name: str) -> str:
+    """Handles agent context guidance."""
     if agent_name == "gramatica_ortografia":
         if GRAMMAR_CONTEXT_MODE == TEXTO_INTEIRO:
             return (
                 "O contexto abaixo traz o texto inteiro enviado para esta passagem do agente de gramática e ortografia.\n"
-                "- analise somente problemas gramaticais, ortográficos, de pontuação e concordância sustentados pelo próprio texto;\n"
+                "- analise problemas gramaticais, ortográficos, de pontuação, concordância, regência, semântica local objetiva e microerros mecânicos de escrita sustentados pelo próprio texto;\n"
+                "- inclua também espaço duplo, falta de espaço após pontuação e espaço indevido antes de pontuação quando isso estiver materializado no trecho;\n"
                 "- ancore cada comentário no trecho exato onde o problema aparece;\n"
                 "- se a correção depender de informação externa ou de decisão editorial, responda `[]`;\n"
                 "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
@@ -216,6 +229,7 @@ def _agent_context_guidance(agent_name: str) -> str:
         return (
             "O contexto abaixo vem separado em duas zonas: janela mínima de contexto e trecho-alvo.\n"
             "- use a janela mínima apenas para desambiguar o trecho-alvo;\n"
+            "- procure também microerros mecânicos de escrita, como espaço duplo e pontuação mal espaçada, além de erros gramaticais e semânticos locais objetivos;\n"
             "- ancore cada comentário no trecho-alvo ou em evidência local explícita da janela;\n"
             "- se a correção depender de contexto documental mais amplo, responda `[]`;\n"
             "- não transforme expressão temporal, número isolado, substantivo comum + ano ou menção temática em citação bibliográfica;\n\n"
@@ -231,6 +245,7 @@ def _agent_context_guidance(agent_name: str) -> str:
 
 
 def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatPromptTemplate:
+    """Builds agent prompt."""
     instruction = load_agent_instruction(agent_name, profile_key=profile_key)
     profile_ctx = _build_profile_context(profile_key)
     support_context = _build_agent_support_context(agent_name)
@@ -274,6 +289,7 @@ def build_agent_prompt(agent_name: str, profile_key: str | None = None) -> ChatP
 
 
 def build_coordinator_prompt(profile_key: str | None = None) -> ChatPromptTemplate:
+    """Builds coordinator prompt."""
     instruction = load_agent_instruction("coordenador", profile_key=profile_key)
     profile_ctx = _build_profile_context(profile_key)
 
@@ -288,7 +304,8 @@ def build_coordinator_prompt(profile_key: str | None = None) -> ChatPromptTempla
                     "Pergunta do usuário: {question}\n\n"
                     "Trecho do documento:\n{document_excerpt}\n\n"
                     "Comentários dos agentes (JSON):\n{comments_json}\n\n"
-                    "Responda em português, de forma direta, e cite os principais pontos."
+                    "Responda em português, de forma direta, e cite os principais pontos. "
+                    "Quando listar achados, use uma única seção chamada `Ajustes`; não crie subdivisões por nível de impacto."
                 ),
             ),
         ]
@@ -296,6 +313,7 @@ def build_coordinator_prompt(profile_key: str | None = None) -> ChatPromptTempla
 
 
 def build_comment_review_prompt(agent_name: str, profile_key: str | None = None) -> ChatPromptTemplate:
+    """Builds comment review prompt."""
     instruction = load_agent_instruction(agent_name, profile_key=profile_key)
     profile_ctx = _build_profile_context(profile_key)
     support_context = _build_agent_support_context(agent_name)

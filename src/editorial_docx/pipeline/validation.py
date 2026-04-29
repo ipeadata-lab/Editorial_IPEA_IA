@@ -5,6 +5,7 @@ from ..agents.validation import (
     build_validation_context,
     detailed_rejection_reason as _agent_detailed_rejection_reason,
     find_excerpt_index as _find_excerpt_index,
+    has_resolved_text_anchor as _has_resolved_text_anchor,
     keep_rejection_reason as _agent_keep_rejection_reason,
     limit_auto_apply as _limit_auto_apply,
     matches_whole_paragraph as _matches_whole_paragraph,
@@ -31,6 +32,8 @@ from .runtime import (
     _serialize_comments,
 )
 
+VerificationCandidate = tuple[str, AgentComment, int | None]
+
 
 def _should_keep_comment(comment: AgentComment, agent: str, chunks: list[str], refs: list[str]) -> bool:
     """Aplica filtros determinísticos para aceitar só comentários úteis e seguros."""
@@ -42,13 +45,14 @@ def _should_keep_comment(comment: AgentComment, agent: str, chunks: list[str], r
     if (
         comment.issue_excerpt
         and agent in {"gramatica_ortografia", "referencias"}
-        and _find_excerpt_index(comment.issue_excerpt, [comment.paragraph_index], chunks) is None
+        and not _has_resolved_text_anchor(comment.issue_excerpt, comment.paragraph_index, chunks)
     ):
         return False
     return _agent_keep_rejection_reason(ctx) is None
 
 
 def _comment_rejection_reason(comment: AgentComment, agent: str, chunks: list[str], refs: list[str]) -> str | None:
+    """Handles comment rejection reason."""
     basic_reason = _basic_comment_rejection_reason(comment)
     if basic_reason is not None:
         return basic_reason
@@ -57,7 +61,7 @@ def _comment_rejection_reason(comment: AgentComment, agent: str, chunks: list[st
     if (
         comment.issue_excerpt
         and agent in {"gramatica_ortografia", "referencias"}
-        and _find_excerpt_index(comment.issue_excerpt, [comment.paragraph_index], chunks) is None
+        and not _has_resolved_text_anchor(comment.issue_excerpt, comment.paragraph_index, chunks)
     ):
         return "descartado por regra de verificação"
 
@@ -76,6 +80,7 @@ def _comment_rejection_reason(comment: AgentComment, agent: str, chunks: list[st
 
 
 def _summarize_verification(decisions: list[VerificationDecision]) -> VerificationSummary:
+    """Handles summarize verification."""
     accepted_count = sum(1 for decision in decisions if decision.accepted)
     rejected_count = sum(1 for decision in decisions if not decision.accepted)
     return VerificationSummary(
@@ -95,11 +100,38 @@ def _verify_batch_comments(
     existing_comments: list[AgentComment] | None = None,
     batch_index: int | None = None,
 ) -> tuple[list[AgentComment], list[VerificationDecision]]:
-    """Combina saídas do LLM e heurísticas, removendo duplicatas e falsos positivos."""
-    candidates: list[tuple[str, AgentComment]] = []
+    """Compatibilidade: coleta e valida comentários de um lote isolado."""
+    candidates = _build_batch_verification_candidates(
+        comments=comments,
+        agent=agent,
+        batch_indexes=batch_indexes,
+        chunks=chunks,
+        refs=refs,
+        reference_pipeline=reference_pipeline,
+        batch_index=batch_index,
+    )
+    return _verify_comment_candidates(
+        candidates=candidates,
+        chunks=chunks,
+        refs=refs,
+        existing_comments=existing_comments,
+    )
+
+
+def _build_batch_verification_candidates(
+    comments: list[AgentComment],
+    agent: str,
+    batch_indexes: list[int],
+    chunks: list[str],
+    refs: list[str],
+    reference_pipeline: ReferencePipelineArtifact | None = None,
+    batch_index: int | None = None,
+) -> list[VerificationCandidate]:
+    """Handles build batch verification candidates."""
+    candidates: list[VerificationCandidate] = []
     for comment in comments:
         remapped = _limit_auto_apply(_remap_comment_index(comment, batch_indexes=batch_indexes, chunks=chunks))
-        candidates.append(("llm", remapped))
+        candidates.append(("llm", remapped, batch_index))
     for comment in _heuristic_comments_for_agent(
         agent=agent,
         batch_indexes=batch_indexes,
@@ -107,8 +139,17 @@ def _verify_batch_comments(
         refs=refs,
         reference_pipeline=reference_pipeline,
     ):
-        candidates.append(("heuristic", comment))
+        candidates.append(("heuristic", comment, batch_index))
+    return candidates
 
+
+def _verify_comment_candidates(
+    candidates: list[VerificationCandidate],
+    chunks: list[str],
+    refs: list[str],
+    existing_comments: list[AgentComment] | None = None,
+) -> tuple[list[AgentComment], list[VerificationDecision]]:
+    """Handles verify comment candidates."""
     accepted: list[AgentComment] = []
     decisions: list[VerificationDecision] = []
     seen_existing = {_comment_key(item) for item in (existing_comments or [])}
@@ -116,7 +157,7 @@ def _verify_batch_comments(
     seen_batch: set[tuple[str, str, int | None, str, str, str, bool, str]] = set()
     seen_batch_semantic: set[tuple[str, int | None, str, str]] = set()
 
-    for source, candidate in candidates:
+    for source, candidate, batch_index in candidates:
         key = _comment_key(candidate)
         semantic_key = _semantic_comment_key(candidate)
         if key in seen_existing or key in seen_batch or semantic_key in seen_existing_semantic or semantic_key in seen_batch_semantic:
@@ -133,7 +174,7 @@ def _verify_batch_comments(
 
         reason = _basic_comment_rejection_reason(candidate)
         if reason is None and source == "llm":
-            reason = _comment_rejection_reason(candidate, agent=agent, chunks=chunks, refs=refs)
+            reason = _comment_rejection_reason(candidate, agent=candidate.agent, chunks=chunks, refs=refs)
         if reason is not None:
             decisions.append(
                 VerificationDecision(
@@ -163,6 +204,7 @@ def _verify_batch_comments(
 
 
 def _format_batch_status(status: str, decisions: list[VerificationDecision]) -> str:
+    """Handles format batch status."""
     summary = _summarize_verification(decisions)
     base = (status or "").strip()
     suffix = f"verif: {summary.accepted_count} aceitos, {summary.rejected_count} rejeitados"
@@ -246,6 +288,7 @@ def _review_comments_with_llm(
 
 
 __all__ = [
+    "_build_batch_verification_candidates",
     "_comment_rejection_reason",
     "_find_excerpt_index",
     "_format_batch_status",
@@ -256,5 +299,6 @@ __all__ = [
     "_review_comments_with_llm",
     "_should_keep_comment",
     "_summarize_verification",
+    "_verify_comment_candidates",
     "_verify_batch_comments",
 ]

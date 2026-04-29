@@ -4,6 +4,7 @@ from . import default, grammar, metadata, references, structure, synopsis, table
 
 
 def scope_indexes_for_agent(agent: str, chunks: list[str], refs: list[str], sections, total: int) -> list[int]:
+    """Handles scope indexes for agent."""
     if agent == "metadados":
         return metadata.build_scope(chunks, refs, sections, total)
     if agent == "sinopse_abstract":

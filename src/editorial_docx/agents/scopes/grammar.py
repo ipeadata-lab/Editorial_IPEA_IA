@@ -4,6 +4,7 @@ from ...review_patterns import _ref_block_type
 
 
 def build_scope(chunks: list[str], refs: list[str], sections, total: int) -> list[int]:
+    """Builds scope."""
     reference_heading_idx = next((idx for idx, ref in enumerate(refs) if _ref_block_type(ref) == "reference_heading"), total)
     body_like = [
         idx

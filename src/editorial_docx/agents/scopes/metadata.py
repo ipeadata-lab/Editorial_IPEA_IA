@@ -5,6 +5,7 @@ from .shared import expand_section_ranges
 
 
 def build_scope(chunks: list[str], refs: list[str], sections, total: int) -> list[int]:
+    """Builds scope."""
     sec = expand_section_ranges(sections, ("metadad", "ficha catalogr", "capa", "titulo", "autoria"))
     head_candidates = _find_metadata_like_indexes(chunks, refs, limit=18)
     picked = sorted(dict.fromkeys([*sec, *head_candidates]))

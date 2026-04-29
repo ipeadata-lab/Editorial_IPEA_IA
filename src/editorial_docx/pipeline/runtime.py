@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from json import JSONDecodeError
+from json import JSONDecodeError, JSONDecoder
 
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -20,6 +20,7 @@ _SURROGATE_RE = re.compile(r"[\uD800-\uDFFF]")
 
 class LLMConnectionFailure(RuntimeError):
     def __init__(self, operation: str, attempts: int, original: Exception):
+        """Handles init."""
         self.operation = operation
         self.attempts = attempts
         self.original = original
@@ -27,17 +28,20 @@ class LLMConnectionFailure(RuntimeError):
 
 
 def _sanitize_for_llm(text: str) -> str:
+    """Handles sanitize for llm."""
     cleaned = _CTRL_RE.sub(" ", text or "")
     cleaned = _SURROGATE_RE.sub(" ", cleaned)
     return cleaned.replace("\ufeff", " ").strip()
 
 
 def _is_json_body_error(exc: Exception) -> bool:
+    """Handles is json body error."""
     msg = str(exc).lower()
     return "could not parse the json body of your request" in msg
 
 
 def _iter_exception_chain(exc: Exception):
+    """Handles iter exception chain."""
     current: Exception | None = exc
     seen: set[int] = set()
     while current is not None and id(current) not in seen:
@@ -48,6 +52,7 @@ def _iter_exception_chain(exc: Exception):
 
 
 def _is_connection_error(exc: Exception) -> bool:
+    """Handles is connection error."""
     connection_names = {
         "APIConnectionError",
         "APITimeoutError",
@@ -79,6 +84,7 @@ def _is_connection_error(exc: Exception) -> bool:
 
 
 def _connection_error_summary(exc: Exception) -> str:
+    """Handles connection error summary."""
     messages: list[str] = []
     for item in _iter_exception_chain(exc):
         msg = str(item).strip()
@@ -93,6 +99,7 @@ def _connection_error_summary(exc: Exception) -> str:
 
 
 def _is_quota_or_rate_limit_error(exc: Exception) -> bool:
+    """Handles is quota or rate limit error."""
     quota_tokens = {
         "insufficient_quota",
         "rate limit",
@@ -108,7 +115,47 @@ def _is_quota_or_rate_limit_error(exc: Exception) -> bool:
     return False
 
 
+def _is_not_found_error(exc: Exception) -> bool:
+    """Handles is not found error."""
+    not_found_names = {
+        "NotFoundError",
+    }
+    not_found_tokens = {
+        "404",
+        "not found",
+        "page not found",
+        "resource not found",
+        "model_not_found",
+    }
+    for item in _iter_exception_chain(exc):
+        if item.__class__.__name__ in not_found_names:
+            return True
+        msg = str(item).lower()
+        if any(token in msg for token in not_found_tokens):
+            return True
+    return False
+
+
+def _not_found_summary(exc: Exception) -> str:
+    """Handles not found summary."""
+    messages: list[str] = []
+    for item in _iter_exception_chain(exc):
+        msg = str(item).strip()
+        if msg:
+            messages.append(msg)
+    for msg in messages:
+        lowered = msg.lower()
+        if "page not found" in lowered or "404" in lowered:
+            return "endpoint/modelo não encontrado (HTTP 404 / `page not found`)"
+        if "model_not_found" in lowered:
+            return "modelo configurado não encontrado no provider"
+    if messages:
+        return messages[-1]
+    return "endpoint ou modelo não encontrado"
+
+
 def _quota_or_rate_limit_summary(exc: Exception) -> str:
+    """Handles quota or rate limit summary."""
     messages: list[str] = []
     for item in _iter_exception_chain(exc):
         msg = str(item).strip()
@@ -126,10 +173,13 @@ def _quota_or_rate_limit_summary(exc: Exception) -> str:
 
 
 def _classify_llm_failure(exc: Exception) -> tuple[str, str]:
+    """Handles classify llm failure."""
     if _is_connection_error(exc):
         return "connection", _connection_error_summary(exc)
     if _is_quota_or_rate_limit_error(exc):
         return "quota/rate limit", _quota_or_rate_limit_summary(exc)
+    if _is_not_found_error(exc):
+        return "not found/config", _not_found_summary(exc)
     if _is_json_body_error(exc):
         return "json/payload", "falha ao montar ou interpretar o payload/json da LLM"
 
@@ -144,6 +194,7 @@ def _classify_llm_failure(exc: Exception) -> tuple[str, str]:
 
 
 def _invoke_with_retry(runnable, payload: dict[str, str], operation: str):
+    """Handles invoke with retry."""
     retry_config = get_llm_retry_config()
     max_retries = int(retry_config["max_retries"])
     backoff_seconds = float(retry_config["backoff_seconds"])
@@ -167,6 +218,7 @@ def _invoke_with_retry(runnable, payload: dict[str, str], operation: str):
 
 
 def _partial_answer_from_comments(comments: list[AgentComment], prefix: str) -> str:
+    """Handles partial answer from comments."""
     if comments:
         points = "\n".join(f"- [{agent_short_label(c.agent)}] {c.message}" for c in comments[:12])
         return prefix + "\n" + points
@@ -174,6 +226,7 @@ def _partial_answer_from_comments(comments: list[AgentComment], prefix: str) -> 
 
 
 def _build_coordinator_document_excerpt(comments: list[AgentComment], limit: int = 12) -> str:
+    """Handles build coordinator document excerpt."""
     if not comments:
         return "(sem comentários aceitos para contextualizar a síntese final)"
 
@@ -193,6 +246,7 @@ def _build_coordinator_document_excerpt(comments: list[AgentComment], limit: int
 
 
 def _truncate_progressive_summary(summary: str, max_chars: int = 6000) -> str:
+    """Handles truncate progressive summary."""
     text = re.sub(r"\s+\n", "\n", (summary or "").strip())
     if len(text) <= max_chars:
         return text
@@ -204,6 +258,7 @@ def _truncate_progressive_summary(summary: str, max_chars: int = 6000) -> str:
 
 
 def _comment_memory_lines(comments: list[AgentComment], limit: int = 6) -> str:
+    """Handles comment memory lines."""
     if not comments:
         return "(sem comentários aceitos nesta passagem)"
     lines = [
@@ -220,6 +275,7 @@ def _deterministic_progressive_summary(
     batch: ReviewBatch,
     accepted_comments: list[AgentComment],
 ) -> str:
+    """Handles deterministic progressive summary."""
     parts: list[str] = []
     if running_summary.strip():
         parts.append(running_summary.strip())
@@ -247,6 +303,7 @@ def _update_running_summary(
     accepted_comments: list[AgentComment],
     use_llm: bool = True,
 ) -> str:
+    """Handles update running summary."""
     fallback = _deterministic_progressive_summary(agent, running_summary, batch, accepted_comments)
     if not use_llm or agent == "gramatica_ortografia" or get_chat_model() is None:
         return fallback
@@ -301,6 +358,7 @@ def _build_batch_review_excerpt(
     running_summary: str,
     agent: str | None = None,
 ) -> str:
+    """Handles build batch review excerpt."""
     if agent == "gramatica_ortografia":
         if GRAMMAR_CONTEXT_MODE == TEXTO_INTEIRO:
             return batch.focus_excerpt
@@ -334,6 +392,7 @@ def _build_batch_review_excerpt(
 
 
 def _invoke_with_model_fallback(prompt, payload: dict[str, str], operation: str):
+    """Handles invoke with model fallback."""
     last_exc: Exception | None = None
     for candidate in get_chat_models():
         if candidate is None:
@@ -355,6 +414,7 @@ def _invoke_with_model_fallback(prompt, payload: dict[str, str], operation: str)
 
 
 def _invoke_coordinator_with_retry(prompt, payload: dict[str, str]):
+    """Handles invoke coordinator with retry."""
     retry_config = get_llm_retry_config()
     max_retries = int(retry_config["max_retries"])
     backoff_seconds = float(retry_config["backoff_seconds"])
@@ -380,6 +440,7 @@ def _invoke_coordinator_with_retry(prompt, payload: dict[str, str]):
 
 
 def _serialize_comments(comments: list[AgentComment]) -> str:
+    """Handles serialize comments."""
     payload: list[dict[str, object]] = []
     for item in comments:
         payload.append(
@@ -397,7 +458,93 @@ def _serialize_comments(comments: list[AgentComment]) -> str:
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
+def _strip_json_trailing_commas(text: str) -> str:
+    """Handles strip json trailing commas."""
+    if not text:
+        return text
+
+    result: list[str] = []
+    in_string = False
+    escape = False
+    string_delimiter = '"'
+    index = 0
+
+    while index < len(text):
+        char = text[index]
+        if in_string:
+            result.append(char)
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == string_delimiter:
+                in_string = False
+            index += 1
+            continue
+
+        if char in {'"', "'"}:
+            in_string = True
+            string_delimiter = char
+            result.append(char)
+            index += 1
+            continue
+
+        if char == ",":
+            lookahead = index + 1
+            while lookahead < len(text) and text[lookahead].isspace():
+                lookahead += 1
+            if lookahead < len(text) and text[lookahead] in "}]":
+                index += 1
+                continue
+
+        result.append(char)
+        index += 1
+
+    return "".join(result)
+
+
+def _load_relaxed_json_candidates(content: str) -> list[tuple[object, bool]]:
+    """Handles load relaxed json candidates."""
+    decoder = JSONDecoder()
+    parsed: list[tuple[object, bool]] = []
+    seen_payloads: set[str] = set()
+
+    for relaxed in (False, True):
+        candidate = _strip_json_trailing_commas(content) if relaxed else content
+        if not candidate:
+            continue
+
+        for payload in (candidate.strip(), candidate):
+            if not payload:
+                continue
+            try:
+                data = json.loads(payload)
+            except JSONDecodeError:
+                pass
+            else:
+                key = repr(data)
+                if key not in seen_payloads:
+                    parsed.append((data, relaxed))
+                    seen_payloads.add(key)
+
+        for start_idx, char in enumerate(candidate):
+            if char not in "[{":
+                continue
+            try:
+                data, _ = decoder.raw_decode(candidate[start_idx:])
+            except JSONDecodeError:
+                continue
+            key = repr(data)
+            if key in seen_payloads:
+                continue
+            parsed.append((data, relaxed))
+            seen_payloads.add(key)
+
+    return parsed
+
+
 def _parse_comments_with_status(raw: str, agent: str) -> tuple[list[AgentComment], str]:
+    """Handles parse comments with status."""
     content = (raw or "").strip()
     if not content:
         return [], "sem conteúdo"
@@ -473,11 +620,13 @@ def _parse_comments_with_status(raw: str, agent: str) -> tuple[list[AgentComment
 
 
 def _parse_comments(raw: str, agent: str) -> list[AgentComment]:
+    """Handles parse comments."""
     comments, _ = _parse_comments_with_status(raw, agent=agent)
     return comments
 
 
 def _parse_comment_reviews(raw: str) -> tuple[list[dict[str, object]], str]:
+    """Handles parse comment reviews."""
     content = (raw or "").strip()
     if not content:
         return [], "sem conteúdo"
@@ -544,7 +693,146 @@ def _parse_comment_reviews(raw: str) -> tuple[list[dict[str, object]], str]:
     return [], "sem revisões válidas"
 
 
+def _parse_comments_with_status(raw: str, agent: str) -> tuple[list[AgentComment], str]:
+    """Handles parse comments with status."""
+    content = (raw or "").strip()
+    if not content:
+        return [], "sem conteudo"
+
+    candidates: list[tuple[str, bool]] = [(content, False)]
+    fenced_match = re.search(r"```(?:json)?\s*(.*?)```", content, flags=re.DOTALL | re.IGNORECASE)
+    if fenced_match:
+        candidates.append((fenced_match.group(1).strip(), True))
+
+    key_match = re.search(r'"comments"\s*:\s*(\[[\s\S]*\])', content, flags=re.IGNORECASE)
+    if key_match:
+        candidates.append((key_match.group(1).strip(), True))
+
+    statuses: list[str] = []
+    for idx, (candidate, recovered_candidate) in enumerate(candidates):
+        if not candidate:
+            continue
+        json_candidates = _load_relaxed_json_candidates(candidate)
+        if not json_candidates:
+            statuses.append("falha json")
+            continue
+
+        for data, relaxed_parse in json_candidates:
+            if isinstance(data, dict):
+                maybe_comments = data.get("comments")
+                if isinstance(maybe_comments, list):
+                    data = maybe_comments
+                else:
+                    statuses.append("json sem comments")
+                    continue
+
+            if not isinstance(data, list):
+                statuses.append("json nao e lista")
+                continue
+
+            comments: list[AgentComment] = []
+            for entry in data:
+                if not isinstance(entry, dict):
+                    continue
+                category = str(entry.get("category") or "").strip() or agent
+                message = str(entry.get("message") or "").strip()
+                paragraph_index = entry.get("paragraph_index")
+                if isinstance(paragraph_index, bool):
+                    paragraph_index = int(paragraph_index)
+                elif isinstance(paragraph_index, (int, float)):
+                    paragraph_index = int(paragraph_index)
+                else:
+                    paragraph_index = None
+                auto_apply = bool(entry.get("auto_apply")) if agent in {"estrutura", "tabelas_figuras", "referencias"} else False
+                format_spec = str(entry.get("format_spec") or "").strip() if auto_apply or agent == "tipografia" else str(entry.get("format_spec") or "").strip()
+                comments.append(
+                    AgentComment(
+                        agent=agent,
+                        category=category,
+                        message=message,
+                        paragraph_index=paragraph_index,
+                        issue_excerpt=str(entry.get("issue_excerpt") or "").strip(),
+                        suggested_fix=str(entry.get("suggested_fix") or "").strip(),
+                        auto_apply=auto_apply,
+                        format_spec=format_spec,
+                    )
+                )
+            if comments:
+                status = "json direto"
+                if idx > 0 or recovered_candidate or relaxed_parse:
+                    status = "json recuperado"
+                return comments, status
+
+    return [], "sem comentarios validos"
+
+
+def _parse_comment_reviews(raw: str) -> tuple[list[dict[str, object]], str]:
+    """Handles parse comment reviews."""
+    content = (raw or "").strip()
+    if not content:
+        return [], "sem conteudo"
+
+    candidates: list[tuple[str, bool]] = [(content, False)]
+    fenced_match = re.search(r"```(?:json)?\s*(.*?)```", content, flags=re.DOTALL | re.IGNORECASE)
+    if fenced_match:
+        candidates.append((fenced_match.group(1).strip(), True))
+
+    key_match = re.search(r'"reviews"\s*:\s*(\[[\s\S]*\])', content, flags=re.IGNORECASE)
+    if key_match:
+        candidates.append((key_match.group(1).strip(), True))
+
+    for idx, (candidate, recovered_candidate) in enumerate(candidates):
+        if not candidate:
+            continue
+        json_candidates = _load_relaxed_json_candidates(candidate)
+        if not json_candidates:
+            continue
+
+        for data, relaxed_parse in json_candidates:
+            if isinstance(data, dict):
+                maybe_reviews = data.get("reviews")
+                if isinstance(maybe_reviews, list):
+                    data = maybe_reviews
+                else:
+                    continue
+
+            if not isinstance(data, list):
+                continue
+
+            reviews: list[dict[str, object]] = []
+            for entry in data:
+                if not isinstance(entry, dict):
+                    continue
+                decision = str(entry.get("decision") or "").strip().lower()
+                if decision not in {"approve", "reject"}:
+                    continue
+                paragraph_index = entry.get("paragraph_index")
+                if isinstance(paragraph_index, bool):
+                    paragraph_index = int(paragraph_index)
+                elif isinstance(paragraph_index, (int, float)):
+                    paragraph_index = int(paragraph_index)
+                else:
+                    paragraph_index = None
+                reviews.append(
+                    {
+                        "paragraph_index": paragraph_index,
+                        "issue_excerpt": str(entry.get("issue_excerpt") or "").strip(),
+                        "suggested_fix": str(entry.get("suggested_fix") or "").strip(),
+                        "decision": decision,
+                        "reason": str(entry.get("reason") or "").strip(),
+                    }
+                )
+            if reviews:
+                status = "json direto"
+                if idx > 0 or recovered_candidate or relaxed_parse:
+                    status = "json recuperado"
+                return reviews, status
+
+    return [], "sem revisoes validas"
+
+
 def build_coordinator_answer(question: str, comments: list[AgentComment]) -> str:
+    """Builds coordinator answer."""
     if get_chat_model() is None:
         if comments:
             points = "\n".join(f"- [{agent_short_label(c.agent)}] {c.message}" for c in comments[:8])
@@ -585,6 +873,7 @@ __all__ = [
     "_invoke_with_retry",
     "_is_connection_error",
     "_is_json_body_error",
+    "_is_not_found_error",
     "_is_quota_or_rate_limit_error",
     "_parse_comment_reviews",
     "_parse_comments",

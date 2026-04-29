@@ -116,6 +116,7 @@ ABNT_RULES: dict[str, AbntRuleSet] = {
 
 
 def rule_set_for_document_type(document_type: str) -> AbntRuleSet:
+    """Handles rule set for document type."""
     return ABNT_RULES.get(document_type, ABNT_RULES[ABNT_TYPE_GENERIC])
 
 

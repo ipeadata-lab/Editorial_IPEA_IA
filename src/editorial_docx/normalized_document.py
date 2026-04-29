@@ -54,6 +54,7 @@ class NormalizedDocument:
     references: list[NormalizedReference] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, object]:
+        """Handles to dict."""
         return {
             "metadata": asdict(self.metadata),
             "toc": self.toc[:],
@@ -64,10 +65,12 @@ class NormalizedDocument:
         }
 
     def to_json(self) -> str:
+        """Handles to json."""
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
 
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> "NormalizedDocument":
+        """Handles from dict."""
         metadata_raw = data.get("metadata") or {}
         return cls(
             metadata=SourceMetadata(
@@ -125,9 +128,11 @@ class NormalizedDocument:
 
     @classmethod
     def from_json(cls, raw: str) -> "NormalizedDocument":
+        """Handles from json."""
         return cls.from_dict(json.loads(raw))
 
     def write_json(self, path: Path) -> Path:
+        """Handles write json."""
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(self.to_json(), encoding="utf-8")
         return path

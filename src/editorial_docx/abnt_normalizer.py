@@ -53,10 +53,12 @@ LEADING_CITATION_CONTEXT_TOKENS = {"segundo", "conforme", "cf", "veja", "ver"}
 
 
 def strip_leading_citation_context(text: str) -> str:
+    """Strips leading citation context."""
     return re.sub(r"^\s*(?:Segundo|Conforme|Cf\.?|Veja|Ver)\s+", "", (text or "").strip(), flags=re.IGNORECASE)
 
 
 def split_author_fragments(author_raw: str) -> tuple[str, ...]:
+    """Splits author fragments."""
     author = strip_leading_citation_context(author_raw).strip().strip(".,;: ")
     if not author:
         return ()
@@ -70,6 +72,7 @@ def split_author_fragments(author_raw: str) -> tuple[str, ...]:
 
 
 def author_short_labels(author_raw: str) -> tuple[str, ...]:
+    """Handles author short labels."""
     labels: list[str] = []
     for fragment in split_author_fragments(author_raw):
         label = fragment.split(",", 1)[0].strip().strip(".,;: ")
@@ -79,6 +82,7 @@ def author_short_labels(author_raw: str) -> tuple[str, ...]:
 
 
 def canonical_author_keys(author_raw: str, extra_blocked_tokens: set[str] | None = None) -> tuple[str, ...]:
+    """Handles canonical author keys."""
     keys: list[str] = []
     for fragment in split_author_fragments(author_raw):
         key = canonical_author_key(fragment, extra_blocked_tokens=extra_blocked_tokens)
@@ -89,6 +93,7 @@ def canonical_author_keys(author_raw: str, extra_blocked_tokens: set[str] | None
 
 
 def canonical_author_key(author_raw: str, extra_blocked_tokens: set[str] | None = None) -> str | None:
+    """Handles canonical author key."""
     author = _ascii_fold(strip_leading_citation_context(author_raw)).casefold()
     if not author:
         return None
@@ -117,6 +122,7 @@ def canonical_author_key(author_raw: str, extra_blocked_tokens: set[str] | None 
 
 
 def is_plausible_reference_author(author_raw: str, extra_blocked_tokens: set[str] | None = None) -> bool:
+    """Returns whether plausible reference author."""
     author = (author_raw or "").strip()
     if not author:
         return False
@@ -131,6 +137,7 @@ def canonical_reference_key(
     year_raw: str,
     extra_blocked_tokens: set[str] | None = None,
 ) -> tuple[str, str] | None:
+    """Handles canonical reference key."""
     year = (year_raw or "").strip().casefold()
     if not year:
         return None
@@ -141,6 +148,7 @@ def canonical_reference_key(
 
 
 def citation_label(author_raw: str, year_raw: str) -> str:
+    """Handles citation label."""
     labels = author_short_labels(author_raw)
     if not labels:
         author = (author_raw or "").strip()
@@ -154,6 +162,7 @@ def citation_label(author_raw: str, year_raw: str) -> str:
 
 
 def publication_year_from_reference(text: str) -> str | None:
+    """Handles publication year from reference."""
     source = (text or "").strip()
     if not source:
         return None

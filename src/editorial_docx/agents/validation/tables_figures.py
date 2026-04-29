@@ -6,7 +6,25 @@ from ...review_patterns import _folded_text, _normalized_text
 from .shared import ValidationContext, has_neighbor_with_prefix, is_safe_text_normalization_auto_apply
 
 
+def _looks_like_source_footer_request(blob: str) -> bool:
+    """Returns whether the comment is asking to add or move a source/footer line."""
+    return "fonte" in blob and any(
+        token in blob
+        for token in (
+            "abaixo do bloco",
+            "linha propria",
+            "linha própria",
+            "inserir",
+            "adicionar",
+            "falta",
+            "elaboracao",
+            "elaboração",
+        )
+    )
+
+
 def rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles rejection reason."""
     comment = ctx.comment
     block_type = ctx.block_type
     issue_excerpt = _normalized_text(comment.issue_excerpt)
@@ -27,16 +45,20 @@ def rejection_reason(ctx: ValidationContext) -> str | None:
     if re.match(r"^(tabela|figura|quadro|grafico)\s+\d+", issue_excerpt_folded) and "fonte" in table_blob_folded:
         if not any(token in table_blob_folded for token in {"abaixo do bloco", "linha propria"}):
             return "descartado por regra de verificação"
-    if "fonte" in ctx.folded_message and isinstance(comment.paragraph_index, int):
+    if _looks_like_source_footer_request(table_blob_folded):
+        anchored_source_block = block_type in {"caption", "table_cell"} or issue_excerpt_folded.startswith(("fonte:", "elaboracao:", "elaboração:"))
+        if not anchored_source_block and not re.match(r"^(tabela|figura|quadro|grafico)\s+\d+[:\s]", issue_excerpt_folded):
+            return "descartado por regra de verificação"
+    if _looks_like_source_footer_request(table_blob_folded) and isinstance(comment.paragraph_index, int):
         if has_neighbor_with_prefix(comment.paragraph_index, ctx.refs, ctx.chunks, ("Fonte:", "Elaboração:", "Elaboracao:"), radius=2):
             return "descartado por regra de verificação"
     if re.match(r"^(tabela|figura|quadro|grafico)\s+\d+[:\s]", issue_excerpt_folded) and any(
         token in table_blob_folded for token in {"falta identificador", "falta o identificador", "nao possui um identificador"}
     ):
         return "descartado por regra de verificação"
-    if block_type == "table_cell" and any(token in table_blob for token in {"subtitulo", "subtítulo", "fonte", "identificador", "legenda"}):
+    if block_type == "table_cell" and any(token in table_blob for token in {"subtitulo", "subtítulo", "identificador", "legenda"}):
         return "descartado por regra de verificação"
-    if block_type != "caption" and any(token in table_blob for token in {"subtitulo", "subtítulo", "fonte"}):
+    if block_type != "caption" and any(token in table_blob for token in {"subtitulo", "subtítulo", "identificador"}):
         return "descartado por regra de verificação"
     if block_type == "caption" and re.match(r"^(tabela|figura|quadro|gr[aá]fico)\s+\d+[:\s]", issue_excerpt):
         if any(token in table_blob for token in {"identificador", "titulo", "título", "subtitulo", "subtítulo"}):
@@ -46,7 +68,7 @@ def rejection_reason(ctx: ValidationContext) -> str | None:
         source_blob = _normalized_text(" ".join([comment.message or "", comment.suggested_fix or ""]))
         if "fonte" in source_blob and not ("abaixo do bloco" in source_blob or "linha propria" in source_blob or "linha própria" in source_blob):
             return "descartado por regra de verificação"
-    if "fonte" in _normalized_text(comment.message) and isinstance(comment.paragraph_index, int):
+    if _looks_like_source_footer_request(table_blob) and isinstance(comment.paragraph_index, int):
         if has_neighbor_with_prefix(comment.paragraph_index, ctx.refs, ctx.chunks, ("Fonte:", "Elaboração:"), radius=2):
             return "descartado por regra de verificação"
     if re.match(r"^(tabela|figura|quadro|gr[aá]fico)\s+\d+[:\s]", issue_excerpt) and any(

@@ -5,6 +5,7 @@ from .shared import ValidationContext
 
 
 def rejection_reason(ctx: ValidationContext) -> str | None:
+    """Handles rejection reason."""
     comment = ctx.comment
     if ctx.block_type not in {"heading", "paragraph"}:
         return "descartado por regra de verificação"

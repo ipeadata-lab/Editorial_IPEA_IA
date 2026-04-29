@@ -8,6 +8,7 @@ from .review_patterns import _folded_text
 
 
 def _normalize_for_match(text: str) -> str:
+    """Handles normalize for match."""
     normalized = _folded_text(text)
     normalized = normalized.replace("|", " ").replace("*", " ").replace("_", " ")
     normalized = re.sub(r"\s+", " ", normalized)
@@ -15,6 +16,7 @@ def _normalize_for_match(text: str) -> str:
 
 
 def _quote_coverage(quote: str, window: str) -> float:
+    """Handles quote coverage."""
     if not quote:
         return 0.0
     matcher = SequenceMatcher(None, quote, window, autojunk=False)

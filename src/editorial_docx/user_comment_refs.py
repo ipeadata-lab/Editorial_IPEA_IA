@@ -43,16 +43,19 @@ class ReferenceCandidate:
 
 
 def _strip_accents(value: str) -> str:
+    """Handles strip accents."""
     normalized = unicodedata.normalize("NFD", value or "")
     return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
 
 
 def _normalized_text(value: str) -> str:
+    """Handles normalized text."""
     folded = _strip_accents((value or "").casefold())
     return re.sub(r"\s+", " ", folded).strip()
 
 
 def _significant_tokens(value: str) -> list[str]:
+    """Handles significant tokens."""
     stop = {
         "de", "da", "do", "das", "dos", "a", "o", "e", "em", "para", "por",
         "with", "from", "the", "and", "of", "on", "in", "um", "uma",
@@ -65,6 +68,7 @@ def _significant_tokens(value: str) -> list[str]:
 
 
 def is_reference_search_request(comment_text: str) -> bool:
+    """Returns whether reference search request."""
     folded = _normalized_text(comment_text)
     if not folded:
         return False
@@ -72,6 +76,7 @@ def is_reference_search_request(comment_text: str) -> bool:
 
 
 def _best_query_text(user_comment: DocumentUserComment) -> str:
+    """Handles best query text."""
     for source in (user_comment.text, user_comment.anchor_excerpt, user_comment.paragraph_text):
         match = re.search(r"[\"“](.+?)[\"”]", source or "")
         if match and len(match.group(1).strip()) >= 12:
@@ -88,6 +93,7 @@ def _best_query_text(user_comment: DocumentUserComment) -> str:
 
 
 def build_reference_search_requests(user_comments: list[DocumentUserComment]) -> list[ReferenceSearchRequest]:
+    """Builds reference search requests."""
     requests: list[ReferenceSearchRequest] = []
     seen: set[tuple[int, str]] = set()
     for item in user_comments:
@@ -116,6 +122,7 @@ def build_reference_search_requests(user_comments: list[DocumentUserComment]) ->
 
 
 def _http_get_json(url: str) -> dict[str, Any]:
+    """Handles http get json."""
     request = Request(
         url,
         headers={
@@ -128,6 +135,7 @@ def _http_get_json(url: str) -> dict[str, Any]:
 
 
 def _person_name(person: dict[str, Any]) -> str:
+    """Handles person name."""
     family = str(person.get("family") or "").strip()
     given = str(person.get("given") or "").strip()
     if family and given:
@@ -136,6 +144,7 @@ def _person_name(person: dict[str, Any]) -> str:
 
 
 def _year_from_crossref(item: dict[str, Any]) -> str:
+    """Handles year from crossref."""
     for key in ("issued", "published-print", "published-online", "created"):
         block = item.get(key) or {}
         date_parts = block.get("date-parts") or []
@@ -147,6 +156,7 @@ def _year_from_crossref(item: dict[str, Any]) -> str:
 
 
 def _candidate_from_crossref(item: dict[str, Any]) -> ReferenceCandidate:
+    """Handles candidate from crossref."""
     title = " ".join(str(part).strip() for part in (item.get("title") or []) if str(part).strip()).strip()
     container_title = " ".join(str(part).strip() for part in (item.get("container-title") or []) if str(part).strip()).strip()
     authors = [_person_name(person) for person in (item.get("author") or []) if _person_name(person)]
@@ -169,6 +179,7 @@ def _candidate_from_crossref(item: dict[str, Any]) -> ReferenceCandidate:
 
 
 def search_reference_candidates(request: ReferenceSearchRequest, rows: int = 5) -> list[ReferenceCandidate]:
+    """Handles search reference candidates."""
     query = (request.query_text or "").strip()
     if not query:
         return []
@@ -195,6 +206,7 @@ def search_reference_candidates(request: ReferenceSearchRequest, rows: int = 5) 
 
 
 def format_reference_candidate(candidate: ReferenceCandidate) -> str:
+    """Formats reference candidate."""
     authors = "; ".join(candidate.authors) if candidate.authors else ""
     title = candidate.title.strip()
     year = candidate.year.strip()
@@ -234,6 +246,7 @@ def format_reference_candidate(candidate: ReferenceCandidate) -> str:
 
 
 def reference_already_present(reference_text: str, existing_reference_entries: list[str]) -> bool:
+    """Handles reference already present."""
     candidate_norm = _normalized_text(reference_text)
     if not candidate_norm:
         return False
@@ -259,6 +272,7 @@ def reference_already_present(reference_text: str, existing_reference_entries: l
 
 
 def candidates_as_json(candidates: list[ReferenceCandidate]) -> str:
+    """Handles candidates as json."""
     payload = [
         {
             "title": item.title,

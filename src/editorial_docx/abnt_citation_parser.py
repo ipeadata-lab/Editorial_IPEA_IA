@@ -40,10 +40,12 @@ def extract_citation_candidates(
     is_non_body_context,
     blocked_author_tokens: set[str] | None = None,
 ) -> list[CitationCandidate]:
+    """Extracts citation candidates."""
     candidates: list[CitationCandidate] = []
     seen: set[tuple[int, str, tuple[str, str], str]] = set()
 
     def add_candidate(idx: int, excerpt: str, author_raw: str, year_raw: str) -> None:
+        """Handles add candidate."""
         key = canonical_reference_key(author_raw, year_raw, extra_blocked_tokens=blocked_author_tokens)
         if key is None:
             return

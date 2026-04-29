@@ -7,15 +7,18 @@ from ...review_patterns import _folded_text, _heading_word_count, _ref_block_typ
 
 
 def is_same_top_level_heading(ref: str) -> bool:
+    """Returns whether same top level heading."""
     return _ref_block_type(ref) in {"heading", "reference_heading"} and "numerado=sim" in ref.casefold()
 
 
 def is_final_section_heading(text: str) -> bool:
+    """Returns whether final section heading."""
     folded = _folded_text(text)
     return folded.startswith("consideracoes finais") or folded.startswith("conclus")
 
 
 def heuristic_structure_comments(batch_indexes: list[int], chunks: list[str], refs: list[str]) -> list[AgentComment]:
+    """Handles heuristic structure comments."""
     comments: list[AgentComment] = []
     heading_indexes = [idx for idx in batch_indexes if 0 <= idx < len(refs) and _ref_block_type(refs[idx]) in {"heading", "reference_heading"}]
     if not heading_indexes:

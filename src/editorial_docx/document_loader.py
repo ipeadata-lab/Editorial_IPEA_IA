@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from dataclasses import dataclass
@@ -35,6 +35,7 @@ _REF_TYPE_RE = re.compile(r"\btipo=([a-z_]+)\b", re.IGNORECASE)
 
 
 def _is_heading(text: str) -> bool:
+    """Handles is heading."""
     t = text.strip()
     if not t:
         return False
@@ -49,7 +50,7 @@ def _is_heading(text: str) -> bool:
             if upper_ratio >= 0.75:
                 return True
 
-    explicit = {"SINOPSE", "ABSTRACT", "REFERÊNCIAS", "INTRODUÇÃO", "APÊNDICE"}
+    explicit = {"SINOPSE", "ABSTRACT", "REFERÊNCIAS", "INTRODUÇÃO", "APÊNDICE", "RESUMO"}
     if t.upper() in explicit:
         return True
 
@@ -57,11 +58,13 @@ def _is_heading(text: str) -> bool:
 
 
 def _ref_block_type(ref: str) -> str:
+    """Handles ref block type."""
     match = _REF_TYPE_RE.search(ref or "")
     return match.group(1).lower() if match else ""
 
 
 def _build_sections(chunks: list[str], refs: list[str] | None = None) -> list[Section]:
+    """Handles build sections."""
     refs = refs or []
     headings = []
     for idx, text in enumerate(chunks):
@@ -80,6 +83,7 @@ def _build_sections(chunks: list[str], refs: list[str] | None = None) -> list[Se
 
 
 def _load_docx(path: Path) -> LoadedDocument:
+    """Handles load docx."""
     items = extract_paragraphs_with_metadata(path)
     chunks = [item.text for item in items]
     refs = [item.ref_label for item in items]
@@ -107,6 +111,7 @@ def _load_docx(path: Path) -> LoadedDocument:
 
 
 def _load_pdf(path: Path) -> LoadedDocument:
+    """Handles load pdf."""
     reader = PdfReader(str(path))
     chunks: list[str] = []
     refs: list[str] = []
@@ -157,6 +162,7 @@ def _load_pdf(path: Path) -> LoadedDocument:
 
 
 def load_normalized_document(path: Path) -> LoadedDocument:
+    """Loads normalized document."""
     normalized = NormalizedDocument.from_json(path.read_text(encoding="utf-8"))
     chunks = [block.text for block in normalized.blocks]
     refs = [block.ref_label for block in normalized.blocks]
@@ -174,6 +180,7 @@ def load_normalized_document(path: Path) -> LoadedDocument:
 
 
 def load_document(path: Path) -> LoadedDocument:
+    """Loads document."""
     suffix = path.suffix.lower()
     if suffix == ".docx":
         return _load_docx(path)

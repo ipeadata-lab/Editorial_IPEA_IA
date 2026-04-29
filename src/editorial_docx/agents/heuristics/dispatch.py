@@ -20,6 +20,7 @@ def heuristic_comments_for_agent(
     refs: list[str],
     reference_pipeline: ReferencePipelineArtifact | None = None,
 ):
+    """Handles heuristic comments for agent."""
     comments = []
     if agent == "gramatica_ortografia":
         comments.extend(heuristic_grammar_comments(batch_indexes=batch_indexes, chunks=chunks, refs=refs))

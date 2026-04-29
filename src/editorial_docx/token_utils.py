@@ -11,6 +11,7 @@ except Exception:  # pragma: no cover - fallback when optional dependency is abs
 
 
 def _get_encoding():
+    """Handles get encoding."""
     if tiktoken is None:
         return None
     try:
@@ -23,6 +24,7 @@ def _get_encoding():
 
 
 def count_tokens(text: str) -> int:
+    """Handles count tokens."""
     encoding = _get_encoding()
     if encoding is None:
         return max(1, len(text or "") // 4)
@@ -30,6 +32,7 @@ def count_tokens(text: str) -> int:
 
 
 def truncate_text(text: str, max_tokens: int) -> str:
+    """Handles truncate text."""
     encoding = _get_encoding()
     if encoding is None:
         return (text or "")[: max_tokens * 4]
@@ -60,6 +63,7 @@ def chunk_index_windows(
     current_total = 0
 
     def flush_current() -> list[tuple[int, int]]:
+        """Handles flush current."""
         nonlocal current_indexes, current_token_counts, current_total
         snapshot = list(zip(current_indexes, current_token_counts))
         if current_indexes:

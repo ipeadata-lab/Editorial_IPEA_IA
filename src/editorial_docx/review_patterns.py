@@ -37,19 +37,23 @@ _REF_NUMBERING_RE = re.compile(r"\bnumerado=sim\b", re.IGNORECASE)
 
 
 def _normalized_text(value: str) -> str:
+    """Handles normalized text."""
     return " ".join((value or "").split())
 
 
 def _ascii_fold(text: str) -> str:
+    """Handles ascii fold."""
     normalized = unicodedata.normalize("NFKD", text or "")
     return "".join(ch for ch in normalized if not unicodedata.combining(ch))
 
 
 def _folded_text(value: str) -> str:
+    """Handles folded text."""
     return _ascii_fold(_normalized_text(value)).casefold()
 
 
 def _parse_format_spec(raw: str) -> dict[str, str]:
+    """Handles parse format spec."""
     spec: dict[str, str] = {}
     for piece in (raw or "").split(";"):
         if "=" not in piece:
@@ -63,20 +67,24 @@ def _parse_format_spec(raw: str) -> dict[str, str]:
 
 
 def _ref_block_type(ref: str) -> str:
+    """Handles ref block type."""
     match = _REF_TYPE_RE.search(ref or "")
     return match.group(1).lower() if match else ""
 
 
 def _ref_style_name(ref: str) -> str:
+    """Handles ref style name."""
     match = re.search(r"\bestilo=([^|]+)", ref or "", re.IGNORECASE)
     return match.group(1).strip() if match else ""
 
 
 def _indexes_by_ref_type(refs: list[str], allowed_types: set[str]) -> list[int]:
+    """Handles indexes by ref type."""
     return [idx for idx, ref in enumerate(refs) if _ref_block_type(ref) in allowed_types]
 
 
 def _style_name_looks_explicit(style_name: str) -> bool:
+    """Handles style name looks explicit."""
     normalized = (style_name or "").strip().casefold()
     if not normalized:
         return False
@@ -85,6 +93,7 @@ def _style_name_looks_explicit(style_name: str) -> bool:
 
 
 def _is_relevant_typography_spec(spec: dict[str, str]) -> bool:
+    """Handles is relevant typography spec."""
     strong_keys = {"size_pt", "bold", "italic", "case", "align", "left_indent_pt"}
     if any(key in spec for key in strong_keys):
         return True
@@ -93,6 +102,7 @@ def _is_relevant_typography_spec(spec: dict[str, str]) -> bool:
 
 
 def _is_illustration_caption(text: str) -> bool:
+    """Handles is illustration caption."""
     folded = _folded_text(text)
     if _ILLUSTRATION_LABEL_RE.match(folded):
         return True
@@ -100,6 +110,7 @@ def _is_illustration_caption(text: str) -> bool:
 
 
 def _looks_like_all_caps_title(text: str) -> bool:
+    """Handles looks like all caps title."""
     letters = [ch for ch in (text or "") if ch.isalpha()]
     if not letters:
         return False
@@ -108,41 +119,50 @@ def _looks_like_all_caps_title(text: str) -> bool:
 
 
 def _looks_like_quoted_excerpt(text: str) -> bool:
+    """Handles looks like quoted excerpt."""
     stripped = (text or "").strip()
     return bool(stripped and _SAFE_QUOTED_EXCERPT_RE.match(stripped))
 
 
 def _contains_quote_marks(text: str) -> bool:
+    """Handles contains quote marks."""
     return bool(_SAFE_QUOTE_CHAR_RE.search(text or ""))
 
 
 def _diacritic_count(text: str) -> int:
+    """Handles diacritic count."""
     return sum(1 for ch in unicodedata.normalize("NFD", text or "") if unicodedata.category(ch) == "Mn")
 
 
 def _strip_heading_prefix(text: str) -> str:
+    """Handles strip heading prefix."""
     return _HEADING_NUMBER_PREFIX_RE.sub("", (text or "").strip())
 
 
 def _heading_word_count(text: str) -> int:
+    """Handles heading word count."""
     stripped = _strip_heading_prefix(text)
     return len(re.findall(r"[A-Za-zÀ-ÿ0-9]+", stripped))
 
 
 def _ref_has_numbering(ref: str) -> bool:
+    """Handles ref has numbering."""
     return bool(_REF_NUMBERING_RE.search(ref or ""))
 
 
 def _ref_has_flag(ref: str, flag: str) -> bool:
+    """Handles ref has flag."""
     return f"{flag}=sim" in _normalized_text(ref or "")
 
 
 def _ref_align(ref: str) -> str:
+    """Handles ref align."""
     match = re.search(r"\balign=([a-z]+)\b", _normalized_text(ref or ""))
     return match.group(1) if match else ""
 
 
 def _is_implicit_heading_candidate(index: int, chunks: list[str], refs: list[str]) -> bool:
+    """Handles is implicit heading candidate."""
     if not (0 <= index < len(chunks)):
         return False
     ref_type = _ref_block_type(refs[index]) if index < len(refs) else ""
@@ -200,6 +220,7 @@ def _is_implicit_heading_candidate(index: int, chunks: list[str], refs: list[str
 
 
 def _is_numbered_heading_context(index: int, chunks: list[str], refs: list[str]) -> bool:
+    """Handles is numbered heading context."""
     if not (0 <= index < len(chunks)):
         return False
     ref_type = _ref_block_type(refs[index]) if index < len(refs) else ""
@@ -250,6 +271,7 @@ def _is_non_body_reference_context(
     chunks: list[str] | None = None,
     refs: list[str] | None = None,
 ) -> bool:
+    """Handles is non body reference context."""
     block_type = _ref_block_type(ref)
     if block_type in {
         "reference_entry",
@@ -277,6 +299,7 @@ def _is_non_body_reference_context(
 
 
 def _is_intro_heading(text: str) -> bool:
+    """Handles is intro heading."""
     stripped = _strip_heading_prefix(text)
     if not stripped:
         return False
@@ -295,6 +318,7 @@ def _is_intro_heading(text: str) -> bool:
 
 
 def _removes_terminal_period_only(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles removes terminal period only."""
     issue = (issue_excerpt or "").strip()
     suggestion = (suggested_fix or "").strip()
     if not issue or not suggestion or not issue.endswith("."):
@@ -303,22 +327,27 @@ def _removes_terminal_period_only(issue_excerpt: str, suggested_fix: str) -> boo
 
 
 def _years_in_text(text: str) -> list[str]:
+    """Handles years in text."""
     return re.findall(r"\b(?:19|20)\d{2}[a-z]?\b", text or "", flags=re.IGNORECASE)
 
 
 def _quoted_terms(text: str) -> list[str]:
+    """Handles quoted terms."""
     return [match.group(1) for match in re.finditer(r'["“”\'‘’«»]([^"“”\'‘’«»]+)["“”\'‘’«»]', text or "")]
 
 
 def _word_tokens(text: str) -> list[str]:
+    """Handles word tokens."""
     return re.findall(r"[A-Za-zÀ-ÿ0-9]+", text or "")
 
 
 def _count_words(text: str) -> int:
+    """Handles count words."""
     return len(_word_tokens(text))
 
 
 def _extract_word_limit(text: str) -> int | None:
+    """Handles extract word limit."""
     match = re.search(r"\b(?:at[eé]|até|max(?:imo)?|m[aá]ximo)\s+(\d{2,4})\s+palavras\b", _folded_text(text))
     if match:
         return int(match.group(1))
@@ -326,6 +355,7 @@ def _extract_word_limit(text: str) -> int | None:
 
 
 def _split_keyword_entries(text: str) -> list[str]:
+    """Handles split keyword entries."""
     source = (text or "").strip()
     if not source:
         return []
@@ -333,6 +363,7 @@ def _split_keyword_entries(text: str) -> list[str]:
 
 
 def _has_repeated_keyword_entries(text: str) -> bool:
+    """Handles has repeated keyword entries."""
     entries = [_folded_text(item) for item in _split_keyword_entries(text)]
     seen: set[str] = set()
     for item in entries:
@@ -345,6 +376,7 @@ def _has_repeated_keyword_entries(text: str) -> bool:
 
 
 def _punctuation_only_change(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles punctuation only change."""
     issue = _normalized_text(issue_excerpt)
     fix = _normalized_text(suggested_fix)
     if not issue or not fix:
@@ -355,6 +387,7 @@ def _punctuation_only_change(issue_excerpt: str, suggested_fix: str) -> bool:
 
 
 def _adds_coordination_comma(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles adds coordination comma."""
     issue = _normalized_text(issue_excerpt)
     fix = _normalized_text(suggested_fix)
     if not issue or not fix:
@@ -374,6 +407,7 @@ def _adds_coordination_comma(issue_excerpt: str, suggested_fix: str) -> bool:
 
 
 def _is_demonstrative_swap(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles is demonstrative swap."""
     issue_tokens = re.findall(r"[A-Za-zÀ-ÿ]+", _folded_text(issue_excerpt))
     fix_tokens = re.findall(r"[A-Za-zÀ-ÿ]+", _folded_text(suggested_fix))
     if len(issue_tokens) != len(fix_tokens) or not issue_tokens:
@@ -411,6 +445,7 @@ def _is_demonstrative_swap(issue_excerpt: str, suggested_fix: str) -> bool:
 
 
 def _drops_article_before_possessive(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles drops article before possessive."""
     issue = _folded_text(issue_excerpt)
     fix = _folded_text(suggested_fix)
     if not issue or not fix:
@@ -445,6 +480,7 @@ def _drops_article_before_possessive(issue_excerpt: str, suggested_fix: str) -> 
 
 
 def _removes_diacritic_only_word(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles removes diacritic only word."""
     issue_tokens = _word_tokens(issue_excerpt)
     fix_tokens = _word_tokens(suggested_fix)
     if len(issue_tokens) != len(fix_tokens) or not issue_tokens:
@@ -463,6 +499,7 @@ def _removes_diacritic_only_word(issue_excerpt: str, suggested_fix: str) -> bool
 
 
 def _introduces_plural_copula_for_singular_head(issue_excerpt: str, suggested_fix: str) -> bool:
+    """Handles introduces plural copula for singular head."""
     issue = _folded_text(issue_excerpt)
     fix = _folded_text(suggested_fix)
     singular_heads = {
@@ -489,6 +526,7 @@ def _introduces_plural_copula_for_singular_head(issue_excerpt: str, suggested_fi
 
 
 def _looks_like_full_reference_rewrite(source_text: str, suggested_fix: str) -> bool:
+    """Handles looks like full reference rewrite."""
     source_tokens = _word_tokens(source_text)
     fix_tokens = _word_tokens(suggested_fix)
     if len(source_tokens) < 12 or len(fix_tokens) < 12:
@@ -498,6 +536,7 @@ def _looks_like_full_reference_rewrite(source_text: str, suggested_fix: str) -> 
 
 
 def _is_reference_missing_data_speculation(message: str, suggested_fix: str) -> bool:
+    """Handles is reference missing data speculation."""
     blob = _folded_text(" ".join([message or "", suggested_fix or ""]))
     speculation_tokens = {
         "falta local",
@@ -525,6 +564,7 @@ def _is_reference_missing_data_speculation(message: str, suggested_fix: str) -> 
 
 
 def _is_grammar_rewrite_or_regency_comment(message: str, suggested_fix: str) -> bool:
+    """Handles is grammar rewrite or regency comment."""
     blob = _folded_text(" ".join([message or "", suggested_fix or ""]))
     risky_tokens = {
         "reescrev",
@@ -543,6 +583,7 @@ def _is_grammar_rewrite_or_regency_comment(message: str, suggested_fix: str) -> 
 
 
 def _comment_key(item: AgentComment) -> tuple[str, str, int | None, str, str, str, bool, str]:
+    """Handles comment key."""
     return (
         item.agent,
         _normalized_text(item.category),
@@ -556,6 +597,7 @@ def _comment_key(item: AgentComment) -> tuple[str, str, int | None, str, str, st
 
 
 def _comment_review_key(paragraph_index: int | None, issue_excerpt: str, suggested_fix: str) -> tuple[int | None, str, str]:
+    """Handles comment review key."""
     return (
         paragraph_index if isinstance(paragraph_index, int) else None,
         _normalized_text(issue_excerpt),
@@ -564,6 +606,7 @@ def _comment_review_key(paragraph_index: int | None, issue_excerpt: str, suggest
 
 
 def _dedupe_comments(items: list[AgentComment]) -> list[AgentComment]:
+    """Handles dedupe comments."""
     best: dict[tuple[str, str, int | None, str, str, str, bool, str], AgentComment] = {}
     for item in items:
         key = _comment_key(item)
@@ -573,6 +616,7 @@ def _dedupe_comments(items: list[AgentComment]) -> list[AgentComment]:
 
 
 def _find_metadata_like_indexes(chunks: list[str], refs: list[str], limit: int = 18) -> list[int]:
+    """Handles find metadata like indexes."""
     metadata_rx = re.compile(r"\b(titulo|título|autor|autora|isbn|issn|doi|palavras-chave|keywords|jel)\b", re.IGNORECASE)
     allowed_types = {"title", "author_line", "document_label", "heading", "paragraph"}
     picked: list[int] = []

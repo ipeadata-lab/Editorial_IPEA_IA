@@ -23,6 +23,7 @@ class ValidationContext:
 
 
 def build_validation_context(comment: AgentComment, agent: str, chunks: list[str], refs: list[str]) -> ValidationContext:
+    """Builds validation context."""
     ref = ""
     if isinstance(comment.paragraph_index, int) and 0 <= comment.paragraph_index < len(refs):
         ref = refs[comment.paragraph_index]
@@ -45,6 +46,7 @@ def build_validation_context(comment: AgentComment, agent: str, chunks: list[str
 
 
 def has_neighbor_with_prefix(paragraph_index: int, refs: list[str], chunks: list[str], prefixes: tuple[str, ...], radius: int = 2) -> bool:
+    """Returns whether neighbor with prefix."""
     for candidate in range(max(0, paragraph_index - radius), min(len(chunks), paragraph_index + radius + 1)):
         text = (chunks[candidate] or "").strip().casefold()
         if any(text.startswith(prefix.casefold()) for prefix in prefixes):
@@ -53,6 +55,7 @@ def has_neighbor_with_prefix(paragraph_index: int, refs: list[str], chunks: list
 
 
 def find_excerpt_index(excerpt: str, candidate_indexes: list[int], chunks: list[str]) -> int | None:
+    """Finds excerpt index."""
     needle = _normalized_text(excerpt)
     if not needle:
         return None
@@ -70,7 +73,19 @@ def find_excerpt_index(excerpt: str, candidate_indexes: list[int], chunks: list[
     return None
 
 
+def has_resolved_text_anchor(excerpt: str, paragraph_index: int | None, chunks: list[str]) -> bool:
+    """Returns whether resolved text anchor."""
+    if not isinstance(paragraph_index, int) or not (0 <= paragraph_index < len(chunks)):
+        return False
+    if not (excerpt or "").strip():
+        return True
+    if find_excerpt_index(excerpt, [paragraph_index], chunks) is not None:
+        return True
+    return bool((chunks[paragraph_index] or "").strip())
+
+
 def semantic_comment_key(item: AgentComment) -> tuple[str, int | None, str, str]:
+    """Handles semantic comment key."""
     return (
         item.agent,
         item.paragraph_index if isinstance(item.paragraph_index, int) else None,
@@ -80,6 +95,7 @@ def semantic_comment_key(item: AgentComment) -> tuple[str, int | None, str, str]
 
 
 def remap_comment_index(comment: AgentComment, batch_indexes: list[int], chunks: list[str]) -> AgentComment:
+    """Handles remap comment index."""
     paragraph_index = comment.paragraph_index
 
     if paragraph_index is None:
@@ -114,6 +130,7 @@ def remap_comment_index(comment: AgentComment, batch_indexes: list[int], chunks:
 
 
 def limit_auto_apply(comment: AgentComment) -> AgentComment:
+    """Handles limit auto apply."""
     if not comment.auto_apply:
         return comment
     return AgentComment(
@@ -132,10 +149,12 @@ def limit_auto_apply(comment: AgentComment) -> AgentComment:
 
 
 def tokenize_structure_text(value: str) -> list[str]:
+    """Tokenizes structure text."""
     return re.findall(r"[A-Za-zÀ-ÿ0-9]+", (value or "").casefold())
 
 
 def is_safe_structure_auto_apply(comment: AgentComment, chunks: list[str]) -> bool:
+    """Returns whether safe structure auto apply."""
     if not isinstance(comment.paragraph_index, int) or not (0 <= comment.paragraph_index < len(chunks)):
         return False
     issue = (comment.issue_excerpt or "").strip()
@@ -149,6 +168,7 @@ def is_safe_structure_auto_apply(comment: AgentComment, chunks: list[str]) -> bo
 
 
 def is_safe_text_normalization_auto_apply(comment: AgentComment, chunks: list[str]) -> bool:
+    """Returns whether safe text normalization auto apply."""
     if not isinstance(comment.paragraph_index, int) or not (0 <= comment.paragraph_index < len(chunks)):
         return False
     issue = (comment.issue_excerpt or "").strip()
@@ -162,6 +182,7 @@ def is_safe_text_normalization_auto_apply(comment: AgentComment, chunks: list[st
 
 
 def matches_whole_paragraph(comment: AgentComment, chunks: list[str]) -> bool:
+    """Returns whether whole paragraph."""
     if not isinstance(comment.paragraph_index, int) or not (0 <= comment.paragraph_index < len(chunks)):
         return False
     issue = (comment.issue_excerpt or "").strip()
@@ -172,10 +193,17 @@ def matches_whole_paragraph(comment: AgentComment, chunks: list[str]) -> bool:
 
 
 def basic_comment_rejection_reason(comment: AgentComment) -> str | None:
+    """Handles basic comment rejection reason."""
     if not (comment.message or "").strip():
         return "mensagem vazia"
 
     if comment.issue_excerpt and comment.suggested_fix and not comment.auto_apply:
         if _normalized_text(comment.issue_excerpt) == _normalized_text(comment.suggested_fix):
+            folded_blob = _folded_text(" ".join([comment.category or "", comment.message or "", comment.suggested_fix or ""]))
+            if any(
+                token in folded_blob
+                for token in ("pontuacao", "espaco", "hifen", "virgula", "ponto final", "dois-pontos", "aspas", "travess")
+            ) and (comment.issue_excerpt or "").strip() != (comment.suggested_fix or "").strip():
+                return None
             return "sugestão idêntica ao trecho"
     return None

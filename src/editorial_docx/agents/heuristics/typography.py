@@ -5,6 +5,7 @@ from ...review_patterns import _is_illustration_caption, _ref_block_type, _ref_h
 
 
 def heuristic_typography_comments(batch_indexes: list[int], chunks: list[str], refs: list[str]) -> list[AgentComment]:
+    """Handles heuristic typography comments."""
     comments: list[AgentComment] = []
     for idx in batch_indexes:
         if not (0 <= idx < len(refs)) or idx >= len(chunks):

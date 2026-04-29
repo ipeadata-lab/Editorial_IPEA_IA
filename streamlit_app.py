@@ -1,11 +1,14 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 import json
 import inspect
 import hashlib
 import html
+from queue import Empty, Queue
 import re
+import threading
+import time
 import unicodedata
 from pathlib import Path
 from typing import Callable
@@ -16,7 +19,7 @@ from src.editorial_docx.config import INPUT_DATA_DIR, OUTPUT_DATA_DIR, build_out
 from src.editorial_docx.docx_utils import apply_comments_to_docx
 from src.editorial_docx.document_loader import load_document, load_normalized_document
 from src.editorial_docx.graph_chat import run_conversation
-from src.editorial_docx.llm import get_llm_config, get_llm_model_tag
+from src.editorial_docx.llm import get_llm_config, get_llm_model_tag, get_runtime_settings
 from src.editorial_docx.models import AgentComment, ExecutionTrace, VerificationSummary, agent_short_label
 from src.editorial_docx.prompts import AGENT_ORDER, detect_prompt_profile
 
@@ -51,14 +54,14 @@ with st.sidebar:
     if env_path.exists():
         st.caption("Arquivo .env detectado no repositório. Usando configuração local.")
     else:
-        key_env = "OPENAI_API_KEY" if llm_config["provider"] == "openai" else "LLM_API_KEY"
+        key_env = "LLM_API_KEY"
         key_source = "variável de ambiente" if llm_config.get("api_key") else "não configurada"
         st.caption(f"Chave atual: {key_source}")
         if llm_config["provider"] != "ollama":
             api_key_input = st.text_input(
                 key_env,
                 type="password",
-                help="A chave fica somente nesta sessão e não é salva em disco.",
+                help="A chave fica somente nesta sessão e não é salva em disco. OPENAI_API_KEY continua aceito como alias legado.",
             )
             if st.button("Usar chave nesta sessão", use_container_width=True):
                 if api_key_input.strip():
@@ -76,9 +79,11 @@ with st.sidebar:
 
     st.divider()
     st.markdown("### Execução")
+    st.caption("Modo determinístico sempre ativo: seed fixa, até 3 agentes em paralelo e sem fallback automático.")
+
     if st.button("Rodar todos os agentes", key="sidebar_run_all", use_container_width=True):
         st.session_state.pending_run = {
-            "question": "Faça uma revisão completa com todos os agentes ativos e liste ajustes prioritários.",
+            "question": "Faça uma revisão completa com todos os agentes ativos e liste ajustes.",
             "agents": AGENT_ORDER.copy(),
             "source": "control:all",
         }
@@ -86,7 +91,7 @@ with st.sidebar:
     st.markdown("#### Execução direta por agente")
     for agent in AGENT_ORDER:
         label = AGENT_LABELS.get(agent, agent)
-        if st.button(f"Rodar: {label}", key=f"sidebar_run_{agent}", use_container_width=True):
+        if st.button(label, key=f"sidebar_run_{agent}", use_container_width=True):
             st.session_state.pending_run = {
                 "question": f"Execute revisão focada em {label} e liste problemas com trecho e sugestão de correção.",
                 "agents": [agent],
@@ -147,6 +152,7 @@ for key, default in {
 
 
 def _build_rows() -> list[dict]:
+    """Handles build rows."""
     rows = []
     for comment_idx, c in enumerate(st.session_state.comments):
         ref = "sem referência"
@@ -172,6 +178,7 @@ def _build_rows() -> list[dict]:
 
 
 def _merge_comments(existing: list[AgentComment], incoming: list[AgentComment]) -> list[AgentComment]:
+    """Handles merge comments."""
     merged: list[AgentComment] = []
     seen: set[tuple[str, str, int | None, str, str, str, bool, str]] = set()
 
@@ -194,6 +201,7 @@ def _merge_comments(existing: list[AgentComment], incoming: list[AgentComment]) 
 
 
 def _signature(rows: list[dict]) -> str:
+    """Handles signature."""
     base = [
         (
             str(r["comment_idx"]),
@@ -212,6 +220,7 @@ def _signature(rows: list[dict]) -> str:
 
 
 def _ensure_correction_state(rows: list[dict]) -> None:
+    """Handles ensure correction state."""
     sig = _signature(rows)
     if st.session_state.comments_signature != sig:
         st.session_state.comments_signature = sig
@@ -232,6 +241,7 @@ def _ensure_correction_state(rows: list[dict]) -> None:
 
 
 def _build_correction_report(rows: list[dict]) -> list[dict]:
+    """Handles build correction report."""
     report = []
     for idx, row in enumerate(rows):
         state = st.session_state.correction_state.get(str(idx), {})
@@ -246,7 +256,27 @@ def _build_correction_report(rows: list[dict]) -> list[dict]:
     return report
 
 
+def _sync_correction_widget_state(rows: list[dict]) -> None:
+    """Syncs Streamlit widget values back into the correction state."""
+    for row in rows:
+        key = str(row["comment_idx"])
+        if key not in st.session_state.correction_state:
+            continue
+        note_key = f"review_note_{key}"
+        user_text = ""
+        if note_key in st.session_state:
+            user_text = st.session_state[note_key]
+            st.session_state.correction_state[key]["observacao"] = user_text
+        final_text_key = f"final_text_{key}"
+        if final_text_key in st.session_state:
+            st.session_state.correction_state[key]["final_text"] = st.session_state[final_text_key]
+        if (user_text or "").strip() and st.session_state.correction_state[key].get("status") != "rejeitado":
+            st.session_state.correction_state[key]["final_text"] = user_text
+            st.session_state.correction_state[key]["status"] = "resolvido"
+
+
 def _build_export_comments(report_rows: list[dict]) -> list[AgentComment]:
+    """Handles build export comments."""
     overrides: dict[int, dict] = {int(row["comment_idx"]): row for row in report_rows}
     export_comments: list[AgentComment] = []
 
@@ -254,6 +284,8 @@ def _build_export_comments(report_rows: list[dict]) -> list[AgentComment]:
         override = overrides.get(idx)
         if override is None:
             export_comments.append(comment)
+            continue
+        if override.get("status") == "rejeitado":
             continue
 
         export_comments.append(
@@ -263,7 +295,7 @@ def _build_export_comments(report_rows: list[dict]) -> list[AgentComment]:
                 paragraph_index=override["indice_trecho"],
                 message=override["comentario"],
                 issue_excerpt=override["trecho_com_problema"],
-                suggested_fix=override["como_deve_ficar"],
+                suggested_fix=override.get("texto_final_aprovado") or override["como_deve_ficar"],
                 auto_apply=override.get("auto_aplicar", False),
                 format_spec=override.get("format_spec", ""),
                 review_status=override.get("status", ""),
@@ -274,24 +306,8 @@ def _build_export_comments(report_rows: list[dict]) -> list[AgentComment]:
     return export_comments
 
 
-def _list_data_files(*suffixes: str) -> list[Path]:
-    if not INPUT_DATA_DIR.exists():
-        return []
-    normalized_suffixes = {suffix.lower() for suffix in suffixes}
-    return sorted(
-        [path for path in INPUT_DATA_DIR.iterdir() if path.is_file() and path.suffix.lower() in normalized_suffixes],
-        key=lambda item: item.name.lower(),
-    )
-
-
-def _persist_loaded_normalized(loaded, source_path: Path) -> Path:
-    output_paths = build_output_paths(source_path, llm_model_tag)
-    normalized_output_path = output_paths["normalized_json"]
-    normalized_output_path.write_text(loaded.normalized_document.to_json(), encoding="utf-8")
-    return normalized_output_path
-
-
 def _serialize_trace(trace: ExecutionTrace | None) -> dict[str, object]:
+    """Handles serialize trace."""
     if trace is None:
         return {"agents": []}
     return {
@@ -326,16 +342,43 @@ def _serialize_trace(trace: ExecutionTrace | None) -> dict[str, object]:
     }
 
 
-def _serialize_verification(summary: VerificationSummary | None) -> dict[str, int]:
+def _serialize_diagnostic_comment(comment: AgentComment) -> dict[str, object]:
+    """Serializes one comment payload for diagnostics exports."""
+    return {
+        "agent": AGENT_LABELS.get(comment.agent, comment.agent),
+        "agent_key": comment.agent,
+        "category": comment.category,
+        "message": comment.message,
+        "paragraph_index": comment.paragraph_index,
+        "issue_excerpt": comment.issue_excerpt,
+        "suggested_fix": comment.suggested_fix,
+        "auto_apply": comment.auto_apply,
+        "format_spec": comment.format_spec,
+    }
+
+
+def _serialize_verification(summary: VerificationSummary | None) -> dict[str, object]:
+    """Serializes verification counts and per-comment decisions for diagnostics."""
     if summary is None:
-        return {"accepted_count": 0, "rejected_count": 0}
+        return {"accepted_count": 0, "rejected_count": 0, "decisions": []}
     return {
         "accepted_count": summary.accepted_count,
         "rejected_count": summary.rejected_count,
+        "decisions": [
+            {
+                "accepted": decision.accepted,
+                "reason": decision.reason,
+                "source": decision.source,
+                "batch_index": decision.batch_index,
+                "comment": _serialize_diagnostic_comment(decision.comment),
+            }
+            for decision in summary.decisions
+        ],
     }
 
 
 def _focus_area_from_comment(comment: AgentComment) -> str:
+    """Handles focus area from comment."""
     category = (comment.category or "").strip().lower()
     if comment.agent == "tipografia" and category in {
         "tipografia_titulo",
@@ -360,6 +403,7 @@ def _focus_area_from_comment(comment: AgentComment) -> str:
 
 
 def _join_focus_areas(items: list[str]) -> str:
+    """Handles join focus areas."""
     cleaned = [item for item in items if item]
     if not cleaned:
         return "ajustes editoriais diversos"
@@ -371,6 +415,7 @@ def _join_focus_areas(items: list[str]) -> str:
 
 
 def _build_diagnostic_headline(comments: list[AgentComment]) -> str:
+    """Handles build diagnostic headline."""
     if not comments:
         return "Nenhum problema editorial relevante foi encontrado na última execução."
 
@@ -384,6 +429,7 @@ def _build_diagnostic_headline(comments: list[AgentComment]) -> str:
 
 
 def _build_diagnostic_summary_text(answer: str, comments: list[AgentComment]) -> str:
+    """Handles build diagnostic summary text."""
     headline = _build_diagnostic_headline(comments)
     clean_answer = (answer or "").strip()
     if not clean_answer:
@@ -391,27 +437,32 @@ def _build_diagnostic_summary_text(answer: str, comments: list[AgentComment]) ->
     return headline + "\n\n" + clean_answer
 
 
-def _persist_review_outputs(report_rows: list[dict], export_comments: list[AgentComment]) -> tuple[Path, Path, Path | None, bytes | None]:
-    source_for_outputs = st.session_state.doc_path or st.session_state.normalized_json_path or (INPUT_DATA_DIR / st.session_state.source_name)
-    output_paths = build_output_paths(Path(source_for_outputs), llm_model_tag)
-
-    report_json_path = output_paths["report_json"]
-    diagnostics_json_path = output_paths["diagnostics_json"]
-    report_json_path.write_text(json.dumps(report_rows, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    diagnostics_payload = {
+def _build_diagnostics_payload(export_comments: list[AgentComment]) -> dict[str, object]:
+    """Handles build diagnostics payload."""
+    runtime = get_runtime_settings()
+    return {
         "source_name": st.session_state.source_name,
         "question": st.session_state.review_question,
         "answer": st.session_state.review_answer,
         "summary": _build_diagnostic_summary_text(st.session_state.review_answer, export_comments),
         "comment_count": len(export_comments),
-        "provider": llm_config["provider"],
-        "model": llm_config["model"],
+        "provider": runtime["provider"],
+        "model": runtime["model"],
+        "runtime": runtime,
         "verification": _serialize_verification(st.session_state.review_verification),
         "trace": _serialize_trace(st.session_state.review_trace),
         "progress_logs": st.session_state.review_logs,
     }
-    diagnostics_json_path.write_text(json.dumps(diagnostics_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _persist_review_outputs(report_rows: list[dict], export_comments: list[AgentComment]) -> tuple[Path, str, Path | None, bytes | None]:
+    """Handles persist review outputs."""
+    source_for_outputs = st.session_state.doc_path or st.session_state.normalized_json_path or (INPUT_DATA_DIR / st.session_state.source_name)
+    output_paths = build_output_paths(Path(source_for_outputs), llm_model_tag)
+
+    report_json_path = output_paths["report_json"]
+    report_json_text = json.dumps(report_rows, ensure_ascii=False, indent=2)
+    report_json_path.write_text(report_json_text, encoding="utf-8")
 
     docx_path: Path | None = None
     docx_bytes: bytes | None = None
@@ -424,16 +475,13 @@ def _persist_review_outputs(report_rows: list[dict], export_comments: list[Agent
         docx_path.write_bytes(docx_bytes)
 
     st.session_state.report_json_path = report_json_path
-    st.session_state.diagnostics_json_path = diagnostics_json_path
+    st.session_state.diagnostics_json_path = None
     st.session_state.commented_docx_path = docx_path
-    return report_json_path, diagnostics_json_path, docx_path, docx_bytes
-
-
-def _set_status_value(key: str, value: str) -> None:
-    st.session_state[key] = value
+    return report_json_path, report_json_text, docx_path, docx_bytes
 
 
 def _select_comment_row(index: int, visible_indexes: list[int], option_labels: list[str]) -> None:
+    """Handles select comment row."""
     if not visible_indexes:
         st.session_state.selected_comment_row = 0
         return
@@ -448,6 +496,7 @@ def _find_next_pending_index(
     current_index: int,
     visible_indexes: list[int],
 ) -> int:
+    """Handles find next pending index."""
     pending_indexes = [
         idx
         for idx in visible_indexes
@@ -465,23 +514,8 @@ def _find_next_pending_index(
     return visible_indexes[-1] if visible_indexes else current_index
 
 
-def _apply_suggestion_and_advance(
-    rows: list[dict],
-    final_key: str,
-    final_value: str,
-    status_key: str,
-    current_index: int,
-    visible_indexes: list[int],
-    option_labels: list[str],
-) -> None:
-    st.session_state[final_key] = final_value
-    st.session_state[status_key] = "resolvido"
-    next_row_index = _find_next_pending_index(rows, current_index, visible_indexes)
-    next_visible_pos = visible_indexes.index(next_row_index) if next_row_index in visible_indexes else 0
-    _select_comment_row(next_visible_pos, visible_indexes, option_labels)
-
-
 def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
+    """Handles normalize text with mapping."""
     normalized_chars: list[str] = []
     mapping: list[int] = []
 
@@ -516,6 +550,7 @@ def _normalize_text_with_mapping(text: str) -> tuple[str, list[int]]:
 
 
 def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
+    """Handles find excerpt span."""
     if not text or not target:
         return None
 
@@ -557,6 +592,7 @@ def _find_excerpt_span(text: str, target: str) -> tuple[int, int] | None:
 
 
 def _render_target_excerpt(paragraph: str, issue_excerpt: str) -> None:
+    """Handles render target excerpt."""
     text = paragraph or ""
     target = (issue_excerpt or "").strip()
 
@@ -590,19 +626,30 @@ def _render_target_excerpt(paragraph: str, issue_excerpt: str) -> None:
 def _run_review(
     question: str,
     agents: list[str],
+    *,
+    paragraphs: list[str],
+    refs: list[str],
+    sections: list[dict],
+    user_comments: list[dict],
+    profile_key: str,
     on_progress: Callable[[str, int, int, int, int, str], None] | None = None,
+    event_queue=None,
 ) -> tuple[object, list[str]]:
+    """Handles run review."""
     logs: list[str] = []
     batch_statuses: dict[tuple[str, int], str] = {}
 
     def on_agent_done(agent: str, new_count: int, total: int) -> None:
+        """Handles the `on_agent_done` callback."""
         _ = (agent, new_count, total)
 
     def on_agent_batch_status(agent: str, batch_idx: int, batch_total: int, status: str) -> None:
+        """Handles the `on_agent_batch_status` callback."""
         _ = batch_total
         batch_statuses[(agent, batch_idx)] = status
 
     def on_agent_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int) -> None:
+        """Handles the `on_agent_progress` callback."""
         label = AGENT_LABELS.get(agent, agent)
         status = batch_statuses.get((agent, batch_idx), "")
         suffix = f" | {status}" if status and status not in {"json direto", "lista em `comments`"} else ""
@@ -613,6 +660,19 @@ def _run_review(
             )
         )
         logs.append(line)
+        if event_queue is not None:
+            event_queue.put(
+                {
+                    "type": "progress",
+                    "agent": agent,
+                    "batch_idx": batch_idx,
+                    "batch_total": batch_total,
+                    "new_count": new_count,
+                    "total": total,
+                    "status": status,
+                    "line": line,
+                }
+            )
         if on_progress is not None:
             on_progress(agent, batch_idx, batch_total, new_count, total, status)
 
@@ -627,18 +687,19 @@ def _run_review(
         kwargs["on_agent_batch_status"] = on_agent_batch_status
 
     result = run_conversation(
-        st.session_state.paragraphs,
-        st.session_state.refs,
-        st.session_state.sections,
+        paragraphs,
+        refs,
+        sections,
         question,
-        user_comments=st.session_state.user_comments,
-        profile_key=st.session_state.doc_profile,
+        user_comments=user_comments,
+        profile_key=profile_key,
         **kwargs,
     )
     return result, logs
 
 
 def _store_loaded_document(loaded, *, file_fingerprint: str | None, file_bytes: bytes = b"", doc_path: Path | None = None) -> None:
+    """Handles store loaded document."""
     st.session_state.messages = []
     st.session_state.comments = []
     st.session_state.agent_result_cache = {}
@@ -655,7 +716,9 @@ def _store_loaded_document(loaded, *, file_fingerprint: str | None, file_bytes: 
     st.session_state.user_comments = loaded.user_comments
     st.session_state.doc_kind = loaded.kind
     st.session_state.normalized_json_text = loaded.normalized_document.to_json()
-    st.session_state.normalized_json_path = loaded.source_path
+    st.session_state.normalized_json_path = (
+        loaded.source_path if loaded.source_path.suffix.lower() == ".json" else None
+    )
     st.session_state.source_name = (doc_path or loaded.source_path).stem
     st.session_state.report_json_path = None
     st.session_state.diagnostics_json_path = None
@@ -667,21 +730,8 @@ def _store_loaded_document(loaded, *, file_fingerprint: str | None, file_bytes: 
     st.session_state.review_verification = None
 
 
-available_documents = _list_data_files(".docx", ".pdf")
-available_normalized = _list_data_files(".json")
-
-selected_document_name = st.selectbox(
-    "Arquivos em input_data (.docx ou .pdf)",
-    options=[""] + [path.name for path in available_documents],
-    index=0,
-)
-selected_normalized_name = st.selectbox(
-    "Normalized em input_data (.json)",
-    options=[""] + [path.name for path in available_normalized],
-    index=0,
-)
-uploaded = st.file_uploader("Adicionar documento ao input_data (.docx ou .pdf)", type=["docx", "pdf"])
-uploaded_normalized = st.file_uploader("Adicionar normalized_document.json ao input_data", type=["json"])
+uploaded = st.file_uploader("Carregar documento (.docx ou .pdf)", type=["docx", "pdf"])
+uploaded_normalized = st.file_uploader("Carregar normalized_document.json", type=["json"])
 
 if uploaded is not None:
     file_bytes = uploaded.getvalue()
@@ -694,9 +744,7 @@ if uploaded is not None:
         doc_path.write_bytes(file_bytes)
 
         loaded = load_document(doc_path)
-        normalized_path = _persist_loaded_normalized(loaded, doc_path)
         _store_loaded_document(loaded, file_fingerprint=file_fingerprint, file_bytes=file_bytes, doc_path=doc_path)
-        st.session_state.normalized_json_path = normalized_path
 
 elif uploaded_normalized is not None:
     file_bytes = uploaded_normalized.getvalue()
@@ -708,126 +756,216 @@ elif uploaded_normalized is not None:
         st.session_state.doc_profile = "GENERIC"
         _store_loaded_document(loaded, file_fingerprint=file_fingerprint, file_bytes=b"", doc_path=None)
         st.session_state.normalized_json_path = normalized_path
-elif selected_document_name:
-    doc_path = INPUT_DATA_DIR / selected_document_name
-    file_bytes = doc_path.read_bytes()
-    file_fingerprint = hashlib.sha256(file_bytes).hexdigest()
-    profile = detect_prompt_profile(doc_path.name)
-    st.session_state.doc_profile = profile.key
-    if st.session_state.doc_fingerprint != file_fingerprint:
-        loaded = load_document(doc_path)
-        normalized_path = _persist_loaded_normalized(loaded, doc_path)
-        _store_loaded_document(loaded, file_fingerprint=file_fingerprint, file_bytes=file_bytes, doc_path=doc_path)
-        st.session_state.normalized_json_path = normalized_path
-elif selected_normalized_name:
-    normalized_path = INPUT_DATA_DIR / selected_normalized_name
-    file_bytes = normalized_path.read_bytes()
-    file_fingerprint = hashlib.sha256(file_bytes).hexdigest()
-    if st.session_state.doc_fingerprint != file_fingerprint:
-        loaded = load_normalized_document(normalized_path)
-        st.session_state.doc_profile = "GENERIC"
-        _store_loaded_document(loaded, file_fingerprint=file_fingerprint, file_bytes=b"", doc_path=None)
-        st.session_state.normalized_json_path = normalized_path
 
 col_diag, col_comments = st.columns([1.05, 1.35], gap="large")
-
-if st.session_state.normalized_json_text:
-    normalized_payload = json.loads(st.session_state.normalized_json_text)
-    metadata = normalized_payload.get("metadata") or {}
-    with st.expander("Normalized Document", expanded=False):
-        meta_a, meta_b, meta_c, meta_d = st.columns(4)
-        meta_a.metric("Blocos", len(normalized_payload.get("blocks") or []))
-        meta_b.metric("Seções", len(normalized_payload.get("sections") or []))
-        meta_c.metric("Referências", len(normalized_payload.get("references") or []))
-        meta_d.metric("Comentários do usuário", len(normalized_payload.get("user_comments") or []))
-        st.caption(
-            f"Origem: `{metadata.get('input_path', '')}` | tipo: `{metadata.get('kind', '')}` | "
-            f"gerado em: `{metadata.get('generated_at', '')}`"
-        )
-        if st.session_state.normalized_json_path:
-            st.caption(f"Artefato atual: `{st.session_state.normalized_json_path}`")
-        st.download_button(
-            label="Baixar normalized_document.json",
-            data=st.session_state.normalized_json_text,
-            file_name=(
-                f"{Path(st.session_state.normalized_json_path).stem if st.session_state.normalized_json_path else 'normalized_document'}.json"
-            ),
-            mime="application/json",
-        )
-        st.json(
-            {
-                "metadata": metadata,
-                "toc": normalized_payload.get("toc") or [],
-            },
-            expanded=False,
-        )
 
 if st.session_state.pending_run and st.session_state.paragraphs:
     run = st.session_state.pending_run
     st.session_state.pending_run = None
+    review_context = {
+        "paragraphs": list(st.session_state.paragraphs),
+        "refs": list(st.session_state.refs),
+        "sections": list(st.session_state.sections),
+        "user_comments": list(st.session_state.user_comments),
+        "profile_key": st.session_state.doc_profile,
+    }
     progress_header = st.empty()
-    progress_bar = st.progress(0, text="Iniciando revisão...")
+    progress_bar = st.progress(0, text="Preparando execução dos agentes...")
+    agent_progress_host = st.empty()
     progress_box = st.empty()
     progress_lines: list[str] = []
-
-    def _push_progress(agent: str, batch_idx: int, batch_total: int, new_count: int, total: int, status: str) -> None:
-        label = AGENT_LABELS.get(agent, agent)
-        pct = int((batch_idx / max(batch_total, 1)) * 100)
-        suffix = f" | {status}" if status and status not in {"json direto", "lista em `comments`"} else ""
-        progress_header.info(
-            f"Processando: {label} | lote {batch_idx}/{batch_total} | +{new_count} comentário(s), total {total}{suffix}"
-        )
-        progress_bar.progress(pct, text=f"Progresso do documento: lote {batch_idx}/{batch_total}")
-        progress_lines.append(f"- `{label}` lote {batch_idx}/{batch_total}: +{new_count} comentário(s), total {total}{suffix}")
-        progress_box.markdown("**Progresso da revisão:**\n" + "\n".join(progress_lines[-14:]))
-
-    with st.spinner("Executando agentes..."):
-        result, logs = _run_review(
-            run["question"],
-            run["agents"],
-            on_progress=_push_progress,
-        )
-
-    progress_header.success("Revisão concluída.")
-    progress_bar.progress(100, text="Processamento completo")
-    progress_box.empty()
-
-    st.session_state.review_question = run["question"]
-    st.session_state.review_answer = result.answer
-    st.session_state.review_logs = logs
-    st.session_state.review_trace = result.trace
-    st.session_state.review_verification = result.verification
-    st.session_state.comments = _merge_comments(st.session_state.comments, result.comments)
-
-    if len(run["agents"]) == 1:
-        agent = run["agents"][0]
-        st.session_state.agent_result_cache[agent] = {
-            "answer": result.answer,
-            "comments": result.comments,
-            "question": run["question"],
-            "trace": result.trace,
-            "verification": result.verification,
+    with agent_progress_host.container():
+        agent_slots = {agent: st.empty() for agent in run["agents"]}
+    agent_state = {
+        agent: {
+            "batch_idx": 0,
+            "batch_total": 0,
+            "new_count": 0,
+            "comments_total": 0,
+            "status": "aguardando",
+            "done": False,
         }
-    st.rerun()
+        for agent in run["agents"]
+    }
+
+    def _render_parallel_progress() -> None:
+        """Handles render parallel progress."""
+        total_agents = max(len(run["agents"]), 1)
+        accumulated_ratio = 0.0
+        completed_agents = 0
+
+        for agent in run["agents"]:
+            state = agent_state[agent]
+            if state["done"]:
+                completed_agents += 1
+            if state["batch_total"] > 0:
+                accumulated_ratio += min(state["batch_idx"] / max(state["batch_total"], 1), 1.0)
+            elif state["done"]:
+                accumulated_ratio += 1.0
+
+            label = AGENT_LABELS.get(agent, agent)
+            if state["batch_total"] > 0:
+                pct = int(min(state["batch_idx"] / max(state["batch_total"], 1), 1.0) * 100)
+                subtitle = (
+                    f"Lote {state['batch_idx']}/{state['batch_total']} | "
+                    f"+{state['new_count']} comentário(s) | total local {state['comments_total']}"
+                )
+            else:
+                pct = 100 if state["done"] else 0
+                subtitle = f"Status: {state['status']}"
+
+            status = state["status"]
+            suffix = f" | {status}" if status else ""
+            with agent_slots[agent].container():
+                st.markdown(f"**{label}**")
+                st.progress(pct, text=f"{subtitle}{suffix}")
+
+        overall_pct = int((accumulated_ratio / total_agents) * 100)
+        progress_header.info(f"Executando revisão: {completed_agents}/{total_agents} agente(s) concluído(s).")
+        progress_bar.progress(overall_pct, text=f"Progresso geral: {overall_pct}%")
+        if progress_lines:
+            progress_box.markdown("**Progresso da revisão:**\n" + "\n".join(progress_lines[-14:]))
+
+    event_queue = Queue()
+    outcome: dict[str, object] = {"done": False}
+
+    def _review_worker() -> None:
+        """Handles review worker."""
+        try:
+            result, logs = _run_review(
+                run["question"],
+                run["agents"],
+                paragraphs=review_context["paragraphs"],
+                refs=review_context["refs"],
+                sections=review_context["sections"],
+                user_comments=review_context["user_comments"],
+                profile_key=review_context["profile_key"],
+                event_queue=event_queue,
+            )
+            outcome["result"] = result
+            outcome["logs"] = logs
+        except Exception as exc:  # pragma: no cover - surface in UI path
+            outcome["error"] = exc
+        finally:
+            outcome["done"] = True
+
+    worker = threading.Thread(target=_review_worker, name="streamlit-review", daemon=True)
+    worker.start()
+
+    try:
+        with st.spinner("Executando agentes..."):
+            while worker.is_alive() or not event_queue.empty():
+                drained = False
+                while True:
+                    try:
+                        event = event_queue.get_nowait()
+                    except Empty:
+                        break
+
+                    drained = True
+                    if event.get("type") != "progress":
+                        continue
+                    agent = str(event["agent"])
+                    state = agent_state.setdefault(
+                        agent,
+                        {
+                            "batch_idx": 0,
+                            "batch_total": 0,
+                            "new_count": 0,
+                            "comments_total": 0,
+                            "status": "aguardando",
+                            "done": False,
+                        },
+                    )
+                    state["batch_idx"] = int(event["batch_idx"])
+                    state["batch_total"] = int(event["batch_total"])
+                    state["new_count"] = int(event["new_count"])
+                    state["comments_total"] += int(event["new_count"])
+                    state["status"] = str(event.get("status") or "em execução")
+                    state["done"] = state["batch_total"] > 0 and state["batch_idx"] >= state["batch_total"]
+                    progress_lines.append(str(event["line"]))
+                if drained:
+                    _render_parallel_progress()
+                time.sleep(0.05)
+            worker.join()
+            _render_parallel_progress()
+            if "error" in outcome:
+                raise outcome["error"]
+            result = outcome["result"]
+            logs = outcome.get("logs", [])
+    except Exception as exc:
+        progress_header.error("A revisão foi interrompida por uma falha inesperada.")
+        progress_bar.empty()
+        agent_progress_host.empty()
+        progress_box.empty()
+        st.error(f"Falha ao executar a revisão: {exc}")
+        st.caption("Verifique a configuração da LLM, especialmente provider, base URL e modelo.")
+    else:
+        if getattr(result, "trace", None) is not None:
+            for agent_trace in result.trace.agents:
+                state = agent_state.setdefault(
+                    agent_trace.agent,
+                    {
+                        "batch_idx": 0,
+                        "batch_total": 0,
+                        "new_count": 0,
+                        "comments_total": 0,
+                        "status": "aguardando",
+                        "done": False,
+                    },
+                )
+                total_batches = len(agent_trace.batches)
+                state["batch_total"] = max(state["batch_total"], total_batches)
+                state["batch_idx"] = total_batches if total_batches else state["batch_idx"]
+                state["status"] = agent_trace.failure_status or "concluído"
+                state["done"] = True
+        _render_parallel_progress()
+        progress_header.success("Revisão concluída.")
+        progress_bar.progress(100, text="Processamento completo")
+
+        st.session_state.review_question = run["question"]
+        st.session_state.review_answer = result.answer
+        st.session_state.review_logs = logs
+        st.session_state.review_trace = result.trace
+        st.session_state.review_verification = result.verification
+        st.session_state.comments = _merge_comments(st.session_state.comments, result.comments)
+
+        if len(run["agents"]) == 1:
+            agent = run["agents"][0]
+            st.session_state.agent_result_cache[agent] = {
+                "answer": result.answer,
+                "comments": result.comments,
+                "question": run["question"],
+                "trace": result.trace,
+                "verification": result.verification,
+            }
+        st.rerun()
 elif st.session_state.pending_run and not st.session_state.paragraphs:
     st.warning("Carregue um documento antes de executar os agentes.")
     st.session_state.pending_run = None
 
 rows = _build_rows()
 report_json_path = None
-diagnostics_json_path = None
+report_json_text = None
+diagnostics_json_name = None
+diagnostics_json_text = None
 docx_path = None
 docx_bytes = None
 
 if rows:
     _ensure_correction_state(rows)
+    _sync_correction_widget_state(rows)
     report = _build_correction_report(rows)
     export_comments = _build_export_comments(report)
-    report_json_path, diagnostics_json_path, docx_path, docx_bytes = _persist_review_outputs(report, export_comments)
+    report_json_path, report_json_text, docx_path, docx_bytes = _persist_review_outputs(report, export_comments)
+    diagnostics_json_name = f"{report_json_path.stem}.diagnostics.json"
+    diagnostics_json_text = json.dumps(_build_diagnostics_payload(export_comments), ensure_ascii=False, indent=2)
 elif st.session_state.comments:
     report = _build_correction_report(_build_rows())
     export_comments = st.session_state.comments
-    report_json_path, diagnostics_json_path, docx_path, docx_bytes = _persist_review_outputs(report, export_comments)
+    report_json_path, report_json_text, docx_path, docx_bytes = _persist_review_outputs(report, export_comments)
+    diagnostics_json_name = f"{report_json_path.stem}.diagnostics.json"
+    diagnostics_json_text = json.dumps(_build_diagnostics_payload(export_comments), ensure_ascii=False, indent=2)
 
 with col_diag:
     st.subheader("Diagnóstico")
@@ -837,31 +975,7 @@ with col_diag:
     elif not st.session_state.comments:
         st.info("Documento carregado. Rode os agentes na barra lateral para gerar o diagnóstico editorial.")
     else:
-        metric_a, metric_b, metric_c = st.columns(3)
-        verification = st.session_state.review_verification
-        trace = st.session_state.review_trace
-        metric_a.metric("Comentários visíveis", len(st.session_state.comments))
-        metric_b.metric("Aceitos", verification.accepted_count if verification else 0)
-        metric_c.metric("Rejeitados", verification.rejected_count if verification else 0)
-
-        if trace is not None:
-            failed_agents = [agent for agent in trace.agents if agent.failed]
-            st.caption(
-                "Agentes com saída: "
-                f"{sum(1 for agent in trace.agents if agent.llm_raw_comment_count or agent.heuristic_accepted_comment_count)}"
-                + (f" | Falhas: {len(failed_agents)}" if failed_agents else " | Falhas: 0")
-            )
-
-        st.markdown(_build_diagnostic_summary_text(st.session_state.review_answer, st.session_state.comments))
-
-        if report_json_path and diagnostics_json_path:
-            st.markdown(
-                "O relatório completo está em "
-                f"`{report_json_path}` e o rastreio da execução em `{diagnostics_json_path}`."
-            )
-
-        if st.session_state.review_question:
-            st.caption(f"Instrução da última execução: `{st.session_state.review_question}`")
+        st.metric("Comentários gerados", len(st.session_state.comments))
 
         if docx_path and docx_bytes is not None:
             st.download_button(
@@ -875,24 +989,11 @@ with col_diag:
         if report_json_path:
             st.download_button(
                 label="Baixar relatório JSON",
-                data=Path(report_json_path).read_text(encoding="utf-8"),
+                data=report_json_text or Path(report_json_path).read_text(encoding="utf-8"),
                 file_name=Path(report_json_path).name,
                 mime="application/json",
                 use_container_width=True,
             )
-
-        if diagnostics_json_path:
-            st.download_button(
-                label="Baixar diagnostics JSON",
-                data=Path(diagnostics_json_path).read_text(encoding="utf-8"),
-                file_name=Path(diagnostics_json_path).name,
-                mime="application/json",
-                use_container_width=True,
-            )
-
-        if st.session_state.review_logs:
-            with st.expander("Progresso da execução", expanded=False):
-                st.markdown("\n".join(st.session_state.review_logs))
 
 with col_comments:
     st.subheader("Erros Encontrados")
@@ -939,12 +1040,65 @@ with col_comments:
                     + (f" | trecho {row['indice_trecho']}" if isinstance(row["indice_trecho"], int) else "")
                 )
                 with st.expander(title, expanded=False):
+                    state_key = str(row["comment_idx"])
+                    state = st.session_state.correction_state.setdefault(
+                        state_key,
+                        {
+                            "status": "pendente",
+                            "final_text": row["como_deve_ficar"] or row["trecho_com_problema"] or "",
+                            "observacao": "",
+                        },
+                    )
+                    status_label = {
+                        "pendente": "Pendente",
+                        "resolvido": "Aceito",
+                        "rejeitado": "Rejeitado",
+                    }.get(state.get("status", "pendente"), state.get("status", "pendente"))
+                    st.caption(f"Status: {status_label}")
+
                     st.markdown(f"**Referência:** {row['referencia']}")
                     st.markdown(f"**Comentário:** {row['comentario']}")
                     st.markdown("**Trecho com problema**")
                     st.code(row["trecho_com_problema"] or "(não informado)", language="text")
                     st.markdown("**Sugestão de correção**")
                     st.code(row["como_deve_ficar"] or "(não informado)", language="text")
+
+                    final_text_key = f"final_text_{state_key}"
+                    if final_text_key not in st.session_state:
+                        st.session_state[final_text_key] = state.get("final_text", "")
+                    final_text = st.text_area(
+                        "Correção que irá para o documento",
+                        key=final_text_key,
+                        placeholder="Edite aqui o texto final a aplicar no documento.",
+                    )
+                    state["final_text"] = final_text
+
+                    note_key = f"review_note_{state_key}"
+                    if note_key not in st.session_state:
+                        st.session_state[note_key] = state.get("observacao", "")
+                    note = st.text_area(
+                        "Comentário/correção do usuário",
+                        key=note_key,
+                        placeholder="Escreva aqui a correção que deve ser aplicada no documento.",
+                    )
+                    state["observacao"] = note
+                    if note.strip() and state.get("status") != "rejeitado":
+                        state["final_text"] = note
+                        state["status"] = "resolvido"
+
+                    action_accept, action_reject = st.columns(2)
+                    with action_accept:
+                        if st.button("Aceitar comentário", key=f"accept_comment_{state_key}", use_container_width=True):
+                            state["status"] = "resolvido"
+                            state["final_text"] = note.strip() or final_text or row["como_deve_ficar"] or row["trecho_com_problema"] or ""
+                            state["observacao"] = note
+                            st.rerun()
+                    with action_reject:
+                        if st.button("Rejeitar comentário", key=f"reject_comment_{state_key}", use_container_width=True):
+                            state["status"] = "rejeitado"
+                            state["final_text"] = ""
+                            state["observacao"] = note
+                            st.rerun()
 
                     pidx = row["indice_trecho"]
                     if isinstance(pidx, int) and 0 <= pidx < len(st.session_state.paragraphs):

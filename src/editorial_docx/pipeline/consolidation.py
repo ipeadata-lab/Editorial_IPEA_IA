@@ -4,14 +4,16 @@ import re
 from difflib import SequenceMatcher
 
 from ..models import AgentComment
-from ..review_patterns import _normalized_text
+from ..review_patterns import _folded_text, _normalized_text
 
 
 def _semantic_text(text: str) -> str:
+    """Handles semantic text."""
     return re.sub(r"\s+", " ", _normalized_text(text).casefold()).strip()
 
 
 def _semantic_similarity(left: str, right: str) -> float:
+    """Handles semantic similarity."""
     if not left or not right:
         return 0.0
     if left == right or left in right or right in left:
@@ -20,11 +22,21 @@ def _semantic_similarity(left: str, right: str) -> float:
 
 
 def _mergeable_comment_key(comment: AgentComment) -> tuple[int | None, str]:
+    """Handles mergeable comment key."""
     paragraph_index = comment.paragraph_index if isinstance(comment.paragraph_index, int) else None
     excerpt = _semantic_text(comment.issue_excerpt)
     if excerpt:
         return paragraph_index, excerpt
     return paragraph_index, _semantic_text(comment.suggested_fix)
+
+
+def _is_punctuation_comment(comment: AgentComment) -> bool:
+    """Returns whether the comment is about punctuation or spacing details."""
+    folded_blob = _folded_text(" ".join([comment.category or "", comment.message or "", comment.suggested_fix or ""]))
+    return any(
+        token in folded_blob
+        for token in ("pontuacao", "espaco", "hifen", "virgula", "ponto final", "dois-pontos", "aspas", "travess")
+    )
 
 
 def consolidate_semantic_comments(comments: list[AgentComment]) -> list[AgentComment]:
@@ -41,6 +53,8 @@ def consolidate_semantic_comments(comments: list[AgentComment]) -> list[AgentCom
         for idx, existing in enumerate(merged):
             existing_key = _mergeable_comment_key(existing)
             if current_key[0] != existing_key[0]:
+                continue
+            if _is_punctuation_comment(comment) or _is_punctuation_comment(existing):
                 continue
             excerpt_similarity = _semantic_similarity(current_key[1], existing_key[1])
             msg_similarity = _semantic_similarity(current_msg, _semantic_text(existing.message))

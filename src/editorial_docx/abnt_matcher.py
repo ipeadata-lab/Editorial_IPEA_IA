@@ -34,6 +34,7 @@ def _build_probable_match(
     *,
     match_type: str | None = None,
 ) -> ProbableReferenceMatch:
+    """Handles build probable match."""
     resolved_type = match_type
     if resolved_type is None:
         if reference.has_glued_reference:
@@ -55,6 +56,7 @@ def _build_probable_match(
 
 
 def _is_exact_author_match(citation: CitationCandidate, reference: ParsedReferenceEntry) -> bool:
+    """Handles is exact author match."""
     if not citation.author_keys or not reference.author_keys:
         return False
     if len(citation.author_keys) == 1:
@@ -63,6 +65,7 @@ def _is_exact_author_match(citation: CitationCandidate, reference: ParsedReferen
 
 
 def _author_overlap_score(citation: CitationCandidate, reference: ParsedReferenceEntry) -> tuple[int, int]:
+    """Handles author overlap score."""
     citation_set = set(citation.author_keys)
     reference_set = set(reference.author_keys)
     overlap = len(citation_set & reference_set)
@@ -73,6 +76,7 @@ def compare_citations_to_references(
     citations: list[CitationCandidate],
     references: list[ParsedReferenceEntry],
 ) -> ReferenceMatchResult:
+    """Compares citations to references."""
     exact_matches: list[ExactReferenceMatch] = []
     probable_matches: list[ProbableReferenceMatch] = []
     missing_citations: list[CitationCandidate] = []

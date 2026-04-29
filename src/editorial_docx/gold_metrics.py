@@ -10,14 +10,17 @@ VALID_GOLD_SUFFIXES = ("gold_", "seed_")
 
 
 def _safe_div(numerator: float, denominator: float) -> float:
+    """Handles safe div."""
     return numerator / denominator if denominator else 0.0
 
 
 def _f1(precision: float, recall: float) -> float:
+    """Handles f1."""
     return (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
 
 
 def _empty_counter() -> dict[str, float | int | None]:
+    """Handles empty counter."""
     return {
         "VP": 0,
         "VP_parcial": 0,
@@ -28,6 +31,7 @@ def _empty_counter() -> dict[str, float | int | None]:
 
 
 def _accumulate_annotation_metrics(counter: dict[str, float | int | None], annotation: dict[str, object]) -> None:
+    """Handles accumulate annotation metrics."""
     label = str(annotation.get("label") or "").strip().lower()
     if label == "correto":
         counter["VP"] = int(counter["VP"]) + 1
@@ -38,12 +42,14 @@ def _accumulate_annotation_metrics(counter: dict[str, float | int | None], annot
 
 
 def _accumulate_missed_issue_metrics(counter: dict[str, float | int | None], missed_issue: dict[str, object]) -> None:
+    """Handles accumulate missed issue metrics."""
     label = str(missed_issue.get("label") or "").strip().lower()
     if label == "faltou":
         counter["FN"] = int(counter["FN"]) + 1
 
 
 def _finalize_metrics(counter: dict[str, float | int | None], partial_weight: float) -> dict[str, float | int | None]:
+    """Handles finalize metrics."""
     vp = int(counter["VP"])
     vp_parcial = int(counter["VP_parcial"])
     fp = int(counter["FP"])
@@ -72,6 +78,7 @@ def _finalize_metrics(counter: dict[str, float | int | None], partial_weight: fl
 
 
 def _load_gold_files(paths: list[Path]) -> list[dict[str, object]]:
+    """Handles load gold files."""
     datasets: list[dict[str, object]] = []
     for path in paths:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -82,6 +89,7 @@ def _load_gold_files(paths: list[Path]) -> list[dict[str, object]]:
 
 
 def _discover_gold_files(inputs: list[Path]) -> list[Path]:
+    """Handles discover gold files."""
     files: list[Path] = []
     for item in inputs:
         if item.is_file():
@@ -102,6 +110,7 @@ def _discover_gold_files(inputs: list[Path]) -> list[Path]:
 
 
 def compute_gold_metrics(datasets: list[dict[str, object]], partial_weight: float = 0.5) -> dict[str, object]:
+    """Computes gold metrics."""
     overall = _empty_counter()
     by_model: dict[str, dict[str, float | int | None]] = defaultdict(_empty_counter)
     by_agent: dict[str, dict[str, float | int | None]] = defaultdict(_empty_counter)
@@ -148,6 +157,7 @@ def compute_gold_metrics(datasets: list[dict[str, object]], partial_weight: floa
 
 
 def main() -> int:
+    """Runs the command-line entry point."""
     parser = argparse.ArgumentParser(description="Consolida métricas reais a partir de arquivos do dataset ouro.")
     parser.add_argument("inputs", nargs="+", type=Path, help="Arquivos JSON do dataset ouro ou diretórios contendo `gold_*.json`/`seed_*.json`.")
     parser.add_argument("--output", type=Path, required=True, help="Caminho do JSON consolidado de métricas.")
