@@ -146,7 +146,7 @@ def main() -> int:
     parser.add_argument(
         "--keep-history",
         action="store_true",
-        help="Quando ativo, grava snapshots extras em output_data/historico.",
+        help="Quando ativo, grava snapshots extras em uma pasta historico/ ao lado da saida principal.",
     )
     args = parser.parse_args()
 

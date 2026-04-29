@@ -7,6 +7,7 @@ import hashlib
 import html
 from queue import Empty, Queue
 import re
+import tempfile
 import threading
 import time
 import unicodedata
@@ -15,7 +16,7 @@ from typing import Callable
 
 import streamlit as st
 
-from src.editorial_docx.config import INPUT_DATA_DIR, OUTPUT_DATA_DIR, build_output_paths, ensure_runtime_directories
+from src.editorial_docx.config import build_output_paths
 from src.editorial_docx.docx_utils import apply_comments_to_docx
 from src.editorial_docx.document_loader import load_document, load_normalized_document
 from src.editorial_docx.graph_chat import run_conversation
@@ -25,8 +26,6 @@ from src.editorial_docx.prompts import AGENT_ORDER, detect_prompt_profile
 
 st.set_page_config(page_title="Editorial TD - Agentes", layout="wide")
 st.title("Revisão Editorial TD com Agentes")
-
-ensure_runtime_directories()
 
 AGENT_LABELS = {
     "metadados": "Metadados",
@@ -71,11 +70,6 @@ with st.sidebar:
                     st.warning("Informe uma chave antes de confirmar.")
         else:
             st.caption("Provider Ollama configurado: chave não é obrigatória por padrão.")
-
-    st.divider()
-    st.markdown("### Pastas")
-    st.caption(f"Entrada: `{INPUT_DATA_DIR}`")
-    st.caption(f"Saída: `{OUTPUT_DATA_DIR}`")
 
     st.divider()
     st.markdown("### Execução")
@@ -146,9 +140,19 @@ for key, default in {
     "review_question": "",
     "review_trace": None,
     "review_verification": None,
+    "session_temp_dir": None,
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
+
+
+def _session_work_dir() -> Path:
+    """Returns an ephemeral directory for uploaded files in the current session."""
+    temp_dir = st.session_state.session_temp_dir
+    if temp_dir is None:
+        temp_dir = tempfile.TemporaryDirectory(prefix="editorial_web_")
+        st.session_state.session_temp_dir = temp_dir
+    return Path(temp_dir.name)
 
 
 def _build_rows() -> list[dict]:
@@ -457,12 +461,15 @@ def _build_diagnostics_payload(export_comments: list[AgentComment]) -> dict[str,
 
 def _persist_review_outputs(report_rows: list[dict], export_comments: list[AgentComment]) -> tuple[Path, str, Path | None, bytes | None]:
     """Handles persist review outputs."""
-    source_for_outputs = st.session_state.doc_path or st.session_state.normalized_json_path or (INPUT_DATA_DIR / st.session_state.source_name)
+    source_for_outputs = (
+        st.session_state.doc_path
+        or st.session_state.normalized_json_path
+        or (_session_work_dir() / st.session_state.source_name)
+    )
     output_paths = build_output_paths(Path(source_for_outputs), llm_model_tag)
 
     report_json_path = output_paths["report_json"]
     report_json_text = json.dumps(report_rows, ensure_ascii=False, indent=2)
-    report_json_path.write_text(report_json_text, encoding="utf-8")
 
     docx_path: Path | None = None
     docx_bytes: bytes | None = None
@@ -472,7 +479,6 @@ def _persist_review_outputs(report_rows: list[dict], export_comments: list[Agent
             export_comments,
         )
         docx_path = output_paths["docx"]
-        docx_path.write_bytes(docx_bytes)
 
     st.session_state.report_json_path = report_json_path
     st.session_state.diagnostics_json_path = None
@@ -740,7 +746,7 @@ if uploaded is not None:
     st.session_state.doc_profile = profile.key
 
     if st.session_state.doc_fingerprint != file_fingerprint:
-        doc_path = INPUT_DATA_DIR / uploaded.name
+        doc_path = _session_work_dir() / uploaded.name
         doc_path.write_bytes(file_bytes)
 
         loaded = load_document(doc_path)
@@ -750,7 +756,7 @@ elif uploaded_normalized is not None:
     file_bytes = uploaded_normalized.getvalue()
     file_fingerprint = hashlib.sha256(file_bytes).hexdigest()
     if st.session_state.doc_fingerprint != file_fingerprint:
-        normalized_path = INPUT_DATA_DIR / uploaded_normalized.name
+        normalized_path = _session_work_dir() / uploaded_normalized.name
         normalized_path.write_bytes(file_bytes)
         loaded = load_normalized_document(normalized_path)
         st.session_state.doc_profile = "GENERIC"

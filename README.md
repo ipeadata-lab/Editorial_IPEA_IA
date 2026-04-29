@@ -96,10 +96,6 @@ Hoje esse artefato agrega:
 
 ### Pastas principais
 
-- `input_data/`
-  Arquivos de entrada para revisao.
-- `output_data/`
-  Artefatos gerados pelo pipeline.
 - `docs/`
   Documentacao complementar e notas de estado.
 - `testes/`
@@ -226,13 +222,13 @@ copy .env.example .env
 Para executar a CLI com `uv`:
 
 ```bash
-uv run editorial-docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+uv run editorial-docx "D:\caminho\para\arquivo.docx"
 ```
 
 Alternativa equivalente:
 
 ```bash
-uv run python -m editorial_docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+uv run python -m editorial_docx "D:\caminho\para\arquivo.docx"
 ```
 
 Para abrir a interface web:
@@ -266,21 +262,20 @@ streamlit run streamlit_app.py
 
 O app:
 
-- lista documentos de `input_data/`;
-- permite subir novos arquivos;
+- permite subir arquivos pela interface;
 - mostra progresso geral e progresso por agente durante a execucao;
-- salva artefatos em `output_data/`.
+- entrega DOCX e relatorios como downloads, sem gravar artefatos no projeto.
 
 ### CLI
 
 ```bash
-python -m editorial_docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+python -m editorial_docx "D:\caminho\para\arquivo.docx"
 ```
 
 Com `uv`, o comando equivalente fica:
 
 ```bash
-uv run editorial-docx "D:\github\lang_IPEA_editorial\input_data\arquivo.docx"
+uv run editorial-docx "D:\caminho\para\arquivo.docx"
 ```
 
 Tambem aceita:
@@ -297,14 +292,14 @@ Argumentos principais:
 
 ## Saidas
 
-Saidas padrao em `output_data/`:
+Saidas padrao da CLI, quando nenhum caminho de saida e informado:
 
 - `<nome>_normalized_document.json`
 - `<nome>_output_<modelo>.relatorio.json`
 - `<nome>_output_<modelo>.relatorio.diagnostics.json`
 - `<nome>_output_<modelo>.docx`
 
-O pipeline tambem grava snapshots em `output_data/historico/`.
+Com `--keep-history`, a CLI grava snapshots em uma pasta `historico/` ao lado do arquivo de saida principal.
 
 O arquivo `diagnostics.json` resume rastros de execucao por agente e por lote, incluindo:
 
@@ -325,7 +320,6 @@ As constantes centrais ficam em:
 
 Exemplos de configuracao:
 
-- diretorios de entrada e saida;
 - modelo padrao;
 - timeout;
 - retries;

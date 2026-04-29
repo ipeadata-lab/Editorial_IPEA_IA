@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-INPUT_DATA_DIR = PROJECT_ROOT / "input_data"
-OUTPUT_DATA_DIR = PROJECT_ROOT / "output_data"
 TMP_DATA_DIR = PROJECT_ROOT / ".tmp"
 
 DEFAULT_OPENAI_MODEL = "gpt-5.2"
@@ -35,8 +33,7 @@ GRAMMAR_CONTEXT_MODE = TEXTO_INTEIRO
 
 def ensure_runtime_directories() -> None:
     """Ensures runtime directories."""
-    for directory in (INPUT_DATA_DIR, OUTPUT_DATA_DIR, TMP_DATA_DIR):
-        directory.mkdir(parents=True, exist_ok=True)
+    TMP_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def resolve_input_path(path: Path) -> Path:
@@ -44,25 +41,19 @@ def resolve_input_path(path: Path) -> Path:
     candidate = path.expanduser()
     if candidate.exists():
         return candidate.resolve()
-
-    input_candidate = INPUT_DATA_DIR / candidate.name
-    if input_candidate.exists():
-        return input_candidate.resolve()
-
     return candidate
 
 
 def build_output_paths(source_path: Path, model_tag: str) -> dict[str, Path]:
     """Builds output paths."""
-    ensure_runtime_directories()
-
     stem = source_path.stem
     if stem.endswith("_normalized_document"):
         stem = stem[: -len("_normalized_document")]
-    report_json = OUTPUT_DATA_DIR / f"{stem}_output_{model_tag}.relatorio.json"
+    output_dir = source_path.parent
+    report_json = output_dir / f"{stem}_output_{model_tag}.relatorio.json"
     return {
-        "normalized_json": OUTPUT_DATA_DIR / f"{stem}_normalized_document.json",
+        "normalized_json": output_dir / f"{stem}_normalized_document.json",
         "report_json": report_json,
         "diagnostics_json": report_json.with_name(f"{report_json.stem}.diagnostics.json"),
-        "docx": OUTPUT_DATA_DIR / f"{stem}_output_{model_tag}.docx",
+        "docx": output_dir / f"{stem}_output_{model_tag}.docx",
     }
